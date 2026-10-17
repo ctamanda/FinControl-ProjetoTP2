@@ -1,14 +1,16 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RouterLink } from '@angular/router';
+import { MODULOS_TRANSACOES, temModulo, tiposEditaveis } from '../../core/acesso';
 import { mensagemDeErro } from '../../core/api';
 import { UsuarioService } from '../../core/usuario/usuario.service';
 import { hojeIso } from '../../models/admin.model';
 import { Transacao } from '../../models/transacao.model';
+import { EmpresaService } from '../../services/empresa.service';
 import { TransacaoService } from '../../services/transacao.service';
 import { Valor } from '../shared/valor/valor';
 
@@ -19,13 +21,14 @@ function chaveMes(d: Date): string {
 }
 
 @Component({
-  imports: [RouterLink, DatePipe, DecimalPipe, MatIconModule, MatButtonModule, MatProgressBarModule, Valor],
+  imports: [RouterLink, CurrencyPipe, DatePipe, DecimalPipe, MatIconModule, MatButtonModule, MatProgressBarModule, Valor],
   selector: 'app-dashboard',
   styleUrl: './dashboard.css',
   templateUrl: './dashboard.html',
 })
 export class Dashboard implements OnInit {
   private readonly transacaoService = inject(TransacaoService);
+  private readonly empresaService = inject(EmpresaService);
   protected readonly perfil = inject(UsuarioService).perfil;
 
   protected readonly transacoes = signal<Transacao[]>([]);
@@ -59,36 +62,29 @@ export class Dashboard implements OnInit {
     variacao(this.despesasMes(), somar(this.doMesAnterior(), 'DESPESA')),
   );
 
-  // Cards Pessoal / Empresa / Mês anterior.
+  // O dashboard mostra só os dados da conta: pessoais ou da empresa.
+  protected readonly empresa = computed(() => this.perfil()?.empresa ?? null);
+  protected readonly tiposEditaveis = computed(() => tiposEditaveis(this.perfil()));
+  protected readonly verLancamentos = computed(() => temModulo(this.perfil(), ...MODULOS_TRANSACOES));
+
+  // Cards Este mês / Mês anterior.
   protected readonly blocos = computed(() => {
-    const pessoal = this.doMes().filter((t) => t.escopo === 'PESSOAL');
-    const empresa = this.doMes().filter((t) => t.escopo === 'EMPRESA');
+    const empresa = this.empresa();
     return [
-      { titulo: 'Pessoal', sub: 'Este mês', icone: 'person_outline', cor: 'blue', lista: pessoal },
-      { titulo: 'Empresa', sub: 'Este mês', icone: 'storefront', cor: 'orange', lista: empresa },
+      {
+        titulo: empresa ? empresa.nome : 'Pessoal',
+        sub: 'Este mês',
+        icone: empresa ? 'storefront' : 'person_outline',
+        cor: empresa ? 'orange' : 'blue',
+        lista: this.doMes(),
+      },
       { titulo: 'Mês anterior', sub: this.nomeMesAnterior, icone: 'history', cor: 'green', lista: this.doMesAnterior() },
     ].map((b) => ({ ...b, receitas: somar(b.lista, 'RECEITA'), despesas: somar(b.lista, 'DESPESA') }));
   });
 
-  // Minigráfico do saldo: saldo acumulado após cada lançamento (até 30 pontos).
-  protected readonly linhaSaldo = computed(() => {
-    const ordenadas = [...this.transacoes()].sort((a, b) => (a.data < b.data ? -1 : a.data > b.data ? 1 : a.id - b.id));
-    let acumulado = 0;
-    const pontos = ordenadas.map((t) => (acumulado += t.tipo === 'RECEITA' ? t.valor : -t.valor)).slice(-30);
-    if (pontos.length < 2) {
-      return '';
-    }
-    const min = Math.min(...pontos);
-    const max = Math.max(...pontos);
-    const faixa = max - min || 1;
-    return pontos
-      .map((v, i) => {
-        const x = (i / (pontos.length - 1)) * 160;
-        const y = 36 - ((v - min) / faixa) * 32;
-        return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`;
-      })
-      .join(' ');
-  });
+  // Administrador da empresa vê o tamanho da equipe, com atalho para "Usuários e acessos".
+  protected readonly ehAdminEmpresa = computed(() => this.perfil()?.role === 'ADMIN_EMPRESA');
+  protected readonly equipe = signal<number | null>(null);
 
   // Principais categorias de despesa do mês, com percentual sobre o total.
   protected readonly categorias = computed(() => {
@@ -127,6 +123,9 @@ export class Dashboard implements OnInit {
   protected readonly recentes = computed(() => this.transacoes().slice(0, 5));
 
   ngOnInit(): void {
+    if (this.ehAdminEmpresa()) {
+      this.empresaService.listarUsuarios().subscribe({ next: (lista) => this.equipe.set(lista.length) });
+    }
     this.transacaoService.findTodas().subscribe({
       next: (lista) => {
         this.transacoes.set(lista.map((t) => ({ ...t, valor: Number(t.valor) })));

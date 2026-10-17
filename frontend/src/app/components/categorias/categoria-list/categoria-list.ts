@@ -8,6 +8,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
 import { mensagemDeErro } from '../../../core/api';
+import { UsuarioService } from '../../../core/usuario/usuario.service';
 import { Categoria } from '../../../models/categoria.model';
 import { CategoriaService } from '../../../services/categoria.service';
 import { confirmar } from '../../shared/confirm-dialog/confirm-dialog';
@@ -23,6 +24,7 @@ export class CategoriaList implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(MatSnackBar);
 
+  protected readonly daEmpresa = !!inject(UsuarioService).perfil()?.empresa;
   protected readonly categorias = signal<Categoria[]>([]);
   protected readonly carregando = signal(true);
   protected readonly erro = signal('');

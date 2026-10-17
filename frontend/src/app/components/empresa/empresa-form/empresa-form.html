@@ -1,0 +1,132 @@
+<ng-template #campos>
+  <form [formGroup]="form" (ngSubmit)="salvar()" novalidate>
+    @if (erro()) {
+      <div class="aviso erro" role="alert"><mat-icon>error_outline</mat-icon> {{ erro() }}</div>
+    }
+
+    <span class="rotulo">Tipo da empresa</span>
+    <div class="opcoes" role="radiogroup" aria-label="Tipo da empresa">
+      <button
+        type="button"
+        role="radio"
+        class="opcao"
+        [class.selecionada]="tipo() === 'MEI'"
+        [attr.aria-checked]="tipo() === 'MEI'"
+        [disabled]="!podeEditar()"
+        (click)="escolherTipo('MEI')"
+      >
+        <mat-icon>storefront</mat-icon>
+        <span class="opcao-titulo">MEI</span>
+        <span class="opcao-sub">Microempreendedor Individual</span>
+      </button>
+      <button
+        type="button"
+        role="radio"
+        class="opcao"
+        [class.selecionada]="tipo() === 'MICROEMPRESA'"
+        [attr.aria-checked]="tipo() === 'MICROEMPRESA'"
+        [disabled]="!podeEditar()"
+        (click)="escolherTipo('MICROEMPRESA')"
+      >
+        <mat-icon>domain</mat-icon>
+        <span class="opcao-titulo">Microempresa</span>
+        <span class="opcao-sub">ME</span>
+      </button>
+    </div>
+
+    <div class="form-grid">
+      <div class="campo full" [class.invalido]="invalido('razaoSocial')">
+        <label for="razaoSocial">Nome da empresa (razão social)</label>
+        <input id="razaoSocial" formControlName="razaoSocial" autocomplete="organization" />
+        @if (invalido('razaoSocial')) {
+          <span class="erro">Informe o nome da empresa.</span>
+        }
+      </div>
+
+      <div class="campo full" [class.invalido]="invalido('nomeFantasia')">
+        <label for="nomeFantasia">Nome fantasia <span class="opcional">opcional</span></label>
+        <input id="nomeFantasia" formControlName="nomeFantasia" />
+      </div>
+
+      <div class="campo" [class.invalido]="invalido('cnpj')">
+        <label for="cnpj">CNPJ</label>
+        <input id="cnpj" formControlName="cnpj" appMascara="cnpj" inputmode="numeric" placeholder="00.000.000/0000-00" />
+        @if (invalido('cnpj')) {
+          <span class="erro">Informe um CNPJ válido.</span>
+        }
+      </div>
+
+      <div class="campo" [class.invalido]="invalido('telefone')">
+        <label for="telefoneEmpresa">Telefone</label>
+        <input id="telefoneEmpresa" type="tel" formControlName="telefone" appMascara="telefone" placeholder="(63) 3215-0000" />
+        @if (invalido('telefone')) {
+          <span class="erro">Informe o telefone com DDD.</span>
+        }
+      </div>
+
+      <div class="campo full" [class.invalido]="invalido('email')">
+        <label for="emailEmpresa">E-mail da empresa</label>
+        <input id="emailEmpresa" type="email" formControlName="email" placeholder="contato@empresa.com" />
+        @if (invalido('email')) {
+          <span class="erro">Informe um e-mail válido.</span>
+        }
+      </div>
+    </div>
+
+    @if (podeEditar()) {
+      @if (cadastro) {
+        <button mat-flat-button class="btn-principal" type="submit" [disabled]="salvando()">
+          @if (salvando()) {
+            <mat-spinner diameter="20" />
+          } @else {
+            <span class="conteudo-btn"><mat-icon>check</mat-icon> Concluir cadastro</span>
+          }
+        </button>
+      } @else {
+        <div class="form-actions">
+          <button mat-flat-button class="btn-primario" type="submit" [disabled]="salvando() || carregando() || form.pristine">
+            <mat-icon>check</mat-icon> Salvar alterações
+          </button>
+        </div>
+      }
+    }
+  </form>
+</ng-template>
+
+@if (cadastro) {
+  <app-fundo-auth />
+  <main class="centro">
+    <app-logo />
+    <div class="card">
+      <app-etapas-cadastro tipo="EMPRESA" [atual]="3" />
+      <div class="cabecalho">
+        <h1>Agora, a sua empresa</h1>
+        <p class="subtitulo">Você será o administrador principal. Depois poderá cadastrar quem ajuda na gestão.</p>
+      </div>
+      <ng-container [ngTemplateOutlet]="campos" />
+      <div class="acoes-secundarias">
+        <button type="button" class="link-acao" (click)="sair()"><mat-icon>logout</mat-icon> Terminar depois</button>
+      </div>
+    </div>
+  </main>
+} @else {
+  <div class="page-header">
+    <div>
+      <h1>Minha empresa</h1>
+      <p>
+        @if (podeEditar()) {
+          Dados cadastrais da empresa. Só administradores podem alterar.
+        } @else {
+          Dados da empresa em que você trabalha. Para alterar, fale com o administrador.
+        }
+      </p>
+    </div>
+  </div>
+
+  <section class="fc-card form-card">
+    @if (carregando()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+    <ng-container [ngTemplateOutlet]="campos" />
+  </section>
+}

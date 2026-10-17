@@ -12,28 +12,32 @@
 
   <form [formGroup]="form" (ngSubmit)="salvar()" novalidate>
     <div class="tipos" role="radiogroup" aria-label="Tipo da transação">
-      <button
-        type="button"
-        role="radio"
-        class="tipo"
-        [class.selecionado]="tipo() === 'DESPESA'"
-        [attr.aria-checked]="tipo() === 'DESPESA'"
-        (click)="form.controls.tipo.setValue('DESPESA')"
-      >
-        <span class="icone-tipo"><mat-icon>arrow_upward</mat-icon></span>
-        Despesa
-      </button>
-      <button
-        type="button"
-        role="radio"
-        class="tipo"
-        [class.selecionado]="tipo() === 'RECEITA'"
-        [attr.aria-checked]="tipo() === 'RECEITA'"
-        (click)="form.controls.tipo.setValue('RECEITA')"
-      >
-        <span class="icone-tipo receita"><mat-icon>arrow_downward</mat-icon></span>
-        Receita
-      </button>
+      @if (tipos.includes('DESPESA')) {
+        <button
+          type="button"
+          role="radio"
+          class="tipo"
+          [class.selecionado]="tipo() === 'DESPESA'"
+          [attr.aria-checked]="tipo() === 'DESPESA'"
+          (click)="form.controls.tipo.setValue('DESPESA')"
+        >
+          <span class="icone-tipo"><mat-icon>arrow_upward</mat-icon></span>
+          Despesa
+        </button>
+      }
+      @if (tipos.includes('RECEITA')) {
+        <button
+          type="button"
+          role="radio"
+          class="tipo"
+          [class.selecionado]="tipo() === 'RECEITA'"
+          [attr.aria-checked]="tipo() === 'RECEITA'"
+          (click)="form.controls.tipo.setValue('RECEITA')"
+        >
+          <span class="icone-tipo receita"><mat-icon>arrow_downward</mat-icon></span>
+          Receita
+        </button>
+      }
     </div>
 
     <div class="form-grid">
@@ -64,7 +68,9 @@
       <div class="campo" [class.invalido]="invalido('idCategoria')">
         <label for="categoria">
           Categoria
-          <a routerLink="/categorias/nova" class="link-mini">+ nova</a>
+          @if (podeCriarCategoria) {
+            <a routerLink="/categorias/nova" class="link-mini">+ nova</a>
+          }
         </label>
         <select id="categoria" formControlName="idCategoria">
           <option [ngValue]="null" disabled>Selecione</option>
@@ -77,14 +83,6 @@
         }
       </div>
 
-      <div class="campo">
-        <label for="escopo">Escopo</label>
-        <select id="escopo" formControlName="escopo">
-          <option value="PESSOAL">Pessoal</option>
-          <option value="EMPRESA">Empresa</option>
-        </select>
-        <span class="ajuda">Separe gastos pessoais dos do seu negócio.</span>
-      </div>
     </div>
 
     <div class="form-actions">

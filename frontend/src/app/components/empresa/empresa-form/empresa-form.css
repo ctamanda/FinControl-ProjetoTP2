@@ -1,0 +1,94 @@
+.rotulo {
+  display: block;
+  font-size: 13px;
+  color: #555c63;
+  margin-bottom: 8px;
+}
+
+.opcional {
+  font-size: 11px;
+  color: var(--fc-muted);
+}
+
+.opcoes {
+  grid-template-columns: 1fr 1fr;
+}
+
+.opcao:disabled {
+  cursor: default;
+}
+
+/* ---------- Etapa do cadastro: mesmo visual de login/cadastro (auth.css) ---------- */
+.centro {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 26px;
+  padding: 40px 16px;
+}
+
+.card {
+  width: min(560px, 100%);
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(20, 6, 45, 0.4);
+  padding: 40px 42px 32px;
+}
+
+.cabecalho {
+  text-align: center;
+  margin-bottom: 26px;
+}
+
+.cabecalho h1 {
+  font-size: 24px;
+  font-weight: 500;
+  margin: 0 0 6px;
+}
+
+.subtitulo {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7178;
+}
+
+.centro .campo input {
+  height: 46px;
+  border-radius: 12px;
+  padding: 0 14px;
+  background: #fafbfb;
+}
+
+.centro .opcao {
+  border-radius: 14px;
+}
+
+.centro .aviso {
+  border-radius: 12px;
+}
+
+.btn-principal.mat-mdc-unelevated-button {
+  width: 100%;
+  height: 48px;
+  border-radius: 12px;
+  font-size: 15px;
+  margin-top: 6px;
+  --mat-button-filled-container-shape: 12px;
+}
+
+.acoes-secundarias {
+  display: flex;
+  justify-content: center;
+  margin-top: 18px;
+}
+
+@media (max-width: 520px) {
+  .card {
+    padding: 32px 22px 28px;
+    border-radius: 16px;
+  }
+}

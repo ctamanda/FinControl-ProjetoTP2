@@ -9,12 +9,14 @@
         neste mês no total de <strong><app-valor [valor]="despesasMes()" [neutro]="true" /></strong>.
       </p>
     } @else {
-      <p>Este é o resumo das suas finanças.</p>
+      <p>Este é o resumo das {{ empresa() ? 'finanças de ' + empresa()!.nome : 'suas finanças' }}.</p>
     }
   </div>
-  <a mat-flat-button class="btn-primario novo" routerLink="/transacoes/nova">
-    <mat-icon>add</mat-icon> Nova transação
-  </a>
+  @if (tiposEditaveis().length) {
+    <a mat-flat-button class="btn-primario novo" routerLink="/transacoes/nova">
+      <mat-icon>add</mat-icon> Nova transação
+    </a>
+  }
 </div>
 
 @if (carregando()) {
@@ -28,50 +30,45 @@
   </div>
 }
 
-<!-- Linha 1: saldo + receitas + despesas -->
-<div class="linha-topo">
-  <div class="fc-card saldo">
-    <div>
-      <span class="rotulo">Saldo atual</span>
-      <app-valor class="grande" [valor]="saldo()" />
-      <a class="ver" routerLink="/transacoes">Ver lançamentos <mat-icon>chevron_right</mat-icon></a>
-    </div>
-    @if (linhaSaldo()) {
-      <svg viewBox="0 0 160 40" class="sparkline" aria-hidden="true">
-        <path [attr.d]="linhaSaldo()" />
-      </svg>
+<!-- Linha 1: cards coloridos -->
+<div class="cards-cor">
+  <a class="card-cor roxo" [routerLink]="verLancamentos() ? '/transacoes' : null">
+    <span class="icone"><mat-icon>account_balance_wallet</mat-icon></span>
+    <span class="numero">{{ saldo() | currency: 'BRL' }}</span>
+    <span class="rotulo">Saldo atual</span>
+    <span class="detalhe">{{ transacoes().length }} lançamentos no total</span>
+  </a>
+
+  <div class="card-cor verde">
+    <span class="icone"><mat-icon>trending_up</mat-icon></span>
+    <span class="numero">{{ receitasMes() | currency: 'BRL' }}</span>
+    <span class="rotulo">Receitas no mês</span>
+    @if (variacaoReceitas() !== null) {
+      <span class="detalhe">{{ variacaoReceitas()! >= 0 ? '▲' : '▼' }} {{ variacaoReceitas()! | number: '1.0-0' }}% vs {{ nomeMesAnterior }}</span>
     }
   </div>
 
-  <div class="fc-card mes">
-    <span class="rotulo">Receitas no mês</span>
-    <div class="linha-valor">
-      <app-valor class="medio" [valor]="receitasMes()" />
-      @if (variacaoReceitas() !== null) {
-        <span class="chip" [class.green]="variacaoReceitas()! >= 0" [class.red]="variacaoReceitas()! < 0">
-          <mat-icon>{{ variacaoReceitas()! >= 0 ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
-          {{ variacaoReceitas()! | number: '1.0-0' }}%
-        </span>
-      }
-    </div>
+  <div class="card-cor rosa">
+    <span class="icone"><mat-icon>trending_down</mat-icon></span>
+    <span class="numero">{{ despesasMes() | currency: 'BRL' }}</span>
+    <span class="rotulo">Despesas no mês</span>
+    @if (variacaoDespesas() !== null) {
+      <span class="detalhe">{{ variacaoDespesas()! >= 0 ? '▲' : '▼' }} {{ variacaoDespesas()! | number: '1.0-0' }}% vs {{ nomeMesAnterior }}</span>
+    }
   </div>
 
-  <div class="fc-card mes">
-    <span class="rotulo">Despesas no mês</span>
-    <div class="linha-valor">
-      <app-valor class="medio" [valor]="despesasMes()" [negativar]="true" />
-      @if (variacaoDespesas() !== null) {
-        <span class="chip" [class.red]="variacaoDespesas()! > 0" [class.green]="variacaoDespesas()! <= 0">
-          <mat-icon>{{ variacaoDespesas()! > 0 ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
-          {{ variacaoDespesas()! | number: '1.0-0' }}%
-        </span>
-      }
-    </div>
-  </div>
+  @if (ehAdminEmpresa()) {
+    <a class="card-cor amarelo" routerLink="/empresa/usuarios">
+      <span class="icone"><mat-icon>groups</mat-icon></span>
+      <span class="numero">{{ equipe() ?? '—' }}</span>
+      <span class="rotulo">Pessoas na equipe</span>
+      <span class="detalhe">Gerenciar usuários e acessos →</span>
+    </a>
+  }
 </div>
 
-<!-- Linha 2: Pessoal / Empresa / Mês anterior -->
-<div class="grid-3 linha">
+<!-- Linha 2: Este mês / Mês anterior -->
+<div class="grid-2 linha">
   @for (b of blocos(); track b.titulo) {
     <div class="kpi {{ b.cor }}">
       <mat-icon>{{ b.icone }}</mat-icon>
@@ -89,7 +86,9 @@
   <section class="fc-card">
     <div class="titulo-com-acao">
       <h2 class="fc-card-title">Últimas transações</h2>
-      <a class="ver" routerLink="/transacoes">Ver todas <mat-icon>chevron_right</mat-icon></a>
+      @if (verLancamentos()) {
+        <a class="ver" routerLink="/transacoes">Ver todas <mat-icon>chevron_right</mat-icon></a>
+      }
     </div>
     @if (recentes().length) {
       <ul class="lista">
@@ -110,7 +109,9 @@
       <div class="estado-vazio">
         <mat-icon>receipt_long</mat-icon>
         <p>Você ainda não lançou nenhuma transação.</p>
-        <a mat-stroked-button routerLink="/transacoes/nova">Lançar a primeira</a>
+        @if (tiposEditaveis().length) {
+          <a mat-stroked-button routerLink="/transacoes/nova">Lançar a primeira</a>
+        }
       </div>
     }
   </section>

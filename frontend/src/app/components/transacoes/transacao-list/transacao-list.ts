@@ -11,7 +11,9 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
 import { Subject, Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
+import { tiposEditaveis } from '../../../core/acesso';
 import { mensagemDeErro } from '../../../core/api';
+import { UsuarioService } from '../../../core/usuario/usuario.service';
 import { Transacao } from '../../../models/transacao.model';
 import { TransacaoService } from '../../../services/transacao.service';
 import { confirmar } from '../../shared/confirm-dialog/confirm-dialog';
@@ -38,7 +40,7 @@ export class TransacaoList implements OnInit {
   private readonly snack = inject(MatSnackBar);
   private readonly dialog = inject(MatDialog);
 
-  protected readonly displayedColumns = ['data', 'descricao', 'categoria', 'escopo', 'valor', 'acoes'];
+  protected readonly displayedColumns = ['data', 'descricao', 'categoria', 'valor', 'acoes'];
   protected readonly transacoes = signal<Transacao[]>([]);
   protected readonly pageIndex = signal(0);
   protected readonly pageSize = signal(10);
@@ -46,7 +48,10 @@ export class TransacaoList implements OnInit {
   protected readonly carregando = signal(false);
   protected readonly carregou = signal(false); // evita mostrar "nenhuma transação" antes da 1ª resposta
 
-  protected readonly rotulosEscopo: Record<string, string> = { PESSOAL: 'Pessoal', EMPRESA: 'Empresa' };
+  // Receitas/Despesas: só lança e altera o tipo liberado (Lançamentos libera os dois).
+  private readonly perfil = inject(UsuarioService).perfil();
+  protected readonly tipos = tiposEditaveis(this.perfil);
+  protected readonly daEmpresa = !!this.perfil?.empresa;
 
   private filtro = '';
   private readonly digitacao = new Subject<string>();

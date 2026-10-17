@@ -1,7 +1,13 @@
 <div class="page-header">
   <div>
     <h1>Categorias</h1>
-    <p>Organize seus lançamentos. Cada usuário tem as próprias categorias.</p>
+    <p>
+      @if (daEmpresa) {
+        Organize os lançamentos. As categorias são compartilhadas por todos da empresa.
+      } @else {
+        Organize seus lançamentos. Cada conta tem as próprias categorias.
+      }
+    </p>
   </div>
   <a mat-flat-button class="btn-primario" routerLink="/categorias/nova">
     <mat-icon>add</mat-icon> Nova categoria

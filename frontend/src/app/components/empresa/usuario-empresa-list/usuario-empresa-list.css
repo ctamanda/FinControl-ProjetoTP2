@@ -1,0 +1,37 @@
+.barra-espaco {
+  height: 4px;
+  margin-bottom: 8px;
+}
+
+.pessoa {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  padding: 6px 0;
+}
+
+.pessoa .meta {
+  flex-basis: 100%;
+  font-size: 12px;
+  color: var(--fc-muted);
+}
+
+.pessoa.inativo strong {
+  color: var(--fc-muted);
+  text-decoration: line-through;
+}
+
+.voce {
+  font-size: 11px;
+  color: var(--fc-primary);
+  background: var(--fc-roxo-claro);
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+
+.acessos {
+  font-size: 13px;
+  color: #555c63;
+  max-width: 320px;
+}

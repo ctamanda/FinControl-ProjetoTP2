@@ -3,6 +3,8 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { API_URL } from '../api';
+import { rotaInicial } from '../acesso';
+import { UsuarioService } from '../usuario/usuario.service';
 import { JwtClaims, LoginRequest, LoginResponse, RegisterRequest } from '../../models/auth.model';
 import { Usuario } from '../../models/usuario.model';
 
@@ -12,13 +14,14 @@ const TOKEN_KEY = 'fincontrol_token';
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  private readonly usuarios = inject(UsuarioService);
 
   private readonly tokenAtual = signal<string | null>(localStorage.getItem(TOKEN_KEY));
 
   readonly token = this.tokenAtual.asReadonly();
   readonly claims = computed(() => decodificar(this.tokenAtual()));
   readonly email = computed(() => this.claims()?.upn ?? '');
-  readonly isAdmin = computed(() => this.claims()?.groups?.includes('ADMIN') ?? false);
+  readonly isSuperAdmin = computed(() => this.claims()?.groups?.includes('SUPER_ADMIN') ?? false);
 
   isLoggedIn(): boolean {
     const claims = this.claims();
@@ -44,16 +47,18 @@ export class AuthService {
     return this.http.post<Usuario>(`${API_URL}/auth/register`, dados);
   }
 
-  logout(motivo?: 'expirou'): void {
+  logout(motivo?: 'expirou' | 'desativado'): void {
     this.limpar();
     this.router.navigate(['/login'], { queryParams: motivo ? { motivo } : {} });
   }
 
+  // Depende do perfil carregado (módulos, empresa pendente); ver core/acesso.ts.
   rotaInicial(): string {
-    return this.isAdmin() ? '/admin/painel' : '/dashboard';
+    return rotaInicial(this.usuarios.perfil());
   }
 
   private salvar(token: string): void {
+    this.usuarios.limpar(); // perfil de outra sessão não vale para o novo token
     localStorage.setItem(TOKEN_KEY, token);
     this.tokenAtual.set(token);
   }
@@ -61,6 +66,7 @@ export class AuthService {
   private limpar(): void {
     localStorage.removeItem(TOKEN_KEY);
     this.tokenAtual.set(null);
+    this.usuarios.limpar();
   }
 }
 

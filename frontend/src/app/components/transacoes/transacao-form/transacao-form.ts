@@ -8,10 +8,12 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
+import { temModulo, tiposEditaveis } from '../../../core/acesso';
 import { mensagemDeErro } from '../../../core/api';
+import { UsuarioService } from '../../../core/usuario/usuario.service';
 import { hojeIso } from '../../../models/admin.model';
 import { Categoria } from '../../../models/categoria.model';
-import { Escopo, TipoTransacao, Transacao } from '../../../models/transacao.model';
+import { TipoTransacao, Transacao } from '../../../models/transacao.model';
 import { CategoriaService } from '../../../services/categoria.service';
 import { TransacaoService } from '../../../services/transacao.service';
 
@@ -35,12 +37,16 @@ export class TransacaoForm implements OnInit {
   private readonly router = inject(Router);
   private readonly snack = inject(MatSnackBar);
 
+  // Com os módulos Receitas/Despesas a pessoa só lança o tipo liberado (o back confere de novo).
+  private readonly perfil = inject(UsuarioService).perfil();
+  protected readonly tipos = tiposEditaveis(this.perfil);
+  protected readonly podeCriarCategoria = temModulo(this.perfil, 'CATEGORIAS');
+
   protected readonly form = this.fb.nonNullable.group({
-    tipo: ['DESPESA' as TipoTransacao, Validators.required],
+    tipo: [(this.tipos[0] ?? 'DESPESA') as TipoTransacao, Validators.required],
     descricao: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(150)]],
     valor: [null as number | null, [Validators.required, Validators.min(0.01)]],
     data: [hojeIso(), Validators.required],
-    escopo: ['PESSOAL' as Escopo, Validators.required],
     idCategoria: [null as number | null, Validators.required],
   });
 

@@ -9,7 +9,7 @@ export function mensagemDeErro(error: HttpErrorResponse, padrao: string): string
     return 'Não foi possível conectar ao servidor.';
   }
   if (error.status === 403) {
-    return 'Você não tem permissão para acessar este recurso.';
+    return error.error?.detail || 'Você não tem permissão para acessar este recurso.';
   }
   // 500 traz só "erro inesperado": a mensagem da tela explica melhor o contexto.
   if (error.status >= 500) {
