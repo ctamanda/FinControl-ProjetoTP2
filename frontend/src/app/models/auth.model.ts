@@ -1,4 +1,4 @@
-import { AtividadeMei, PerfilFiscal, Role } from './usuario.model';
+import { Role, TipoConta } from './usuario.model';
 
 export interface LoginRequest {
   email: string;
@@ -11,11 +11,13 @@ export interface LoginResponse {
 }
 
 export interface RegisterRequest {
-  email: string;
+  tipoConta: TipoConta;
   nome: string;
+  email: string;
+  telefone: string;
+  profissao: string | null; // obrigatória na conta pessoal
   password: string;
-  perfilFiscal: PerfilFiscal;
-  atividadeMei?: AtividadeMei | null;
+  confirmPassword: string;
 }
 
 // Claims emitidas pelo back (AuthResource): upn = e-mail, groups = [role].

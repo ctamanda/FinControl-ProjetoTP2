@@ -71,24 +71,6 @@ h1 {
 }
 
 /* Etapas do cadastro */
-.etapas {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  margin-bottom: 18px;
-}
-
-.etapas span {
-  width: 26px;
-  height: 5px;
-  border-radius: 999px;
-  background: #dfe3e6;
-}
-
-.etapas span.feita {
-  background: var(--fc-primary);
-}
-
 /* Campos mais arredondados que no restante do app */
 .campo input,
 .campo select {
@@ -229,42 +211,27 @@ h1 {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 
-/* Requisitos da senha */
-.requisitos {
-  margin: 0 0 8px;
-  font-size: 13px;
-  color: #6b7178;
-}
-
-.requisitos ul {
-  list-style: none;
-  padding: 0;
-  margin: 8px 0 0;
-}
-
-.requisitos li {
+.ajuda-etapa {
   display: flex;
   align-items: center;
-  gap: 6px;
-  line-height: 1.6;
+  gap: 8px;
+  margin: 0 0 18px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--fc-roxo-claro);
+  font-size: 13px;
+  color: var(--fc-primary);
 }
 
-.requisitos li::before {
-  content: '';
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 1.5px solid #8a9199;
+.ajuda-etapa mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
 }
 
-.requisitos li.ok {
-  color: var(--fc-success);
-}
-
-.requisitos li.ok::before {
-  border-color: var(--fc-success);
-  background: var(--fc-success);
-  box-shadow: inset 0 0 0 2px #fff;
+/* Cartões do tipo de conta em coluna, com mais destaque */
+.tipos .opcao {
+  padding: 28px 12px 22px;
 }
 
 .dupla {

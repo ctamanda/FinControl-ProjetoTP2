@@ -15,6 +15,11 @@
         <mat-icon>schedule</mat-icon>
         <div><strong>Sua sessão expirou</strong>Por segurança, entre novamente.</div>
       </div>
+    } @else if (desativado) {
+      <div class="recado" role="status">
+        <mat-icon>block</mat-icon>
+        <div><strong>Seu acesso foi desativado</strong>Fale com o administrador da sua empresa ou com o suporte do FinControl.</div>
+      </div>
     } @else if (cadastrado) {
       <div class="recado" role="status">
         <mat-icon>celebration</mat-icon>

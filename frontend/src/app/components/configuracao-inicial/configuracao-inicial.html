@@ -1,0 +1,49 @@
+<app-fundo-auth />
+
+<main class="centro">
+  <app-logo />
+
+  <div class="card largo">
+    <app-etapas-cadastro [tipo]="pessoal() ? 'PESSOAL' : 'EMPRESA'" [atual]="pessoal() ? 3 : 4" />
+
+    <div class="cabecalho">
+      <h1>Bem-vindo{{ primeiroNome() ? ', ' + primeiroNome() : '' }}!</h1>
+      <p class="subtitulo">
+        @if (pessoal()) {
+          Escolha o que você quer usar. Dá para mudar depois em Funcionalidades.
+        } @else {
+          Sua empresa está pronta. Veja por onde começar.
+        }
+      </p>
+    </div>
+
+    @if (erro()) {
+      <div class="aviso erro" role="alert"><mat-icon>error_outline</mat-icon> {{ erro() }}</div>
+    }
+
+    @if (pessoal()) {
+      <app-seletor-modulos [opcoes]="opcoes" [(selecionados)]="modulos" />
+    } @else {
+      <ol class="passos">
+        @for (p of passos; track p.titulo; let i = $index) {
+          <li>
+            <span class="num">{{ i + 1 }}</span>
+            <div>
+              <strong><mat-icon>{{ p.icone }}</mat-icon> {{ p.titulo }}</strong>
+              <p>{{ p.texto }}</p>
+            </div>
+            <a mat-stroked-button [routerLink]="p.rota">{{ p.acao }}</a>
+          </li>
+        }
+      </ol>
+    }
+
+    <button mat-flat-button class="btn-principal" type="button" (click)="entrar()" [disabled]="salvando()">
+      @if (salvando()) {
+        <mat-spinner diameter="20" />
+      } @else {
+        <span class="conteudo-btn">Entrar no sistema <mat-icon>arrow_forward</mat-icon></span>
+      }
+    </button>
+  </div>
+</main>

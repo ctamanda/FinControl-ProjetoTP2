@@ -5,8 +5,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { switchMap } from 'rxjs';
+import { rotaInicial } from '../../../core/acesso';
 import { mensagemDeErro } from '../../../core/api';
 import { AuthService } from '../../../core/auth/auth.service';
+import { UsuarioService } from '../../../core/usuario/usuario.service';
 import { Logo } from '../../shared/logo/logo';
 import { FundoAuth } from '../../shared/fundo-auth/fundo-auth';
 
@@ -21,6 +24,7 @@ export class Login {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly usuarios = inject(UsuarioService);
 
   protected readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -34,6 +38,7 @@ export class Login {
 
   private readonly params = this.route.snapshot.queryParamMap;
   protected readonly sessaoExpirou = this.params.get('motivo') === 'expirou';
+  protected readonly desativado = this.params.get('motivo') === 'desativado';
   protected readonly cadastrado = this.params.get('cadastrado') === '1';
 
   constructor() {
@@ -57,19 +62,26 @@ export class Login {
     this.carregando.set(true);
     this.erro.set('');
 
-    this.auth.login(this.form.getRawValue()).subscribe({
-      next: () => {
-        const voltar = this.params.get('voltar');
-        this.router.navigateByUrl(voltar || this.auth.rotaInicial());
-      },
-      error: (error: HttpErrorResponse) => {
-        this.carregando.set(false);
-        this.erro.set(
-          error.status === 401
-            ? 'E-mail ou senha inválidos.'
-            : mensagemDeErro(error, 'Não foi possível entrar. Tente novamente.'),
-        );
-      },
-    });
+    // A tela inicial depende do perfil (módulos liberados, empresa pendente).
+    this.auth
+      .login(this.form.getRawValue())
+      .pipe(switchMap(() => this.usuarios.carregarPerfil()))
+      .subscribe({
+        next: (usuario) => {
+          const voltar = this.params.get('voltar');
+          this.router.navigateByUrl(voltar && !usuario.empresaPendente ? voltar : rotaInicial(usuario));
+        },
+        error: (error: HttpErrorResponse) => {
+          this.carregando.set(false);
+          const detalhe: string = error.error?.detail ?? '';
+          this.erro.set(
+            error.status === 401
+              ? /desativad/i.test(detalhe)
+                ? detalhe
+                : 'E-mail ou senha inválidos.'
+              : mensagemDeErro(error, 'Não foi possível entrar. Tente novamente.'),
+          );
+        },
+      });
   }
 }
