@@ -36,15 +36,36 @@
 
 ## Visão geral
 
-O frontend consome a API REST do FinControl e oferece:
+O frontend consome a API REST do FinControl. No cadastro a pessoa escolhe o tipo de conta: **Pessoal** ou **MEI / Microempresa**.
 
 | Para quem | O que pode fazer |
 |---|---|
-| **Visitante** | Ver a página de apresentação, criar conta ("Para mim" ou "Para minha empresa") e entrar |
-| **Usuário (USER)** | Ver a visão geral do mês, lançar receitas e despesas, gerenciar categorias e editar o perfil |
-| **Administrador (ADMIN)** | Tudo do usuário + painel com estatísticas agregadas e CRUD de parâmetros fiscais |
+| **Visitante** | Ver a página de apresentação, criar conta e entrar |
+| **Conta pessoal** (`PESSOAL`) | Visão geral, lançamentos, categorias e perfil, nas funcionalidades que escolheu usar |
+| **Administrador da empresa** (`ADMIN_EMPRESA`) | Cadastrar e editar a empresa, tudo do financeiro da empresa e **usuários e acessos** da equipe |
+| **Usuário da empresa** (`USUARIO_EMPRESA`) | Só as funcionalidades que o administrador liberou, com os dados da empresa |
+| **Administrador do FinControl** (`SUPER_ADMIN`) | Painel administrativo: indicadores, usuários, empresas, transações (só consulta), categorias padrão, parâmetros fiscais e auditoria |
 
-Cada usuário enxerga **apenas os próprios dados**. O administrador vê somente números agregados (LGPD).
+Cada conta enxerga **apenas os próprios dados**; numa empresa, os dados são compartilhados entre os usuários dela. O administrador do FinControl consulta as transações de todos sem poder alterá-las, e cada consulta fica na auditoria.
+
+### Fluxo de entrada
+
+```
+ENTRAR NO FINCONTROL
+  ├─ já tem conta ──► Login ───────────────────────────────────────────┐
+  └─ criar conta ──► Tipo (Pessoal | MEI/Microempresa)                  │
+                     └► Cadastro + senha                                │
+                        └► Completar perfil (telefone; profissão)       │
+                           └► [MEI/ME] Cadastro da empresa              │
+                              └► Configuração inicial ──────────────────┤
+                                                                        ▼
+                                          ENTRAR NO SISTEMA (identifica o perfil)
+                                 ┌────────────────────┼────────────────────┐
+                              PESSOAL             MEI/MICRO               ADMIN
+                          Ambiente pessoal   Ambiente empresarial   Painel administrativo
+```
+
+Na área logada, a **barra lateral** mostra o ambiente e só as funções que o perfil pode usar (no celular ela vira gaveta, aberta pelo ☰). Funcionalidades liberadas que ainda não têm tela aparecem em "Em breve".
 
 ## Tecnologias
 
@@ -88,10 +109,11 @@ Abra **http://localhost:4200**.
 
 | Perfil | E-mail | Senha | Observação |
 |---|---|---|---|
-| ADMIN | `admin@fincontrol.com` | `admin123` | Criado pela migration `V10` do backend |
-| USER | — | — | Crie pela tela **Experimente grátis** |
+| SUPER_ADMIN | `admin@fincontrol.com` | `admin123` | Criado pelas migrations `V10`/`V12` do backend |
+| PESSOAL ou ADMIN_EMPRESA | — | — | Crie em **Criar conta** (ou o super admin cria em Usuários) |
+| USUARIO_EMPRESA | — | — | Criado pelo administrador da empresa em **Gestão → Usuários e acessos** |
 
-> Ao criar uma conta, o backend já gera 6 categorias: Alimentação, Moradia, Transporte, Lazer, Salário e Vendas.
+> Toda conta pessoal e toda empresa começam com as **categorias padrão** ativas (de início: Alimentação, Moradia, Transporte, Lazer, Salário e Vendas), que o super admin administra.
 
 ## Estrutura de pastas
 
@@ -105,20 +127,27 @@ src/
     ├── app.routes.ts           # rotas (lazy loading) e guards
     ├── core/
     │   ├── api.ts              # API_URL e tradução de erros (RFC 7807)
+    │   ├── acesso.ts           # regras de acesso na tela: módulos, tipos liberados, rota inicial
+    │   ├── validadores.ts      # senha forte, telefone, CNPJ e máscaras (mesmas regras do back)
     │   ├── auth/               # AuthService, interceptor e guards
-    │   └── usuario/            # UsuarioService (GET/PUT /usuarios/me)
-    ├── models/                 # tipos: usuário, auth, transação, categoria, admin
-    ├── services/               # acesso à API: transações, categorias, admin
+    │   └── usuario/            # UsuarioService (perfil logado: GET/PUT /usuarios/me)
+    ├── models/                 # tipos: usuário (perfis, módulos), empresa, auth, transação, categoria, admin
+    ├── services/               # acesso à API: transações, categorias, empresa e usuários, admin
     └── components/
         ├── landing/            # página inicial pública
-        ├── auth/               # login e cadastro (2 etapas)
-        ├── layout/shell/       # barra superior + menu (área logada)
-        ├── dashboard/          # visão geral do usuário
+        ├── auth/               # login e criar conta (tipo → cadastro + senha → perfil)
+        ├── configuracao-inicial/ # última etapa da entrada (/bem-vindo)
+        ├── configuracoes/      # funcionalidades da conta pessoal
+        ├── layout/shell/       # barra lateral por ambiente + cabeçalho (área logada)
+        ├── dashboard/          # visão geral (cards coloridos; equipe para o admin da empresa)
         ├── transacoes/         # lista e formulário
         ├── categorias/         # lista e formulário
-        ├── perfil/             # dados do usuário
-        ├── admin/              # painel, lista e formulário de parâmetros
-        └── shared/             # logo, valor monetário, diálogo, fundo do login
+        ├── perfil/             # cartão de identidade + dados pessoais + acesso
+        ├── empresa/            # cadastro/dados da empresa, usuários da empresa (lista e formulário)
+        ├── admin/              # painel administrativo: visão geral, usuários, empresas, transações,
+        │                       #   categorias, parâmetros fiscais e auditoria
+        └── shared/             # logo, valor, diálogo, fundo do login, máscara, requisitos da senha,
+                                #   seletor de funcionalidades, etapas do cadastro
 public/
 ├── favicon.svg
 └── logo/                       # símbolo para fundo claro e escuro
@@ -130,28 +159,45 @@ public/
 |---|---|---|
 | `/` | Página inicial (apresentação do sistema e da API) | Público |
 | `/login` | Login | Só visitante¹ |
-| `/cadastro` | Cadastro em 2 etapas (`?perfil=empresa` já marca "Para minha empresa") | Só visitante¹ |
-| `/dashboard` | Visão geral: saldo, receitas/despesas do mês, Pessoal × Empresa, categorias, gráfico de 6 meses | Logado |
-| `/transacoes` | Lista com busca por descrição e paginação | Logado |
-| `/transacoes/nova` · `/transacoes/:id` | Formulário de transação | Logado |
-| `/categorias` | Categorias agrupadas em Despesas e Receitas | Logado |
-| `/categorias/nova` · `/categorias/:id` | Formulário com tipo e cor | Logado |
-| `/perfil` | Nome, perfil fiscal (PF/MEI/ME) e atividade do MEI | Logado |
-| `/admin/painel` | Estatísticas agregadas, gráficos e parâmetros vigentes | **ADMIN** |
-| `/admin/parametros` | Parâmetros fiscais com filtro por situação (vigente, futuro, encerrado) | **ADMIN** |
-| `/admin/parametros/novo` · `/admin/parametros/:id` | Formulário de parâmetro | **ADMIN** |
+| `/cadastro` | Criar conta: tipo → cadastro + senha → completar perfil (`?perfil=empresa` já marca "MEI / Microempresa") | Só visitante¹ |
+| `/empresa/cadastro` | Cadastro da empresa (etapa da conta MEI/Microempresa) | Admin de empresa **com a empresa pendente** |
+| `/bem-vindo` | Configuração inicial: funcionalidades (pessoal) ou primeiros passos (empresa) | Logado |
+| `/dashboard` | Visão geral: cards coloridos (saldo, receitas, despesas, equipe), este mês × mês anterior, categorias, 6 meses | Módulo `DASHBOARD` |
+| `/transacoes` · `/transacoes/nova` · `/transacoes/:id` | Lançamentos (só os tipos liberados) | `LANCAMENTOS`, `RECEITAS` ou `DESPESAS` |
+| `/categorias` · `/categorias/nova` · `/categorias/:id` | Categorias | `CATEGORIAS` |
+| `/perfil` | Meu perfil: identidade, dados pessoais (nome, telefone, profissão) e acesso | Logado |
+| `/configuracoes` | Funcionalidades da conta pessoal | `PESSOAL` |
+| `/empresa` | Dados da empresa (só o administrador edita) | `ADMIN_EMPRESA` ou `USUARIO_EMPRESA` |
+| `/empresa/usuarios` · `/novo` · `/:id` | Usuários e acessos da empresa | `ADMIN_EMPRESA` |
+| `/admin/painel` | Visão geral do sistema: usuários, empresas, transações, volume de dados, categorias mais usadas | `SUPER_ADMIN` |
+| `/admin/usuarios` · `/novo` · `/:id` | Todos os usuários: busca, filtros, cadastro de qualquer perfil, ativar/desativar, excluir | `SUPER_ADMIN` |
+| `/admin/empresas` · `/:id` | Empresas: dados, situação, quem tem acesso, números vinculados | `SUPER_ADMIN` |
+| `/admin/transacoes` | Transações do sistema (só consulta) com filtros por período, empresa, usuário, categoria, tipo e origem | `SUPER_ADMIN` |
+| `/admin/categorias` | Categorias padrão + ranking de uso | `SUPER_ADMIN` |
+| `/admin/parametros` · `/novo` · `/:id` | Parâmetros fiscais (vale para MEI/ME, ativo, última alteração) | `SUPER_ADMIN` |
+| `/admin/auditoria` | Quem fez cada alteração administrativa | `SUPER_ADMIN` |
 
-¹ Quem já está logado é levado direto para a tela inicial do seu perfil (`/dashboard` ou `/admin/painel`).
+¹ Quem já está logado é levado direto para a primeira tela que pode abrir (ver `rotaInicial` em `core/acesso.ts`).
 
-### Cadastro: "Para mim" ou "Para minha empresa"
+Sem acesso a uma tela, o guard leva para a primeira tela permitida.
 
-O backend trabalha com três perfis fiscais. A tela traduz a escolha assim:
+### Cadastro
 
-| Escolha na tela | Etapa 2 | `perfilFiscal` enviado |
+| Etapa | Pessoal | MEI / Microempresa |
 |---|---|---|
-| Para mim | — | `PF` |
-| Para minha empresa | "Sua empresa é" **MEI** + atividade (comércio, serviço, ambos) | `MEI` |
-| Para minha empresa | "Sua empresa é" **Microempresa** | `ME` |
+| 1. Tipo | Pessoal | MEI / Microempresa |
+| 2. Cadastro + senha | Nome, e-mail, senha e confirmação | Dados do responsável: nome, e-mail, senha e confirmação |
+| 3. Completar perfil | Telefone e profissão | Telefone |
+| 4. Empresa | — | Nome, nome fantasia, CNPJ, tipo, telefone e e-mail |
+| 5. Configuração inicial | Escolher as funcionalidades | Primeiros passos: equipe, categorias, primeiro lançamento |
+
+- **Senha:** mínimo de 6 caracteres, 1 maiúscula, 1 minúscula, 1 número e 1 caractere especial. A lista de requisitos fica verde em tempo real, e o olho mostra/oculta a senha.
+- **Telefone e CNPJ** ganham máscara enquanto a pessoa digita. O CNPJ tem os dígitos verificadores conferidos.
+- O backend valida tudo de novo: as regras da tela só guiam quem digita.
+
+### Funcionalidades (módulos)
+
+A conta pessoal escolhe na configuração inicial e depois em **Conta → Funcionalidades** o que quer usar. O administrador da empresa libera, por usuário comum, o que cada um acessa (tem acesso / não tem acesso). Os módulos que ainda não têm tela aparecem como "em breve", mas já podem ser liberados.
 
 ## Autenticação
 
@@ -162,18 +208,21 @@ Login ──POST /auth/login──▶ { token, expiresIn }
         │
         ├─ AuthService lê o payload do JWT: upn (e-mail), groups (perfil), exp (validade)
         ├─ authInterceptor envia  Authorization: Bearer <token>  em toda chamada à API
-        └─ resposta 401 ─▶ logout automático e volta ao login ("Sua sessão expirou")
+        ├─ UsuarioService carrega o perfil (GET /usuarios/me): role, módulos, empresa, empresaPendente
+        └─ resposta 401 ─▶ logout automático e volta ao login ("Sua sessão expirou" ou "Seu acesso foi desativado")
 ```
 
 | Peça | Arquivo | Função |
 |---|---|---|
-| `AuthService` | `core/auth/auth.service.ts` | Login, cadastro, logout, `isLoggedIn()`, `isAdmin()`, rota inicial por perfil |
+| `AuthService` | `core/auth/auth.service.ts` | Login, cadastro, logout, `isLoggedIn()`, `isSuperAdmin()`, rota inicial |
 | `authInterceptor` | `core/auth/auth.interceptor.ts` | Anexa o token (exceto em `/auth/*`) e trata 401 |
-| `authGuard` | `core/auth/auth.guard.ts` | Exige usuário logado |
-| `adminGuard` | `core/auth/auth.guard.ts` | Exige perfil ADMIN |
+| `authGuard` | `core/auth/auth.guard.ts` | Exige usuário logado e com o cadastro completo (empresa cadastrada) |
+| `empresaPendenteGuard` | `core/auth/auth.guard.ts` | Só deixa abrir o cadastro da empresa quem ainda não cadastrou |
+| `moduloGuard(...)` | `core/auth/auth.guard.ts` | Exige pelo menos um dos módulos |
+| `perfilGuard(...)` | `core/auth/auth.guard.ts` | Exige um dos perfis (ex.: `SUPER_ADMIN`, `ADMIN_EMPRESA`) |
 | `visitanteGuard` | `core/auth/auth.guard.ts` | Tira usuários logados das telas de login/cadastro |
 
-> O frontend **só lê** o token para mostrar dados na tela. Quem valida assinatura, validade e perfil é o backend, em toda requisição.
+> O frontend **só decide o que mostrar**. Quem valida token, usuário ativo, empresa cadastrada, perfil e módulo é o backend, em toda requisição.
 
 ## Comunicação com a API
 
@@ -200,7 +249,7 @@ export const API_URL = 'http://localhost:8080';
 
 | Token | Cor | Uso |
 |---|---|---|
-| `--fc-roxo` | `#3B1478` | Cor da marca: barra superior, fundos de destaque |
+| `--fc-roxo` | `#3B1478` | Cor da marca: item ativo do menu, fundos de destaque |
 | `--fc-roxo-escuro` | `#2A0E57` | Rodapé, menu no celular |
 | `--fc-primary` / `--fc-roxo-medio` | `#4C1D95` | Botões principais, links, foco |
 | `--fc-roxo-claro` | `#F3EDFC` | Fundos suaves, item selecionado |
