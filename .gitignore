@@ -1,0 +1,33 @@
+# =====================================================================
+# FinControl - regras gerais (cada pasta tem também o seu .gitignore)
+# =====================================================================
+
+# --- Segredos: NUNCA versionar ----------------------------------------
+# Chave privada JWT, certificados e variáveis de ambiente.
+*.pem
+*.key
+*.crt
+*.p12
+*.jks
+.env
+.env.*
+# Exceção: a chave PÚBLICA do JWT pode ir para o repositório.
+!backend/src/main/resources/publicKey.pem
+
+# --- Gerados no build -------------------------------------------------
+backend/target/
+backend/.quarkus/
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/coverage/
+
+# --- Scripts locais (caminhos da máquina de cada um) -------------------
+iniciar-*.ps1
+
+# --- Sistema / editores ----------------------------------------------
+.DS_Store
+Thumbs.db
+.idea/
+*.iml
+*.log

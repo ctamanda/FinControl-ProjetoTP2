@@ -1,0 +1,43 @@
+# Maven
+target/
+.classpath
+.project
+.settings/
+.DS_Store
+*.swp
+*.swo
+*~
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+*.code-workspace
+
+# Quarkus
+.quarkus/
+.env
+*.jar
+*.war
+*.ear
+
+# Node
+node_modules/
+dist/
+*.log
+
+# Database
+.h2.db
+*.db
+
+# Segurança - chaves e certificados
+*.pem
+*.key
+*.crt
+*.p12
+*.jks
+.env
+.env.*
+
+# Exceção: chave pública PODE ir pro repo
+!**/publicKey.pem
