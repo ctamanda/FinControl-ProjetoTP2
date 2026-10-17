@@ -1,0 +1,62 @@
+# Publica o frontend no GitHub Pages: https://<usuário>.github.io/<repositório>/
+#
+# Compila o Angular da pasta frontend/ com o caminho do repositório (--base-href)
+# e envia o resultado para a branch gh-pages.
+# No GitHub (uma vez): Settings > Pages > Source: "Deploy from a branch",
+# branch "gh-pages", pasta "/ (root)".
+#
+# O front chama a API em http://localhost:8080: para usar o site, o backend precisa
+# estar rodando na máquina de quem acessa.
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/deploy-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+
+      - name: Build
+        run: npx ng build --base-href "/${{ github.event.repository.name }}/"
+
+      # O Pages não conhece as rotas do Angular: o 404.html devolve o próprio app,
+      # e o .nojekyll impede o Jekyll de ignorar arquivos.
+      - name: Preparar para o Pages
+        run: |
+          cp dist/hello-world/browser/index.html dist/hello-world/browser/404.html
+          touch dist/hello-world/browser/.nojekyll
+
+      - name: Publicar na branch gh-pages
+        run: |
+          cd dist/hello-world/browser
+          git init -q -b gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "deploy: ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" gh-pages
