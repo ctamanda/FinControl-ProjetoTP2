@@ -1,0 +1,137 @@
+<div class="page-header">
+  <div>
+    <h1>{{ editando() ? 'Editar usuário' : 'Novo usuário' }}</h1>
+    <p>Administração · Usuários</p>
+  </div>
+</div>
+
+<section class="fc-card form-card">
+  @if (carregando()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  <form [formGroup]="form" (ngSubmit)="salvar()" novalidate>
+    <h2 class="secao">Perfil de acesso</h2>
+    <div class="opcoes" role="radiogroup" aria-label="Perfil de acesso">
+      @for (r of perfisPossiveis(); track r) {
+        <button
+          type="button"
+          role="radio"
+          class="opcao"
+          [class.selecionada]="role() === r"
+          [attr.aria-checked]="role() === r"
+          [disabled]="perfilTravado()"
+          (click)="escolherPerfil(r)"
+        >
+          <span class="opcao-titulo">{{ rotulosRole[r] }}</span>
+          <span class="opcao-sub">{{ descricoes[r] }}</span>
+        </button>
+      }
+    </div>
+    @if (perfilTravado()) {
+      <p class="ajuda">O seu próprio perfil e o do administrador principal de uma empresa não podem ser alterados.</p>
+    } @else if (editando()) {
+      <p class="ajuda">O perfil troca entre usuário e administrador do mesmo tipo de conta.</p>
+    }
+
+    @if (ehEmpresa()) {
+      <div class="campo" [class.invalido]="invalido('idEmpresa')">
+        <label for="empresa">Empresa</label>
+        @if (editando(); as u) {
+          <input id="empresa" [value]="u.empresa?.nome ?? 'Cadastro da empresa pendente'" disabled />
+        } @else {
+          <select id="empresa" formControlName="idEmpresa">
+            <option [ngValue]="null">{{ role() === 'ADMIN_EMPRESA' ? 'Nenhuma (cadastra a própria no 1º acesso)' : 'Selecione' }}</option>
+            @for (e of empresas(); track e.id) {
+              <option [ngValue]="e.id">{{ e.nomeFantasia || e.razaoSocial }}{{ e.ativo ? '' : ' (desativada)' }}</option>
+            }
+          </select>
+        }
+        @if (invalido('idEmpresa')) {
+          <span class="erro">Escolha a empresa.</span>
+        }
+      </div>
+    }
+
+    <h2 class="secao">Dados</h2>
+    <div class="form-grid">
+      <div class="campo" [class.invalido]="invalido('nome')">
+        <label for="nome">Nome</label>
+        <input id="nome" formControlName="nome" />
+        @if (invalido('nome')) {
+          <span class="erro">Informe o nome.</span>
+        }
+      </div>
+
+      <div class="campo" [class.invalido]="invalido('email')">
+        <label for="email">E-mail (usado para entrar)</label>
+        <input id="email" type="email" formControlName="email" autocomplete="off" />
+        @if (invalido('email')) {
+          <span class="erro">Informe um e-mail válido.</span>
+        }
+      </div>
+
+      <div class="campo" [class.invalido]="invalido('telefone')">
+        <label for="telefone">Telefone</label>
+        <input id="telefone" type="tel" formControlName="telefone" appMascara="telefone" placeholder="(63) 99999-0000" />
+        @if (invalido('telefone')) {
+          <span class="erro">Informe o telefone com DDD.</span>
+        }
+      </div>
+
+      @if (role() === 'PESSOAL') {
+        <div class="campo full" [class.invalido]="invalido('profissao')">
+          <label for="profissao">Profissão</label>
+          <input id="profissao" formControlName="profissao" />
+          @if (invalido('profissao')) {
+            <span class="erro">Informe a profissão.</span>
+          }
+        </div>
+      }
+    </div>
+
+    @if (opcoesModulos().length) {
+      <h2 class="secao">Permissões de acesso</h2>
+      <app-seletor-modulos [opcoes]="opcoesModulos()" [(selecionados)]="modulos" />
+    } @else {
+      <div class="aviso">
+        <mat-icon>info</mat-icon>
+        {{ role() === 'SUPER_ADMIN'
+          ? 'Administradores do FinControl acessam toda a área administrativa.'
+          : 'Administradores da empresa acessam todas as funcionalidades e gerenciam a equipe.' }}
+      </div>
+    }
+
+    @if (!editando()) {
+      <h2 class="secao">Senha inicial</h2>
+      <div class="form-grid">
+        <div class="campo" [class.invalido]="invalido('password')">
+          <label for="senha">Senha</label>
+          <div class="caixa-input">
+            <input id="senha" [type]="mostrarSenha() ? 'text' : 'password'" formControlName="password" autocomplete="new-password" />
+            <button type="button" class="btn-olho" (click)="mostrarSenha.set(!mostrarSenha())" [attr.aria-label]="mostrarSenha() ? 'Ocultar senha' : 'Mostrar senha'">
+              <mat-icon>{{ mostrarSenha() ? 'visibility' : 'visibility_off' }}</mat-icon>
+            </button>
+          </div>
+        </div>
+        <div class="campo" [class.invalido]="invalido('confirmacao') || (form.controls.confirmacao.touched && senha() !== confirmacao())">
+          <label for="confirmacao">Confirme a senha</label>
+          <div class="caixa-input">
+            <input id="confirmacao" [type]="mostrarSenha() ? 'text' : 'password'" formControlName="confirmacao" autocomplete="new-password" />
+            <button type="button" class="btn-olho" (click)="mostrarSenha.set(!mostrarSenha())" [attr.aria-label]="mostrarSenha() ? 'Ocultar senha' : 'Mostrar senha'">
+              <mat-icon>{{ mostrarSenha() ? 'visibility' : 'visibility_off' }}</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+      <app-requisitos-senha [senha]="senha()" [confirmacao]="confirmacao()" />
+    }
+
+    <div class="form-actions">
+      <button mat-flat-button class="btn-primario" type="submit" [disabled]="salvando() || carregando()">
+        <mat-icon>check</mat-icon> Salvar
+      </button>
+      <a class="link-acao" routerLink="/admin/usuarios"><mat-icon>arrow_back</mat-icon> Voltar</a>
+    </div>
+  </form>
+</section>

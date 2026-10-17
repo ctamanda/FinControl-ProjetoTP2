@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import {
@@ -14,6 +15,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { mensagemDeErro } from '../../../core/api';
 import { ParametroFiscal } from '../../../models/admin.model';
+import { TipoEmpresa } from '../../../models/usuario.model';
 import { AdminService } from '../../../services/admin.service';
 
 // Fim da vigência não pode ser antes do início (mesma regra do back).
@@ -25,6 +27,7 @@ function vigenciaValida(group: AbstractControl): ValidationErrors | null {
 
 @Component({
   imports: [
+    DatePipe,
     ReactiveFormsModule,
     RouterLink,
     MatButtonModule,
@@ -43,6 +46,7 @@ export class ParametroForm implements OnInit {
   private readonly snack = inject(MatSnackBar);
 
   // Sugestões de chaves comuns para MEI/ME (o campo aceita qualquer texto).
+  // Os valores em si ficam só no banco: nada de número fiscal fixo no código.
   protected readonly sugestoes = [
     { chave: 'LIMITE_FATURAMENTO_MEI', descricao: 'Teto de faturamento anual do MEI' },
     { chave: 'DAS_MEI_COMERCIO', descricao: 'Valor mensal do DAS — comércio' },
@@ -52,12 +56,16 @@ export class ParametroForm implements OnInit {
     { chave: 'LIMITE_FATURAMENTO_ME', descricao: 'Teto de faturamento anual da ME' },
   ];
 
+  protected readonly ultimaAlteracao = signal<{ quando: string | null; quem: string | null } | null>(null);
+
   protected readonly form = this.fb.nonNullable.group(
     {
       chave: ['', [Validators.required, Validators.maxLength(50)]],
       valor: [null as number | null, [Validators.required, Validators.min(0.01)]],
       vigenciaInicio: ['', Validators.required],
       vigenciaFim: ['', Validators.required],
+      descricao: ['', Validators.maxLength(150)],
+      tipoEmpresa: [null as TipoEmpresa | null],
     },
     { validators: vigenciaValida },
   );
@@ -87,7 +95,8 @@ export class ParametroForm implements OnInit {
     this.carregando.set(true);
     this.adminService.buscarParametro(id).subscribe({
       next: (p) => {
-        this.form.patchValue(p);
+        this.form.patchValue({ ...p, descricao: p.descricao ?? '', tipoEmpresa: p.tipoEmpresa ?? null });
+        this.ultimaAlteracao.set({ quando: p.ultimaAlteracao ?? null, quem: p.alteradoPor ?? null });
         this.carregando.set(false);
       },
       error: (error: HttpErrorResponse) => {
@@ -112,7 +121,8 @@ export class ParametroForm implements OnInit {
 
     this.salvando.set(true);
     this.erro.set('');
-    const dados = this.form.getRawValue() as ParametroFiscal;
+    const valores = this.form.getRawValue();
+    const dados = { ...valores, descricao: valores.descricao || null } as ParametroFiscal;
     const id = this.id();
     const requisicao = id
       ? this.adminService.atualizarParametro(id, dados)

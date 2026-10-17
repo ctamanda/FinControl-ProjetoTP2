@@ -1,0 +1,82 @@
+/* Estilos compartilhados pelas listas da área administrativa. */
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.filtros .busca {
+  flex: 1 1 260px;
+}
+
+.filtros .campo {
+  margin: 0;
+  flex: 0 1 200px;
+}
+
+.filtros .campo input,
+.filtros .campo select {
+  height: 38px;
+}
+
+.filtro-fixo {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.barra-espaco {
+  height: 4px;
+  margin-bottom: 8px;
+}
+
+.pessoa {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  padding: 6px 0;
+}
+
+.pessoa .meta {
+  flex-basis: 100%;
+}
+
+.pessoa.inativo strong {
+  color: var(--fc-muted);
+  text-decoration: line-through;
+}
+
+.meta {
+  font-size: 12px;
+  color: var(--fc-muted);
+}
+
+.voce {
+  font-size: 11px;
+  color: var(--fc-primary);
+  background: var(--fc-roxo-claro);
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+
+.link {
+  color: var(--fc-primary);
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.numero {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.aviso-leitura {
+  margin-bottom: 16px;
+}

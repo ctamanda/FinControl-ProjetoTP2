@@ -260,25 +260,108 @@
   flex-wrap: wrap;
 }
 
-/* ---------- LGPD ---------- */
-.lista-lgpd {
+/* ---------- Cards clicáveis ---------- */
+.kpi.link {
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.kpi.link:hover {
+  box-shadow: 0 4px 14px rgba(16, 24, 40, 0.12);
+  transform: translateY(-1px);
+}
+
+.kpi-sub {
+  font-size: 12px;
+  color: var(--fc-muted);
+  margin-top: 4px;
+}
+
+/* ---------- Top categorias ---------- */
+.top-categorias {
   list-style: none;
   padding: 0;
-  margin: 16px 0 0;
+  margin: 4px 0 0;
   display: grid;
-  gap: 12px;
+  gap: 14px;
 }
 
-.lista-lgpd li {
+.top-categorias li {
   display: flex;
-  align-items: center;
   gap: 10px;
-  font-size: 13px;
+  align-items: flex-start;
 }
 
-.lista-lgpd mat-icon {
-  color: var(--fc-roxo-medio);
-  font-size: 20px;
-  width: 20px;
-  height: 20px;
+.posicao {
+  width: 22px;
+  color: var(--fc-muted);
+  font-size: 14px;
+}
+
+.cat-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.cat-linha {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.cat-linha strong {
+  font-weight: 500;
+  color: var(--fc-azul);
+  font-variant-numeric: tabular-nums;
+}
+
+.barra {
+  background: var(--fc-danger);
+}
+
+.barra.receita {
+  background: var(--fc-success);
+}
+
+/* ---------- Colunas por mês ---------- */
+.colunas {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  height: 170px;
+  align-items: end;
+  margin-bottom: 18px;
+}
+
+.coluna-mes {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+}
+
+.coluna-mes .col {
+  width: 60%;
+  min-height: 3px;
+  border-radius: 4px 4px 0 0;
+  background: var(--fc-roxo-medio);
+  transition: height 0.6s ease;
+}
+
+.coluna-mes .qtd {
+  font-size: 12px;
+  color: var(--fc-azul);
+}
+
+.mes-rotulo {
+  font-size: 12px;
+  color: var(--fc-muted);
+}
+
+.medias {
+  grid-template-columns: repeat(3, 1fr);
 }

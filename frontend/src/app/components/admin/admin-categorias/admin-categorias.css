@@ -1,0 +1,141 @@
+.layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+
+/* Lado a lado: sem a margem global entre cards empilhados. */
+.layout > .fc-card + .fc-card {
+  margin-top: 0;
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.fc-card-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.contagem {
+  display: flex;
+  gap: 6px;
+}
+
+.ajuda {
+  font-size: 12px;
+  color: var(--fc-muted);
+  margin: -6px 0 14px;
+}
+
+.padrao {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 18px;
+}
+
+.padrao li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--fc-border);
+}
+
+.padrao .nome {
+  flex: 1;
+}
+
+.padrao li.inativa .nome {
+  color: var(--fc-muted);
+  text-decoration: line-through;
+}
+
+.padrao li mat-icon {
+  color: var(--fc-muted);
+}
+
+.padrao li:not(.inativa) button:last-child mat-icon {
+  color: var(--fc-success);
+}
+
+.nova h3 {
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0 0 10px;
+}
+
+.linha-form {
+  display: grid;
+  grid-template-columns: 1fr 140px 70px;
+  gap: 12px;
+}
+
+.cor input {
+  padding: 2px;
+}
+
+.filtro-tipo {
+  font: inherit;
+  font-size: 13px;
+  height: 32px;
+  border: 1px solid #c9ced3;
+  border-radius: 4px;
+  padding: 0 8px;
+  background: #fff;
+}
+
+.ranking {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.ranking th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--fc-muted);
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--fc-border);
+}
+
+.ranking td {
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--fc-border);
+  vertical-align: top;
+}
+
+.ranking .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.ranking .pos {
+  color: var(--fc-muted);
+  width: 28px;
+}
+
+.trilho {
+  height: 6px;
+  background: #eef0f2;
+  border-radius: 999px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+
+.barra {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--fc-danger);
+}
+
+.barra.receita {
+  background: var(--fc-success);
+}

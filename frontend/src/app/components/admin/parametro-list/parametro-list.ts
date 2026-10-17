@@ -42,7 +42,8 @@ export class ParametroList implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(MatSnackBar);
 
-  protected readonly colunas = ['chave', 'valor', 'vigencia', 'situacao', 'acoes'];
+  protected readonly colunas = ['chave', 'aplica', 'valor', 'vigencia', 'situacao', 'alteracao', 'acoes'];
+  protected readonly rotulosTipo: Record<string, string> = { MEI: 'MEI', MICROEMPRESA: 'Microempresa' };
   protected readonly parametros = signal<ParametroFiscal[]>([]);
   protected readonly carregando = signal(true);
   protected readonly erro = signal('');
@@ -115,6 +116,18 @@ export class ParametroList implements OnInit {
         error: (error: HttpErrorResponse) =>
           this.avisar(mensagemDeErro(error, 'Erro ao excluir o parâmetro.')),
       });
+    });
+  }
+
+  // Desativar tira o parâmetro de uso sem apagar o histórico.
+  alterarAtivo(p: ParametroFiscal): void {
+    if (p.id == null) return;
+    this.adminService.alterarAtivoParametro(p.id, p.ativo === false).subscribe({
+      next: (atualizado) => {
+        this.parametros.update((lista) => lista.map((x) => (x.id === atualizado.id ? atualizado : x)));
+        this.avisar(atualizado.ativo ? 'Parâmetro ativado.' : 'Parâmetro desativado.');
+      },
+      error: (error: HttpErrorResponse) => this.avisar(mensagemDeErro(error, 'Não foi possível alterar o parâmetro.')),
     });
   }
 

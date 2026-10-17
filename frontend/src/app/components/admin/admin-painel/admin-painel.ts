@@ -6,9 +6,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RouterLink } from '@angular/router';
 import { mensagemDeErro } from '../../../core/api';
-import { Estatisticas, ParametroFiscal, situacaoVigencia } from '../../../models/admin.model';
+import { Estatisticas, formatarBytes, ParametroFiscal, situacaoVigencia } from '../../../models/admin.model';
 import { AdminService } from '../../../services/admin.service';
 import { Valor } from '../../shared/valor/valor';
+
+const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
 @Component({
   imports: [RouterLink, DatePipe, DecimalPipe, MatIconModule, MatButtonModule, MatProgressBarModule, Valor],
@@ -25,42 +27,48 @@ export class AdminPainel implements OnInit {
   protected readonly erro = signal('');
   protected readonly atualizadoEm = signal<Date | null>(null);
 
+  protected readonly volume = computed(() => formatarBytes(this.estatisticas()?.volumeDadosBytes));
+
   protected readonly parametrosVigentes = computed(() =>
-    this.parametros().filter((p) => situacaoVigencia(p) === 'VIGENTE'),
+    this.parametros().filter((p) => p.ativo !== false && situacaoVigencia(p) === 'VIGENTE'),
   );
 
-  protected readonly contagemVigencia = computed(() => {
-    const contagem = { VIGENTE: 0, FUTURO: 0, ENCERRADO: 0 };
-    for (const p of this.parametros()) {
-      contagem[situacaoVigencia(p)]++;
-    }
-    return contagem;
+  // Barras do ranking proporcionais à categoria mais usada.
+  protected readonly ranking = computed(() => {
+    const lista = this.estatisticas()?.categoriasMaisUtilizadas ?? [];
+    const maior = Math.max(1, ...lista.map((c) => c.totalTransacoes));
+    return lista.map((c) => ({ ...c, largura: (c.totalTransacoes / maior) * 100 }));
   });
 
-  // Percentual de ADMIN para o gráfico de rosca (conic-gradient).
-  protected readonly percentualAdmin = computed(() => {
+  // Distribuição das contas por tipo (gráfico de rosca em conic-gradient).
+  protected readonly perfis = computed(() => {
     const e = this.estatisticas();
-    return e && e.totalUsuarios > 0 ? (e.totalAdmins / e.totalUsuarios) * 100 : 0;
+    if (!e) return [];
+    const total = Math.max(1, e.totalUsuarios);
+    let acumulado = 0;
+    return [
+      { rotulo: 'Contas pessoais', valor: e.totalContasPessoais, cor: 'var(--fc-azul)' },
+      { rotulo: 'Usuários de empresas', valor: e.totalUsuariosEmpresa, cor: 'var(--fc-warning)' },
+      { rotulo: 'Administradores', valor: e.totalAdmins, cor: 'var(--fc-roxo-medio)' },
+    ].map((p) => {
+      const inicio = acumulado;
+      acumulado += (p.valor / total) * 100;
+      return { ...p, inicio, fim: acumulado };
+    });
   });
 
-  // Barras horizontais comparando os volumes do sistema.
-  protected readonly volumes = computed(() => {
-    const e = this.estatisticas();
-    if (!e) {
-      return [];
-    }
-    const itens = [
-      { rotulo: 'Usuários', valor: e.totalUsuarios, cor: 'var(--fc-azul)' },
-      { rotulo: 'Categorias', valor: e.totalCategorias, cor: 'var(--fc-amarelo)' },
-      { rotulo: 'Transações', valor: e.totalTransacoes, cor: 'var(--fc-success)' },
-    ];
-    const maior = Math.max(1, ...itens.map((i) => i.valor));
-    return itens.map((i) => ({ ...i, largura: (i.valor / maior) * 100 }));
-  });
+  protected readonly rosca = computed(() =>
+    'conic-gradient(' + this.perfis().map((p) => `${p.cor} ${p.inicio}% ${p.fim}%`).join(', ') + ')',
+  );
 
-  protected readonly categoriasPorUsuario = computed(() => {
-    const e = this.estatisticas();
-    return e && e.totalUsuarios > 0 ? e.totalCategorias / e.totalUsuarios : 0;
+  protected readonly meses = computed(() => {
+    const lista = this.estatisticas()?.transacoesPorMes ?? [];
+    const maior = Math.max(1, ...lista.map((m) => m.quantidade));
+    return lista.map((m) => ({
+      rotulo: MESES[Number(m.mes.slice(5, 7)) - 1],
+      quantidade: m.quantidade,
+      altura: (m.quantidade / maior) * 100,
+    }));
   });
 
   ngOnInit(): void {

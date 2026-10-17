@@ -1,0 +1,76 @@
+<div class="page-header">
+  <div>
+    <h1>Auditoria</h1>
+    <p>Quem fez cada alteração administrativa importante, em quê e quando.</p>
+  </div>
+</div>
+
+<section class="fc-card">
+  <div class="filtros">
+    <label class="busca">
+      <mat-icon>search</mat-icon>
+      <input (input)="buscar($event)" placeholder="Buscar por autor, alvo ou detalhe" aria-label="Buscar na auditoria" />
+    </label>
+    <div class="campo">
+      <select [(ngModel)]="acao" (change)="filtrar()" aria-label="Ação">
+        <option value="">Todas as ações</option>
+        @for (a of acoes; track a[0]) {
+          <option [value]="a[0]">{{ a[1] }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <div class="barra-espaco">
+    @if (carregando()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+  </div>
+
+  <div class="table-wrap">
+    <table mat-table [dataSource]="registros()">
+      <ng-container matColumnDef="dataHora">
+        <th mat-header-cell *matHeaderCellDef>Quando</th>
+        <td mat-cell *matCellDef="let r">{{ r.dataHora | date: 'dd/MM/yyyy HH:mm' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="autor">
+        <th mat-header-cell *matHeaderCellDef>Quem</th>
+        <td mat-cell *matCellDef="let r">{{ r.autorEmail }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="acao">
+        <th mat-header-cell *matHeaderCellDef>Ação</th>
+        <td mat-cell *matCellDef="let r"><span class="chip {{ cor(r.acao) }}">{{ rotulo(r.acao) }}</span></td>
+      </ng-container>
+
+      <ng-container matColumnDef="alvo">
+        <th mat-header-cell *matHeaderCellDef>Em quê</th>
+        <td mat-cell *matCellDef="let r">
+          {{ r.alvo }}
+          @if (r.detalhe) {
+            <br /><span class="meta">{{ r.detalhe }}</span>
+          }
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="colunas"></tr>
+      <tr mat-row *matRowDef="let row; columns: colunas"></tr>
+    </table>
+  </div>
+
+  @if (!carregando() && total() === 0) {
+    <div class="estado-vazio">
+      <mat-icon>history</mat-icon>
+      <p>Nenhum registro encontrado.</p>
+    </div>
+  }
+
+  <mat-paginator
+    [length]="total()"
+    [pageIndex]="pagina()"
+    [pageSize]="tamanho()"
+    [pageSizeOptions]="[20, 50, 100]"
+    (page)="mudarPagina($event)"
+  />
+</section>

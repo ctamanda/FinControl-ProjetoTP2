@@ -1,0 +1,106 @@
+<div class="page-header">
+  <div>
+    <h1>Categorias</h1>
+    <p>Categorias padrão que toda conta nova recebe e o uso das categorias no sistema.</p>
+  </div>
+</div>
+
+@if (carregando()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+<div class="layout">
+  <section class="fc-card">
+    <h2 class="fc-card-title">
+      Categorias padrão
+      <span class="contagem">
+        <span class="chip red">{{ totais().despesas }} despesas</span>
+        <span class="chip green">{{ totais().receitas }} receitas</span>
+      </span>
+    </h2>
+    <p class="ajuda">Só as ativas são copiadas para as contas e empresas novas. Mudar aqui não altera as categorias que as contas já têm.</p>
+
+    <ul class="padrao">
+      @for (c of padrao(); track c.id) {
+        <li [class.inativa]="!c.ativo">
+          <span class="color-dot" [style.background]="c.cor || '#9aa5b5'"></span>
+          <span class="nome">{{ c.nome }}</span>
+          <span class="chip" [class.red]="c.tipo === 'DESPESA'" [class.green]="c.tipo === 'RECEITA'">
+            {{ c.tipo === 'DESPESA' ? 'Despesa' : 'Receita' }}
+          </span>
+          <button mat-icon-button (click)="editar(c)" matTooltip="Editar"><mat-icon>edit</mat-icon></button>
+          <button mat-icon-button (click)="alterarAtivo(c)" [matTooltip]="c.ativo ? 'Desativar' : 'Ativar'">
+            <mat-icon>{{ c.ativo ? 'toggle_on' : 'toggle_off' }}</mat-icon>
+          </button>
+        </li>
+      }
+    </ul>
+
+    <form [formGroup]="form" (ngSubmit)="salvar()" class="nova" novalidate>
+      <h3>{{ editando() ? 'Editar "' + editando()!.nome + '"' : 'Nova categoria padrão' }}</h3>
+      <div class="linha-form">
+        <div class="campo nome-campo" [class.invalido]="form.controls.nome.invalid && form.controls.nome.touched">
+          <label for="nome">Nome</label>
+          <input id="nome" formControlName="nome" placeholder="Ex.: Saúde" />
+        </div>
+        <div class="campo">
+          <label for="tipo">Tipo</label>
+          <select id="tipo" formControlName="tipo">
+            <option value="DESPESA">Despesa</option>
+            <option value="RECEITA">Receita</option>
+          </select>
+        </div>
+        <div class="campo cor">
+          <label for="cor">Cor</label>
+          <input id="cor" type="color" formControlName="cor" />
+        </div>
+      </div>
+      <div class="form-actions">
+        <button mat-flat-button class="btn-primario" type="submit" [disabled]="salvando()">
+          <mat-icon>{{ editando() ? 'check' : 'add' }}</mat-icon> {{ editando() ? 'Salvar' : 'Adicionar' }}
+        </button>
+        @if (editando()) {
+          <button mat-button type="button" (click)="cancelar()">Cancelar</button>
+        }
+      </div>
+    </form>
+  </section>
+
+  <section class="fc-card">
+    <h2 class="fc-card-title">
+      Ranking de uso
+      <select class="filtro-tipo" [value]="filtroRanking()" (change)="filtroRanking.set($any($event.target).value)" aria-label="Tipo">
+        <option value="">Todas</option>
+        <option value="DESPESA">Despesas</option>
+        <option value="RECEITA">Receitas</option>
+      </select>
+    </h2>
+    <p class="ajuda">Soma as categorias de mesmo nome de todas as contas e empresas.</p>
+
+    @if (rankingFiltrado().length) {
+      <table class="ranking">
+        <thead>
+          <tr><th>#</th><th>Categoria</th><th class="num">Transações</th><th class="num">Contas</th></tr>
+        </thead>
+        <tbody>
+          @for (c of rankingFiltrado(); track c.nome + c.tipo; let i = $index) {
+            <tr>
+              <td class="pos">{{ i + 1 }}</td>
+              <td>
+                {{ c.nome }}
+                <div class="trilho"><div class="barra" [class.receita]="c.tipo === 'RECEITA'" [style.width.%]="c.largura"></div></div>
+              </td>
+              <td class="num">{{ c.totalTransacoes | number }}</td>
+              <td class="num">{{ c.totalContas | number }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else {
+      <div class="estado-vazio">
+        <mat-icon>leaderboard</mat-icon>
+        <p>Nenhuma transação registrada ainda.</p>
+      </div>
+    }
+  </section>
+</div>

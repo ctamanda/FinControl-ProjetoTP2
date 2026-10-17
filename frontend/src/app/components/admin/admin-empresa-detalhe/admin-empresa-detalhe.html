@@ -1,0 +1,112 @@
+@if (carregando()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+@if (empresa(); as e) {
+  <div class="page-header">
+    <div>
+      <h1>{{ e.nomeFantasia || e.razaoSocial }}</h1>
+      <p>
+        Cadastrada em {{ e.dataCadastro | date: 'dd/MM/yyyy' }} · responsável {{ e.responsavel.nome }} ({{ e.responsavel.email }})
+      </p>
+    </div>
+    <button mat-stroked-button [class.perigo]="e.ativo" (click)="alterarAtivoEmpresa()">
+      <mat-icon>{{ e.ativo ? 'block' : 'check_circle' }}</mat-icon> {{ e.ativo ? 'Desativar empresa' : 'Reativar empresa' }}
+    </button>
+  </div>
+
+  @if (!e.ativo) {
+    <div class="aviso erro"><mat-icon>block</mat-icon> Empresa desativada: nenhum usuário dela consegue entrar.</div>
+  }
+
+  <div class="kpi-grid numeros">
+    <a class="kpi blue link" [routerLink]="['/admin/usuarios']" [queryParams]="{ empresa: e.id }">
+      <mat-icon>group</mat-icon>
+      <div class="kpi-label">Usuários</div>
+      <div class="kpi-value">{{ e.totalUsuarios | number }}</div>
+    </a>
+    <a class="kpi green link" [routerLink]="['/admin/transacoes']" [queryParams]="{ empresa: e.id }">
+      <mat-icon>receipt_long</mat-icon>
+      <div class="kpi-label">Transações</div>
+      <div class="kpi-value">{{ e.totalTransacoes | number }}</div>
+    </a>
+  </div>
+
+  <div class="layout">
+    <section class="fc-card">
+      <h2 class="fc-card-title">Dados da empresa</h2>
+      <form [formGroup]="form" (ngSubmit)="salvar()" novalidate>
+        <div class="opcoes" role="radiogroup" aria-label="Tipo da empresa">
+          <button type="button" role="radio" class="opcao" [class.selecionada]="tipo() === 'MEI'" [attr.aria-checked]="tipo() === 'MEI'" (click)="escolherTipo('MEI')">
+            <span class="opcao-titulo">MEI</span>
+          </button>
+          <button type="button" role="radio" class="opcao" [class.selecionada]="tipo() === 'MICROEMPRESA'" [attr.aria-checked]="tipo() === 'MICROEMPRESA'" (click)="escolherTipo('MICROEMPRESA')">
+            <span class="opcao-titulo">Microempresa</span>
+          </button>
+        </div>
+        <div class="form-grid">
+          <div class="campo full" [class.invalido]="invalido('razaoSocial')">
+            <label for="razaoSocial">Nome da empresa (razão social)</label>
+            <input id="razaoSocial" formControlName="razaoSocial" />
+          </div>
+          <div class="campo full">
+            <label for="nomeFantasia">Nome fantasia</label>
+            <input id="nomeFantasia" formControlName="nomeFantasia" />
+          </div>
+          <div class="campo" [class.invalido]="invalido('cnpj')">
+            <label for="cnpj">CNPJ</label>
+            <input id="cnpj" formControlName="cnpj" appMascara="cnpj" />
+            @if (invalido('cnpj')) {
+              <span class="erro">Informe um CNPJ válido.</span>
+            }
+          </div>
+          <div class="campo" [class.invalido]="invalido('telefone')">
+            <label for="telefone">Telefone</label>
+            <input id="telefone" type="tel" formControlName="telefone" appMascara="telefone" />
+          </div>
+          <div class="campo full" [class.invalido]="invalido('email')">
+            <label for="email">E-mail</label>
+            <input id="email" type="email" formControlName="email" />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button mat-flat-button class="btn-primario" type="submit" [disabled]="salvando() || form.pristine">
+            <mat-icon>check</mat-icon> Salvar alterações
+          </button>
+          <a class="link-acao" routerLink="/admin/empresas"><mat-icon>arrow_back</mat-icon> Voltar</a>
+        </div>
+      </form>
+    </section>
+
+    <section class="fc-card">
+      <div class="titulo-acao">
+        <h2 class="fc-card-title">Quem tem acesso</h2>
+        <a mat-stroked-button routerLink="/admin/usuarios/novo" [queryParams]="{ empresa: e.id }">
+          <mat-icon>person_add</mat-icon> Adicionar
+        </a>
+      </div>
+      <ul class="usuarios">
+        @for (u of usuarios(); track u.id) {
+          <li [class.inativo]="!u.ativo">
+            <div class="quem">
+              <a [routerLink]="['/admin/usuarios', u.id]">{{ u.nome }}</a>
+              <span class="meta">{{ u.email }}</span>
+            </div>
+            <span class="chip" [class.purple]="u.role === 'ADMIN_EMPRESA'" [class.blue]="u.role !== 'ADMIN_EMPRESA'">
+              {{ u.empresa?.responsavel ? 'Principal' : rotulosRole[u.role] }}
+            </span>
+            @if (!u.empresa?.responsavel) {
+              <button mat-icon-button (click)="alterarAtivoUsuario(u)" [matTooltip]="u.ativo ? 'Remover acesso' : 'Devolver acesso'">
+                <mat-icon>{{ u.ativo ? 'person_off' : 'person_check' }}</mat-icon>
+              </button>
+            } @else {
+              <span class="espaco-botao"></span>
+            }
+          </li>
+        } @empty {
+          <li class="meta">Nenhum usuário.</li>
+        }
+      </ul>
+    </section>
+  </div>
+}

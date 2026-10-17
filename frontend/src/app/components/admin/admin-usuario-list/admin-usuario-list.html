@@ -1,0 +1,131 @@
+<div class="page-header">
+  <div>
+    <h1>Usuários</h1>
+    <p>Todas as contas do sistema: pessoais, de empresas e administradores.</p>
+  </div>
+  <a mat-flat-button class="btn-primario" routerLink="/admin/usuarios/novo" [queryParams]="idEmpresa ? { empresa: idEmpresa } : {}">
+    <mat-icon>person_add</mat-icon> Novo usuário
+  </a>
+</div>
+
+<section class="fc-card">
+  <div class="filtros">
+    <label class="busca">
+      <mat-icon>search</mat-icon>
+      <input (input)="buscar($event)" placeholder="Buscar por nome ou e-mail" aria-label="Buscar por nome ou e-mail" />
+    </label>
+    <div class="campo">
+      <select [(ngModel)]="role" (change)="filtrar()" aria-label="Perfil">
+        <option value="">Todos os perfis</option>
+        @for (p of perfis; track p[0]) {
+          <option [value]="p[0]">{{ p[1] }}</option>
+        }
+      </select>
+    </div>
+    <div class="campo">
+      <select [(ngModel)]="ativo" (change)="filtrar()" aria-label="Situação">
+        <option value="">Ativos e inativos</option>
+        <option value="true">Só ativos</option>
+        <option value="false">Só inativos</option>
+      </select>
+    </div>
+    @if (idEmpresa) {
+      <a class="chip orange filtro-fixo" routerLink="/admin/usuarios">
+        Empresa #{{ idEmpresa }} <mat-icon>close</mat-icon>
+      </a>
+    }
+  </div>
+
+  <div class="barra-espaco">
+    @if (carregando()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+  </div>
+
+  <div class="table-wrap">
+    <table mat-table [dataSource]="usuarios()">
+      <ng-container matColumnDef="usuario">
+        <th mat-header-cell *matHeaderCellDef>Usuário</th>
+        <td mat-cell *matCellDef="let u">
+          <div class="pessoa" [class.inativo]="!u.ativo">
+            <strong>{{ u.nome }}</strong>
+            @if (u.id === eu()?.id) {
+              <span class="voce">você</span>
+            }
+            <span class="meta">{{ u.email }}</span>
+          </div>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="perfil">
+        <th mat-header-cell *matHeaderCellDef>Perfil</th>
+        <td mat-cell *matCellDef="let u">
+          <span class="chip {{ corPerfil(u.role) }}">{{ rotulosRole[u.role] }}</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="empresa">
+        <th mat-header-cell *matHeaderCellDef>Empresa</th>
+        <td mat-cell *matCellDef="let u">
+          @if (u.empresa; as e) {
+            <a class="link" [routerLink]="['/admin/empresas', e.id]">{{ e.nome }}</a>
+            @if (e.responsavel) {
+              <span class="meta"> · principal</span>
+            }
+          } @else if (u.empresaPendente) {
+            <span class="meta">Cadastro pendente</span>
+          } @else {
+            <span class="meta">—</span>
+          }
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="situacao">
+        <th mat-header-cell *matHeaderCellDef>Situação</th>
+        <td mat-cell *matCellDef="let u">
+          <span class="chip" [class.green]="u.ativo" [class.red]="!u.ativo">{{ u.ativo ? 'Ativo' : 'Inativo' }}</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="cadastro">
+        <th mat-header-cell *matHeaderCellDef>Cadastro</th>
+        <td mat-cell *matCellDef="let u" class="meta">{{ u.dataCadastro | date: 'dd/MM/yyyy' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="acoes">
+        <th mat-header-cell *matHeaderCellDef class="col-acoes"></th>
+        <td mat-cell *matCellDef="let u" class="col-acoes">
+          <a mat-icon-button [routerLink]="['/admin/usuarios', u.id]" matTooltip="Editar">
+            <mat-icon>edit</mat-icon>
+          </a>
+          @if (u.id !== eu()?.id) {
+            <button mat-icon-button (click)="alterarAtivo(u)" [matTooltip]="u.ativo ? 'Desativar' : 'Reativar'">
+              <mat-icon>{{ u.ativo ? 'person_off' : 'person_check' }}</mat-icon>
+            </button>
+            <button mat-icon-button (click)="excluir(u)" matTooltip="Excluir">
+              <mat-icon>delete_outline</mat-icon>
+            </button>
+          }
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="colunas"></tr>
+      <tr mat-row *matRowDef="let row; columns: colunas"></tr>
+    </table>
+  </div>
+
+  @if (!carregando() && total() === 0) {
+    <div class="estado-vazio">
+      <mat-icon>person_search</mat-icon>
+      <p>Nenhum usuário encontrado.</p>
+    </div>
+  }
+
+  <mat-paginator
+    [length]="total()"
+    [pageIndex]="pagina()"
+    [pageSize]="tamanho()"
+    [pageSizeOptions]="[10, 20, 50]"
+    (page)="mudarPagina($event)"
+  />
+</section>

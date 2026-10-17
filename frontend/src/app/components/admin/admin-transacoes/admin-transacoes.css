@@ -1,0 +1,35 @@
+.grade-filtros {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0 14px;
+  align-items: end;
+}
+
+.grade-filtros .campo input,
+.grade-filtros .campo select {
+  height: 38px;
+}
+
+.acoes-filtro {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.resumo {
+  font-size: 14px;
+  color: var(--fc-muted);
+  margin-bottom: 6px;
+}
+
+.resumo strong {
+  color: var(--fc-azul);
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.descricao {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}

@@ -1,10 +1,10 @@
 <div class="saudacao">
   <span class="avatar"><mat-icon>admin_panel_settings</mat-icon></span>
   <div>
-    <h1>Painel administrativo</h1>
+    <h1>Gestão do FinControl</h1>
     <p>
       <mat-icon>verified_user</mat-icon>
-      Visão consolidada do sistema — somente dados agregados
+      Indicadores de uso do sistema
       @if (atualizadoEm(); as data) {
         · atualizado às {{ data | date: 'HH:mm' }}
       }
@@ -14,9 +14,6 @@
     <button mat-stroked-button (click)="carregar()" [disabled]="carregando()">
       <mat-icon>refresh</mat-icon> Atualizar
     </button>
-    <a mat-flat-button class="btn-primario" routerLink="/admin/parametros/novo">
-      <mat-icon>add</mat-icon> Novo parâmetro
-    </a>
   </div>
 </div>
 
@@ -33,140 +30,143 @@
 }
 
 @if (estatisticas(); as e) {
-  <div class="kpi-grid">
-    <div class="kpi blue">
-      <mat-icon>group</mat-icon>
-      <div class="kpi-label">Usuários cadastrados</div>
-      <div class="kpi-value">{{ e.totalUsuarios }}</div>
-    </div>
-    <div class="kpi purple">
-      <mat-icon>admin_panel_settings</mat-icon>
-      <div class="kpi-label">Administradores</div>
-      <div class="kpi-value">{{ e.totalAdmins }}</div>
-    </div>
-    <div class="kpi green">
-      <mat-icon>receipt_long</mat-icon>
-      <div class="kpi-label">Transações registradas</div>
-      <div class="kpi-value">{{ e.totalTransacoes }}</div>
-    </div>
-    <div class="kpi orange">
-      <mat-icon>sell</mat-icon>
-      <div class="kpi-label">Categorias criadas</div>
-      <div class="kpi-value">{{ e.totalCategorias }}</div>
+  <!-- Cards principais -->
+  <div class="cards-cor">
+    <a class="card-cor azul" routerLink="/admin/usuarios">
+      <span class="icone"><mat-icon>group</mat-icon></span>
+      <span class="numero">{{ e.totalUsuarios | number }}</span>
+      <span class="rotulo">Usuários</span>
+      <span class="detalhe">{{ e.usuariosAtivos }} ativos · {{ e.usuariosInativos }} inativos</span>
+    </a>
+    <a class="card-cor verde" routerLink="/admin/empresas">
+      <span class="icone"><mat-icon>storefront</mat-icon></span>
+      <span class="numero">{{ e.totalEmpresas | number }}</span>
+      <span class="rotulo">Empresas / MEIs</span>
+      <span class="detalhe">{{ e.empresasAtivas }} ativas</span>
+    </a>
+    <a class="card-cor amarelo" routerLink="/admin/transacoes">
+      <span class="icone"><mat-icon>receipt_long</mat-icon></span>
+      <span class="numero">{{ e.totalTransacoes | number }}</span>
+      <span class="rotulo">Transações</span>
+      <span class="detalhe">{{ e.transacoes30Dias }} nos últimos 30 dias</span>
+    </a>
+    <div class="card-cor roxo">
+      <span class="icone"><mat-icon>storage</mat-icon></span>
+      <span class="numero">{{ volume() }}</span>
+      <span class="rotulo">Volume de dados</span>
+      <span class="detalhe">{{ e.totalRegistros | number }} registros</span>
     </div>
   </div>
 
-  <div class="grid-2">
+  <div class="grid-2 linha">
+    <!-- Categorias mais utilizadas -->
     <section class="fc-card">
-      <h2 class="fc-card-title">Volume de dados do sistema</h2>
+      <div class="titulo-com-acao">
+        <h2 class="fc-card-title">Categorias mais utilizadas</h2>
+        <a class="ver" routerLink="/admin/categorias">Ranking completo <mat-icon>chevron_right</mat-icon></a>
+      </div>
+      @if (ranking().length) {
+        <ol class="top-categorias">
+          @for (c of ranking(); track c.nome + c.tipo; let i = $index) {
+            <li>
+              <span class="posicao">{{ i + 1 }}.</span>
+              <div class="cat-info">
+                <div class="cat-linha">
+                  <span>{{ c.nome }}</span>
+                  <strong>{{ c.totalTransacoes | number }}</strong>
+                </div>
+                <div class="barra-trilho">
+                  <div class="barra" [class.receita]="c.tipo === 'RECEITA'" [style.width.%]="c.largura"></div>
+                </div>
+              </div>
+            </li>
+          }
+        </ol>
+      } @else {
+        <div class="estado-vazio">
+          <mat-icon>sell</mat-icon>
+          <p>Nenhuma transação registrada ainda.</p>
+        </div>
+      }
+    </section>
 
-      <div class="barras">
-        @for (v of volumes(); track v.rotulo) {
-          <div class="barra-linha">
-            <span class="barra-rotulo">{{ v.rotulo }}</span>
-            <div class="barra-trilho">
-              <div class="barra" [style.width.%]="v.largura" [style.background]="v.cor"></div>
-            </div>
-            <span class="barra-valor">{{ v.valor }}</span>
+    <!-- Contas por tipo -->
+    <section class="fc-card">
+      <h2 class="fc-card-title">Contas por tipo</h2>
+      <div class="rosca-area">
+        <div class="rosca" [style.background]="rosca()" role="img" aria-label="Distribuição das contas por tipo">
+          <div class="rosca-centro">
+            <strong>{{ e.totalUsuarios }}</strong>
+            <span>contas</span>
+          </div>
+        </div>
+        <ul class="ranking">
+          @for (p of perfis(); track p.rotulo) {
+            <li [style.border-color]="p.cor">
+              <span>{{ p.rotulo }}</span><strong>{{ p.valor }}</strong>
+            </li>
+          }
+        </ul>
+      </div>
+    </section>
+  </div>
+
+  <div class="grid-2 linha">
+    <!-- Uso nos últimos 6 meses -->
+    <section class="fc-card">
+      <h2 class="fc-card-title">Transações por mês</h2>
+      <div class="colunas" role="img" aria-label="Quantidade de transações nos últimos 6 meses">
+        @for (m of meses(); track m.rotulo) {
+          <div class="coluna-mes">
+            <span class="qtd">{{ m.quantidade }}</span>
+            <div class="col" [style.height.%]="m.altura"></div>
+            <span class="mes-rotulo">{{ m.rotulo }}</span>
           </div>
         }
       </div>
-
       <div class="medias">
         <div>
           <span class="media-rotulo">Transações por usuário</span>
           <span class="media-valor">{{ e.mediaTransacoesPorUsuario | number: '1.1-1' }}</span>
         </div>
         <div>
-          <span class="media-rotulo">Categorias por usuário</span>
-          <span class="media-valor">{{ categoriasPorUsuario() | number: '1.1-1' }}</span>
+          <span class="media-rotulo">Novos usuários (30 dias)</span>
+          <span class="media-valor">{{ e.novosUsuarios30Dias }}</span>
+        </div>
+        <div>
+          <span class="media-rotulo">Categorias criadas</span>
+          <span class="media-valor">{{ e.totalCategorias | number }}</span>
         </div>
       </div>
     </section>
 
+    <!-- Parâmetros fiscais -->
     <section class="fc-card">
-      <h2 class="fc-card-title">Usuários por perfil de acesso</h2>
-
-      <div class="rosca-area">
-        <div
-          class="rosca"
-          [style.background]="
-            'conic-gradient(var(--fc-amarelo) 0 ' +
-            percentualAdmin() +
-            '%, var(--fc-roxo-medio) ' +
-            percentualAdmin() +
-            '% 100%)'
-          "
-          role="img"
-          [attr.aria-label]="e.totalAdmins + ' administradores e ' + e.totalUsers + ' usuários'"
-        >
-          <div class="rosca-centro">
-            <strong>{{ e.totalUsuarios }}</strong>
-            <span>contas</span>
-          </div>
-        </div>
-
-        <ul class="ranking">
-          <li style="border-color: var(--fc-roxo-medio)">
-            <span>Usuários</span><strong>{{ e.totalUsers }}</strong>
-          </li>
-          <li style="border-color: var(--fc-amarelo)">
-            <span>Administradores</span><strong>{{ e.totalAdmins }}</strong>
-          </li>
-        </ul>
+      <div class="titulo-com-acao">
+        <h2 class="fc-card-title">Parâmetros fiscais vigentes</h2>
+        <a class="ver" routerLink="/admin/parametros">Gerenciar <mat-icon>chevron_right</mat-icon></a>
       </div>
+
+      @if (parametrosVigentes().length) {
+        <ul class="lista">
+          @for (p of parametrosVigentes(); track p.id) {
+            <li>
+              <span class="icone-param"><mat-icon>tune</mat-icon></span>
+              <div class="info">
+                <span class="chave">{{ p.chave }}</span>
+                <span class="meta">{{ p.descricao || 'Vigente' }} · até {{ p.vigenciaFim | date: 'dd/MM/yyyy' }}</span>
+              </div>
+              <app-valor [valor]="p.valor" />
+            </li>
+          }
+        </ul>
+      } @else {
+        <div class="estado-vazio">
+          <mat-icon>event_busy</mat-icon>
+          <p>Nenhum parâmetro vigente hoje.</p>
+          <a mat-stroked-button routerLink="/admin/parametros/novo">Cadastrar parâmetro</a>
+        </div>
+      }
     </section>
   </div>
 }
-
-<div class="grid-2 linha">
-  <section class="fc-card">
-    <div class="titulo-com-acao">
-      <h2 class="fc-card-title">Parâmetros fiscais vigentes</h2>
-      <a class="ver" routerLink="/admin/parametros">Gerenciar <mat-icon>chevron_right</mat-icon></a>
-    </div>
-
-    @if (parametrosVigentes().length) {
-      <ul class="lista">
-        @for (p of parametrosVigentes(); track p.id) {
-          <li>
-            <span class="icone-param"><mat-icon>tune</mat-icon></span>
-            <div class="info">
-              <span class="chave">{{ p.chave }}</span>
-              <span class="meta">Vigente até {{ p.vigenciaFim | date: 'dd/MM/yyyy' }}</span>
-            </div>
-            <app-valor [valor]="p.valor" />
-          </li>
-        }
-      </ul>
-    } @else {
-      <div class="estado-vazio">
-        <mat-icon>event_busy</mat-icon>
-        <p>Nenhum parâmetro vigente hoje.</p>
-        <a mat-stroked-button routerLink="/admin/parametros/novo">Cadastrar parâmetro</a>
-      </div>
-    }
-
-    <div class="resumo-vigencia">
-      <span class="chip green">{{ contagemVigencia().VIGENTE }} {{ contagemVigencia().VIGENTE === 1 ? 'vigente' : 'vigentes' }}</span>
-      <span class="chip blue">{{ contagemVigencia().FUTURO }} {{ contagemVigencia().FUTURO === 1 ? 'futuro' : 'futuros' }}</span>
-      <span class="chip">{{ contagemVigencia().ENCERRADO }} {{ contagemVigencia().ENCERRADO === 1 ? 'encerrado' : 'encerrados' }}</span>
-    </div>
-  </section>
-
-  <section class="fc-card">
-    <h2 class="fc-card-title">Privacidade (LGPD)</h2>
-    <div class="aviso verde">
-      <mat-icon>verified_user</mat-icon>
-      <span>
-        O administrador vê apenas <strong>dados agregados</strong> (totais e médias). Transações,
-        categorias e perfis de cada usuário ficam isolados e só o próprio dono tem acesso.
-      </span>
-    </div>
-    <ul class="lista-lgpd">
-      <li><mat-icon>lock_outline</mat-icon> Senhas armazenadas com BCrypt</li>
-      <li><mat-icon>key</mat-icon> Acesso por token JWT com expiração de 1 hora</li>
-      <li><mat-icon>person_off</mat-icon> Nenhum endpoint de listagem de usuários</li>
-    </ul>
-  </section>
-</div>

@@ -1,7 +1,7 @@
 <div class="page-header">
   <div>
     <h1>Parâmetros fiscais</h1>
-    <p>Valores de referência usados pelo sistema (limites, alíquotas, DAS), com período de vigência.</p>
+    <p>Valores fiscais de MEI e Microempresa (tetos, DAS, alíquotas) com vigência. Ficam no banco, nunca fixos no código.</p>
   </div>
   <a mat-flat-button class="btn-primario" routerLink="/admin/parametros/novo">
     <mat-icon>add</mat-icon> Novo parâmetro
@@ -43,7 +43,17 @@
       <table mat-table [dataSource]="filtrados()">
         <ng-container matColumnDef="chave">
           <th mat-header-cell *matHeaderCellDef>Chave</th>
-          <td mat-cell *matCellDef="let p"><span class="chave">{{ p.chave }}</span></td>
+          <td mat-cell *matCellDef="let p">
+            <span class="chave" [class.inativo]="p.ativo === false">{{ p.chave }}</span>
+            @if (p.descricao) {
+              <br /><span class="meta">{{ p.descricao }}</span>
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="aplica">
+          <th mat-header-cell *matHeaderCellDef>Vale para</th>
+          <td mat-cell *matCellDef="let p">{{ p.tipoEmpresa ? rotulosTipo[p.tipoEmpresa] : 'MEI e ME' }}</td>
         </ng-container>
 
         <ng-container matColumnDef="valor">
@@ -61,7 +71,21 @@
         <ng-container matColumnDef="situacao">
           <th mat-header-cell *matHeaderCellDef>Situação</th>
           <td mat-cell *matCellDef="let p">
-            <span class="chip {{ p.rotulo.cor }}">{{ p.rotulo.texto }}</span>
+            @if (p.ativo === false) {
+              <span class="chip red">Desativado</span>
+            } @else {
+              <span class="chip {{ p.rotulo.cor }}">{{ p.rotulo.texto }}</span>
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="alteracao">
+          <th mat-header-cell *matHeaderCellDef>Última alteração</th>
+          <td mat-cell *matCellDef="let p">
+            {{ p.ultimaAlteracao | date: 'dd/MM/yyyy HH:mm' }}
+            @if (p.alteradoPor) {
+              <br /><span class="meta">{{ p.alteradoPor }}</span>
+            }
           </td>
         </ng-container>
 
@@ -71,6 +95,9 @@
             <a mat-icon-button [routerLink]="['/admin/parametros', p.id]" matTooltip="Editar">
               <mat-icon>edit</mat-icon>
             </a>
+            <button mat-icon-button (click)="alterarAtivo(p)" [matTooltip]="p.ativo === false ? 'Ativar' : 'Desativar'">
+              <mat-icon>{{ p.ativo === false ? 'toggle_off' : 'toggle_on' }}</mat-icon>
+            </button>
             <button mat-icon-button (click)="excluir(p)" matTooltip="Excluir">
               <mat-icon>delete_outline</mat-icon>
             </button>

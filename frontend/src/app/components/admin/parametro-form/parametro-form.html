@@ -51,6 +51,20 @@
           }
         </div>
 
+        <div class="campo full">
+          <label for="descricao">Descrição <span class="opcional">opcional</span></label>
+          <input id="descricao" formControlName="descricao" placeholder="Ex.: Teto de faturamento anual do MEI" />
+        </div>
+
+        <div class="campo full">
+          <label for="tipoEmpresa">Vale para</label>
+          <select id="tipoEmpresa" formControlName="tipoEmpresa">
+            <option [ngValue]="null">MEI e Microempresa</option>
+            <option [ngValue]="'MEI'">Só MEI</option>
+            <option [ngValue]="'MICROEMPRESA'">Só Microempresa</option>
+          </select>
+        </div>
+
         <div class="campo" [class.invalido]="invalido('vigenciaInicio')">
           <label for="inicio">Início da vigência</label>
           <input id="inicio" type="date" formControlName="vigenciaInicio" />
@@ -69,6 +83,14 @@
           }
         </div>
       </div>
+
+      @if (ultimaAlteracao(); as u) {
+        <p class="historico">
+          <mat-icon>history</mat-icon>
+          Última alteração {{ u.quando ? 'em ' + (u.quando | date: 'dd/MM/yyyy HH:mm') : '' }}
+          {{ u.quem ? 'por ' + u.quem : '' }}
+        </p>
+      }
 
       <div class="form-actions">
         <button mat-flat-button class="btn-primario" type="submit" [disabled]="salvando() || carregando()">
