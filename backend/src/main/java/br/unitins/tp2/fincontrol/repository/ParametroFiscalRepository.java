@@ -16,7 +16,7 @@ public class ParametroFiscalRepository implements PanacheRepository<ParametroFis
 
     public ParametroFiscal findVigente(String chave, LocalDate data) {
         return find(
-                "chave = ?1 and vigenciaInicio <= ?2 and vigenciaFim >= ?2",
+                "ativo = true and chave = ?1 and vigenciaInicio <= ?2 and vigenciaFim >= ?2",
                 chave,
                 data
         ).firstResult();

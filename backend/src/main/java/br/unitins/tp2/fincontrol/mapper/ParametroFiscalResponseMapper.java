@@ -14,7 +14,12 @@ public final class ParametroFiscalResponseMapper {
                 parametro.getChave(),
                 parametro.getValor(),
                 parametro.getVigenciaInicio(),
-                parametro.getVigenciaFim()
+                parametro.getVigenciaFim(),
+                parametro.getDescricao(),
+                parametro.getTipoEmpresa(),
+                parametro.isAtivo(),
+                parametro.getDataAlteracao() != null ? parametro.getDataAlteracao() : parametro.getDataCadastro(),
+                parametro.getAlteradoPor() != null ? parametro.getAlteradoPor().getEmail() : null
         );
     }
 }

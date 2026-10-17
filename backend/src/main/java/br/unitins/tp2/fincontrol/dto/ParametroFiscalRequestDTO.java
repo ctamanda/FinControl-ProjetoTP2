@@ -5,6 +5,8 @@ import java.time.LocalDate;
 
 import org.hibernate.validator.constraints.Length;
 
+import br.unitins.tp2.fincontrol.model.TipoEmpresa;
+
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
@@ -30,7 +32,13 @@ public record ParametroFiscalRequestDTO(
         LocalDate vigenciaInicio,
 
         @NotNull(message = "A data final da vigência deve ser informada.")
-        LocalDate vigenciaFim
+        LocalDate vigenciaFim,
+
+        @Length(max = 150, message = "A descrição deve conter no máximo 150 caracteres.")
+        String descricao,
+
+        // Nulo = vale para MEI e Microempresa.
+        TipoEmpresa tipoEmpresa
 
 ) {
 
