@@ -31,16 +31,12 @@ public class AuthResource {
     UsuarioService usuarioService;
 
     // 201 com os dados públicos do usuário criado (sem senha).
+    // Conta EMPRESA volta com empresaPendente = true: o próximo passo é POST /empresa.
     @POST
     @Path("register")
     public Response register(
             @Valid @NotNull(message = "O corpo da requisição deve ser informado.") RegisterRequestDTO dto) {
-        Usuario usuario = usuarioService.criar(
-                dto.email(),
-                dto.nome(),
-                dto.password(),
-                dto.perfilFiscal(),
-                dto.atividadeMei());
+        Usuario usuario = usuarioService.criar(dto);
 
         return Response.status(Response.Status.CREATED)
                 .entity(UsuarioResponseMapper.toResponse(usuario))

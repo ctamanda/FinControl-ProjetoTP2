@@ -1,15 +1,24 @@
 package br.unitins.tp2.fincontrol.dto;
 
-import br.unitins.tp2.fincontrol.model.AtividadeMei;
-import br.unitins.tp2.fincontrol.model.PerfilFiscal;
-import br.unitins.tp2.fincontrol.model.Role;
+import java.time.LocalDateTime;
+import java.util.Set;
 
+import br.unitins.tp2.fincontrol.model.Role;
+import br.unitins.tp2.fincontrol.model.Modulo;
+
+// "modulos" são os módulos que o usuário pode usar de fato (já considerando o perfil).
+// "empresaPendente" = ADMIN_EMPRESA que ainda não cadastrou a empresa.
 public record UsuarioResponseDTO(
         Long id,
         String email,
         String nome,
-        PerfilFiscal perfilFiscal,
-        AtividadeMei atividadeMei,
-        Role role
+        String telefone,
+        String profissao,
+        Role role,
+        boolean ativo,
+        Set<Modulo> modulos,
+        EmpresaResumoDTO empresa,
+        boolean empresaPendente,
+        LocalDateTime dataCadastro
 ) {
 }

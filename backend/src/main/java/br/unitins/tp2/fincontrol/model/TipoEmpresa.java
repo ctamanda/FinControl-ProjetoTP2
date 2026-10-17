@@ -1,7 +1,6 @@
 package br.unitins.tp2.fincontrol.model;
 
-public enum PerfilFiscal {
-    PF,
+public enum TipoEmpresa {
     MEI,
-    ME
+    MICROEMPRESA
 }

@@ -8,7 +8,9 @@ import br.unitins.tp2.fincontrol.dto.CategoriaRequestDTO;
 import br.unitins.tp2.fincontrol.dto.CategoriaResponseDTO;
 import br.unitins.tp2.fincontrol.mapper.CategoriaResponseMapper;
 import br.unitins.tp2.fincontrol.model.Categoria;
+import br.unitins.tp2.fincontrol.model.Modulo;
 import br.unitins.tp2.fincontrol.model.Usuario;
+import br.unitins.tp2.fincontrol.security.RequerModulo;
 import br.unitins.tp2.fincontrol.service.CategoriaService;
 import br.unitins.tp2.fincontrol.service.UsuarioService;
 import jakarta.annotation.security.RolesAllowed;
@@ -27,7 +29,10 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 @Path("categorias")
-@RolesAllowed({"ADMIN", "USER"})
+@RolesAllowed({"SUPER_ADMIN", "PESSOAL", "ADMIN_EMPRESA", "USUARIO_EMPRESA"})
+// Ver a lista serve também a quem lança transações (para escolher a categoria);
+// criar, alterar e excluir exige o módulo Categorias.
+@RequerModulo(Modulo.CATEGORIAS)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class CategoriaResource {
@@ -42,6 +47,7 @@ public class CategoriaResource {
     JsonWebToken jwt;
 
     @GET
+    @RequerModulo({Modulo.CATEGORIAS, Modulo.LANCAMENTOS, Modulo.RECEITAS, Modulo.DESPESAS, Modulo.DASHBOARD})
     public List<CategoriaResponseDTO> listar() {
         return service.findAll(getUsuarioLogado()).stream()
                 .map(CategoriaResponseMapper::toResponse)
@@ -49,6 +55,7 @@ public class CategoriaResource {
     }
 
     @GET
+    @RequerModulo({Modulo.CATEGORIAS, Modulo.LANCAMENTOS, Modulo.RECEITAS, Modulo.DESPESAS, Modulo.DASHBOARD})
     @Path("/{id}")
     public CategoriaResponseDTO buscarPorId(@PathParam("id") Long id) {
         return CategoriaResponseMapper.toResponse(service.findById(id, getUsuarioLogado()));

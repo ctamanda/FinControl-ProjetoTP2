@@ -1,22 +1,30 @@
 package br.unitins.tp2.fincontrol.dto;
 
+import java.util.Set;
+
 import org.hibernate.validator.constraints.Length;
 
-import br.unitins.tp2.fincontrol.model.AtividadeMei;
-import br.unitins.tp2.fincontrol.model.PerfilFiscal;
+import br.unitins.tp2.fincontrol.model.Modulo;
+import br.unitins.tp2.fincontrol.validation.Telefone;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
+// Edição do próprio perfil (PUT /usuarios/me).
+// "profissao" e "modulos" só valem para conta pessoal; nas demais são ignorados.
+// "modulos" nulo mantém a escolha atual.
 public record UsuarioUpdateDTO(
 
         @NotBlank(message = "O nome deve ser informado.")
         @Length(max = 100, message = "O nome deve conter no máximo 100 caracteres.")
         String nome,
 
-        @NotNull(message = "O perfil fiscal deve ser informado.")
-        PerfilFiscal perfilFiscal,
+        @NotBlank(message = "O telefone deve ser informado.")
+        @Telefone
+        String telefone,
 
-        AtividadeMei atividadeMei
+        @Length(max = 100, message = "A profissão deve conter no máximo 100 caracteres.")
+        String profissao,
+
+        Set<Modulo> modulos
 
 ) {
 }

@@ -9,7 +9,9 @@ import br.unitins.tp2.fincontrol.dto.TransacaoRequestDTO;
 import br.unitins.tp2.fincontrol.dto.TransacaoResponseDTO;
 import br.unitins.tp2.fincontrol.mapper.TransacaoResponseMapper;
 import br.unitins.tp2.fincontrol.model.Transacao;
+import br.unitins.tp2.fincontrol.model.Modulo;
 import br.unitins.tp2.fincontrol.model.Usuario;
+import br.unitins.tp2.fincontrol.security.RequerModulo;
 import br.unitins.tp2.fincontrol.service.TransacaoService;
 import br.unitins.tp2.fincontrol.service.UsuarioService;
 import jakarta.annotation.security.RolesAllowed;
@@ -30,7 +32,9 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 @Path("transacoes")
-@RolesAllowed({"ADMIN", "USER"})
+@RolesAllowed({"SUPER_ADMIN", "PESSOAL", "ADMIN_EMPRESA", "USUARIO_EMPRESA"})
+// Receitas/Despesas limitam ao seu tipo (regra no TransacaoServiceImpl); o Dashboard só lê.
+@RequerModulo({Modulo.LANCAMENTOS, Modulo.RECEITAS, Modulo.DESPESAS})
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class TransacaoResource {
@@ -45,6 +49,7 @@ public class TransacaoResource {
     JsonWebToken jwt;
 
     @GET
+    @RequerModulo({Modulo.LANCAMENTOS, Modulo.RECEITAS, Modulo.DESPESAS, Modulo.DASHBOARD})
     public PageResponse<TransacaoResponseDTO> buscarTodos(@QueryParam("descricao") String descricao,
             @QueryParam("page") @DefaultValue("0") int page,
             @QueryParam("pageSize") @DefaultValue("10") int pageSize) {
@@ -64,6 +69,7 @@ public class TransacaoResource {
     }
 
     @GET
+    @RequerModulo({Modulo.LANCAMENTOS, Modulo.RECEITAS, Modulo.DESPESAS, Modulo.DASHBOARD})
     @Path("/{id}")
     public TransacaoResponseDTO buscarPorId(@PathParam("id") Long id) {
         return TransacaoResponseMapper.toResponse(service.findById(id, getUsuarioLogado()));

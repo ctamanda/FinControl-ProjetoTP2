@@ -1,6 +1,10 @@
 package br.unitins.tp2.fincontrol.repository;
 
+import java.util.Set;
+
+import br.unitins.tp2.fincontrol.model.TipoTransacao;
 import br.unitins.tp2.fincontrol.model.Transacao;
+import br.unitins.tp2.fincontrol.model.Usuario;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -8,22 +12,21 @@ import jakarta.enterprise.context.ApplicationScoped;
 @ApplicationScoped
 public class TransacaoRepository implements PanacheRepository<Transacao> {
 
-    public PanacheQuery<Transacao> findByDescricao(String descricao) {
-        return find("lower(descricao) like lower(?1) order by data desc, id desc",
-                "%" + descricao + "%");
+    // "tipos": só os tipos que o usuário pode ver (ver Permissoes.tiposVisiveis).
+    public PanacheQuery<Transacao> findByDono(Usuario usuario, Set<TipoTransacao> tipos) {
+        return find(Dono.filtro(usuario) + " and tipo in :tipos order by data desc, id desc",
+                Dono.parametros(usuario).and("tipos", tipos));
     }
 
-    @Override
-    public PanacheQuery<Transacao> findAll() {
-        return find("order by data desc, id desc");
+    public PanacheQuery<Transacao> findByDonoAndDescricao(Usuario usuario, Set<TipoTransacao> tipos,
+            String descricao) {
+        return find(Dono.filtro(usuario)
+                + " and tipo in :tipos and lower(descricao) like lower(:descricao) order by data desc, id desc",
+                Dono.parametros(usuario).and("tipos", tipos).and("descricao", "%" + descricao + "%"));
     }
 
-    public PanacheQuery<Transacao> findByUsuario(Long usuarioId) {
-        return find("usuario.id = ?1 order by data desc, id desc", usuarioId);
-    }
-
-    public PanacheQuery<Transacao> findByUsuarioAndDescricao(Long usuarioId, String descricao) {
-        return find("usuario.id = ?1 and lower(descricao) like lower(?2) order by data desc, id desc",
-                usuarioId, "%" + descricao + "%");
+    public Transacao findByDonoAndId(Usuario usuario, Set<TipoTransacao> tipos, Long id) {
+        return find(Dono.filtro(usuario) + " and tipo in :tipos and id = :id",
+                Dono.parametros(usuario).and("tipos", tipos).and("id", id)).firstResult();
     }
 }

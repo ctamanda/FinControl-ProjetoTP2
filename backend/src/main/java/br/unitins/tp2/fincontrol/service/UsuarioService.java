@@ -1,19 +1,18 @@
 package br.unitins.tp2.fincontrol.service;
 
-import java.util.List;
-
+import br.unitins.tp2.fincontrol.dto.RegisterRequestDTO;
 import br.unitins.tp2.fincontrol.dto.UsuarioUpdateDTO;
-import br.unitins.tp2.fincontrol.model.AtividadeMei;
-import br.unitins.tp2.fincontrol.model.Categoria;
-import br.unitins.tp2.fincontrol.model.PerfilFiscal;
+import br.unitins.tp2.fincontrol.exception.ValidationException;
+import br.unitins.tp2.fincontrol.model.Modulo;
 import br.unitins.tp2.fincontrol.model.Role;
-import br.unitins.tp2.fincontrol.model.TipoCategoria;
+import br.unitins.tp2.fincontrol.model.TipoConta;
 import br.unitins.tp2.fincontrol.model.Usuario;
 import br.unitins.tp2.fincontrol.repository.UsuarioRepository;
+import br.unitins.tp2.fincontrol.security.Permissoes;
+import br.unitins.tp2.fincontrol.validation.Documentos;
 import io.quarkus.elytron.security.common.BcryptUtil;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAuthorizedException;
@@ -25,83 +24,42 @@ public class UsuarioService {
     UsuarioRepository repository;
 
     @Inject
-    EntityManager entityManager;
+    CategoriasIniciais categoriasIniciais;
 
+    // PESSOAL já sai pronto para usar (todos os módulos pessoais e 6 categorias).
+    // EMPRESA vira ADMIN_EMPRESA com a empresa pendente: só entra no sistema depois de POST /empresa.
     @Transactional
-    public Usuario criar(
-            String email,
-            String nome,
-            String password,
-            PerfilFiscal perfilFiscal,
-            AtividadeMei atividadeMei) {
+    public Usuario criar(RegisterRequestDTO dto) {
+        String email = normalizarEmail(dto.email());
 
-        String emailNormalizado = normalizarEmail(email);
-
-        if (repository.findByEmail(emailNormalizado) != null) {
+        if (repository.findByEmail(email) != null) {
             throw new BadRequestException("E-mail já cadastrado.");
         }
 
-        if (perfilFiscal == null) {
-            throw new BadRequestException(
-                    "O perfil fiscal deve ser informado."
-            );
-        }
-
-        if (perfilFiscal == PerfilFiscal.MEI && atividadeMei == null) {
-            throw new BadRequestException(
-                    "A atividade MEI deve ser informada para o perfil fiscal MEI."
-            );
-        }
-
-        if (perfilFiscal != PerfilFiscal.MEI) {
-            atividadeMei = null;
-        }
-
         Usuario usuario = new Usuario();
-        usuario.setEmail(emailNormalizado);
-        usuario.setNome(nome.trim());
-        usuario.setPassword(BcryptUtil.bcryptHash(password));
-        usuario.setPerfilFiscal(perfilFiscal);
-        usuario.setAtividadeMei(atividadeMei);
-        usuario.setRole(Role.USER);
+        usuario.setEmail(email);
+        usuario.setNome(dto.nome().trim());
+        usuario.setTelefone(Documentos.soDigitos(dto.telefone()));
+        usuario.setPassword(BcryptUtil.bcryptHash(dto.password()));
+
+        if (dto.tipoConta() == TipoConta.PESSOAL) {
+            usuario.setRole(Role.PESSOAL);
+            usuario.setProfissao(dto.profissao().trim());
+            usuario.setModulos(Permissoes.pessoais());
+        } else {
+            usuario.setRole(Role.ADMIN_EMPRESA);
+        }
 
         repository.persist(usuario);
 
-        criarCategoriasIniciais(usuario);
+        if (usuario.getRole() == Role.PESSOAL) {
+            categoriasIniciais.criar(usuario, null);
+        }
 
         return usuario;
     }
 
-    private void criarCategoriasIniciais(Usuario usuario) {
-        List<Categoria> categorias = List.of(
-                novaCategoria("Alimentação", TipoCategoria.DESPESA, "#FF5733", usuario),
-                novaCategoria("Moradia", TipoCategoria.DESPESA, "#33FF57", usuario),
-                novaCategoria("Transporte", TipoCategoria.DESPESA, "#3357FF", usuario),
-                novaCategoria("Lazer", TipoCategoria.DESPESA, "#FF33A1", usuario),
-                novaCategoria("Salário", TipoCategoria.RECEITA, "#28A745", usuario),
-                novaCategoria("Vendas", TipoCategoria.RECEITA, "#FFC107", usuario)
-        );
-
-        for (Categoria categoria : categorias) {
-            entityManager.persist(categoria);
-        }
-    }
-
-    private Categoria novaCategoria(
-            String nome,
-            TipoCategoria tipo,
-            String cor,
-            Usuario usuario) {
-
-        Categoria categoria = new Categoria();
-        categoria.setNome(nome);
-        categoria.setTipo(tipo);
-        categoria.setCor(cor);
-        categoria.setUsuario(usuario);
-
-        return categoria;
-    }
-
+    // Mesma mensagem para e-mail inexistente e senha errada: não revela quem tem conta.
     public Usuario autenticar(String email, String password) {
         Usuario usuario = repository.findByEmail(email);
 
@@ -111,6 +69,11 @@ public class UsuarioService {
             throw new NotAuthorizedException("Credenciais inválidas.", "Bearer");
         }
 
+        String bloqueio = Permissoes.motivoBloqueio(usuario);
+        if (bloqueio != null) {
+            throw new NotAuthorizedException(bloqueio, "Bearer");
+        }
+
         return usuario;
     }
 
@@ -118,12 +81,17 @@ public class UsuarioService {
         return repository.findByEmail(email);
     }
 
-    // Usuário dono do token (upn). Se a conta não existe mais, o token deixa de valer: 401.
+    // Usuário dono do token (upn). Se a conta (ou a empresa dela) não existe mais ou foi
+    // desativada, o token deixa de valer: 401.
     public Usuario buscarLogado(String email) {
         Usuario usuario = repository.findByEmail(email);
 
         if (usuario == null) {
             throw new NotAuthorizedException("Usuário do token não encontrado.", "Bearer");
+        }
+        String bloqueio = Permissoes.motivoBloqueio(usuario);
+        if (bloqueio != null) {
+            throw new NotAuthorizedException(bloqueio, "Bearer");
         }
 
         return usuario;
@@ -133,26 +101,19 @@ public class UsuarioService {
     public Usuario atualizarPerfil(String email, UsuarioUpdateDTO dto) {
         Usuario usuario = buscarLogado(email);
 
-        if (dto.perfilFiscal() == null) {
-            throw new BadRequestException(
-                    "O perfil fiscal deve ser informado."
-            );
-        }
-
-        if (dto.perfilFiscal() == PerfilFiscal.MEI
-                && dto.atividadeMei() == null) {
-            throw new BadRequestException(
-                    "A atividade MEI deve ser informada para o perfil fiscal MEI."
-            );
-        }
-
         usuario.setNome(dto.nome().trim());
-        usuario.setPerfilFiscal(dto.perfilFiscal());
+        usuario.setTelefone(Documentos.soDigitos(dto.telefone()));
 
-        if (dto.perfilFiscal() == PerfilFiscal.MEI) {
-            usuario.setAtividadeMei(dto.atividadeMei());
-        } else {
-            usuario.setAtividadeMei(null);
+        if (usuario.getRole() == Role.PESSOAL) {
+            if (dto.profissao() == null || dto.profissao().isBlank()) {
+                throw ValidationException.of("profissao", "A profissão deve ser informada na conta pessoal.");
+            }
+            usuario.setProfissao(dto.profissao().trim());
+
+            if (dto.modulos() != null) {
+                usuario.setModulos(Permissoes.exigirPermitidos(dto.modulos(), Modulo::isPessoal,
+                        "Estes módulos não existem na conta pessoal: "));
+            }
         }
 
         return usuario;

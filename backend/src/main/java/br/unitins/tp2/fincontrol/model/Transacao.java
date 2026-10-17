@@ -38,6 +38,12 @@ public class Transacao extends DefaultEntity {
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
 
+    // Preenchida quando a transação é da empresa; nula numa conta pessoal.
+    // Nesse caso "usuario" é quem lançou.
+    @ManyToOne
+    @JoinColumn(name = "empresa_id")
+    private Empresa empresa;
+
     public String getDescricao() {
         return descricao;
     }
@@ -92,5 +98,13 @@ public class Transacao extends DefaultEntity {
 
     public void setUsuario(Usuario usuario) {
         this.usuario = usuario;
+    }
+
+    public Empresa getEmpresa() {
+        return empresa;
+    }
+
+    public void setEmpresa(Empresa empresa) {
+        this.empresa = empresa;
     }
 }

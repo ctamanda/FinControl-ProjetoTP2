@@ -5,13 +5,13 @@ import java.time.LocalDate;
 
 import org.hibernate.validator.constraints.Length;
 
-import br.unitins.tp2.fincontrol.model.Escopo;
 import br.unitins.tp2.fincontrol.model.TipoTransacao;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
+// O escopo (PESSOAL ou EMPRESA) não vem do cliente: sai do tipo de conta de quem lança.
 public record TransacaoRequestDTO(
     @NotBlank(message = "O campo descricao deve ser informado.")
     @Length(min = 2, max = 150, message = "O campo deve conter entre 2 e 150 caracteres.")
@@ -27,9 +27,6 @@ public record TransacaoRequestDTO(
 
     @NotNull(message = "O campo tipo deve ser informado.")
     TipoTransacao tipo,
-
-    @NotNull(message = "O campo escopo deve ser informado.")
-    Escopo escopo,
 
     @NotNull(message = "A categoria deve ser informada.")
     Long idCategoria

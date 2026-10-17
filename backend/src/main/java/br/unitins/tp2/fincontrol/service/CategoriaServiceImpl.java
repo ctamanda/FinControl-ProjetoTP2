@@ -27,6 +27,7 @@ public class CategoriaServiceImpl implements CategoriaService {
     public Categoria create(CategoriaRequestDTO dto, Usuario usuario) {
         Categoria categoria = new Categoria();
         categoria.setUsuario(usuario);
+        categoria.setEmpresa(usuario.getEmpresa());
         aplicarDados(categoria, dto, usuario);
 
         repository.persist(categoria);
@@ -63,13 +64,13 @@ public class CategoriaServiceImpl implements CategoriaService {
 
     @Override
     public List<Categoria> findAll(Usuario usuario) {
-        return repository.findByUsuario(usuario.getId());
+        return repository.findByDono(usuario);
     }
 
     private void aplicarDados(Categoria categoria, CategoriaRequestDTO dto, Usuario usuario) {
         String nome = dto.nome().trim();
 
-        Categoria existente = repository.findByUsuarioAndNome(usuario.getId(), nome);
+        Categoria existente = repository.findByDonoAndNome(usuario, nome);
         if (existente != null && !existente.getId().equals(categoria.getId())) {
             throw ValidationException.of("nome",
                     "Já existe uma categoria com esse nome.");
@@ -92,7 +93,7 @@ public class CategoriaServiceImpl implements CategoriaService {
     }
 
     private Categoria buscarCategoriaOuFalhar(Long id, Usuario usuario) {
-        Categoria categoria = repository.findByUsuarioAndId(usuario.getId(), id);
+        Categoria categoria = repository.findByDonoAndId(usuario, id);
 
         if (categoria == null)
             throw new ResourceNotFoundException("Categoria não encontrada.");
