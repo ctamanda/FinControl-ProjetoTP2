@@ -31,3 +31,7 @@ Thumbs.db
 .idea/
 *.iml
 *.log
+
+# Logs de crash do Java
+hs_err_pid*.log
+replay_pid*.log
