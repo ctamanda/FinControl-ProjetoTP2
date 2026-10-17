@@ -1,0 +1,99 @@
+<div class="page-header">
+  <div>
+    <h1>Transações</h1>
+    <p>Suas receitas e despesas. Somente você tem acesso a estes lançamentos.</p>
+  </div>
+  <a mat-flat-button class="btn-primario" routerLink="/transacoes/nova">
+    <mat-icon>add</mat-icon> Nova transação
+  </a>
+</div>
+
+<section class="fc-card">
+  <div class="toolbar-filtros">
+    <label class="busca">
+      <mat-icon>search</mat-icon>
+      <input (input)="applyFilter($event)" placeholder="Filtrar por descrição (ex.: Mercado)" aria-label="Filtrar por descrição" />
+    </label>
+  </div>
+
+  <div class="barra-espaco">
+    @if (carregando()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+  </div>
+
+  <div class="table-wrap">
+    <table mat-table [dataSource]="transacoes()">
+      <ng-container matColumnDef="data">
+        <th mat-header-cell *matHeaderCellDef>Data</th>
+        <td mat-cell *matCellDef="let obj">{{ obj.data | date: 'dd/MM/yyyy' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="descricao">
+        <th mat-header-cell *matHeaderCellDef>Descrição</th>
+        <td mat-cell *matCellDef="let obj">
+          <div class="descricao">
+            <span class="icone-tipo" [class.receita]="obj.tipo === 'RECEITA'">
+              <mat-icon>{{ obj.tipo === 'RECEITA' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
+            </span>
+            {{ obj.descricao }}
+          </div>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="categoria">
+        <th mat-header-cell *matHeaderCellDef>Categoria</th>
+        <td mat-cell *matCellDef="let obj">
+          <span class="categoria">
+            <span class="color-dot" [style.background]="obj.categoria?.cor || '#9aa5b5'"></span>
+            {{ obj.categoria?.nome }}
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="escopo">
+        <th mat-header-cell *matHeaderCellDef>Escopo</th>
+        <td mat-cell *matCellDef="let obj">
+          <span class="chip" [class.orange]="obj.escopo === 'EMPRESA'" [class.blue]="obj.escopo === 'PESSOAL'">{{ rotulosEscopo[obj.escopo] }}</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="valor">
+        <th mat-header-cell *matHeaderCellDef class="col-num">Valor</th>
+        <td mat-cell *matCellDef="let obj" class="col-num">
+          <app-valor [valor]="obj.valor" [negativar]="obj.tipo === 'DESPESA'" />
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="acoes">
+        <th mat-header-cell *matHeaderCellDef class="col-acoes"></th>
+        <td mat-cell *matCellDef="let obj" class="col-acoes">
+          <a mat-icon-button [routerLink]="['/transacoes', obj.id]" matTooltip="Editar">
+            <mat-icon>edit</mat-icon>
+          </a>
+          <button mat-icon-button (click)="excluir(obj)" matTooltip="Excluir">
+            <mat-icon>delete_outline</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    </table>
+  </div>
+
+  @if (carregou() && totalItems() === 0) {
+    <div class="estado-vazio" role="status">
+      <mat-icon>receipt_long</mat-icon>
+      <p>Nenhuma transação encontrada.</p>
+    </div>
+  }
+
+  <mat-paginator
+    [length]="totalItems()"
+    [pageIndex]="pageIndex()"
+    [pageSize]="pageSize()"
+    [pageSizeOptions]="[5, 10, 20, 50]"
+    (page)="onPageChange($event)"
+  />
+</section>

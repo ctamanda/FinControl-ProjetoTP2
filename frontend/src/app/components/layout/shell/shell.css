@@ -1,0 +1,220 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: var(--fc-bg);
+}
+
+.interno {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+}
+
+/* ---------- Barra roxa superior ---------- */
+.barra {
+  background: var(--fc-roxo);
+  color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.barra .interno {
+  height: 60px;
+  gap: 8px;
+}
+
+.marca {
+  text-decoration: none;
+  margin-right: 28px;
+  display: inline-flex;
+}
+
+.menu {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+  flex: 1;
+  gap: 4px;
+}
+
+.item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 12px;
+  color: #d8ccf0;
+  text-decoration: none;
+  font: inherit;
+  font-size: 14px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  border-top: 3px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.item mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.item .seta {
+  margin-left: -4px;
+}
+
+.item:hover {
+  color: #fff;
+}
+
+.item.ativo {
+  color: #fff;
+  border-bottom-color: var(--fc-amarelo);
+}
+
+.so-celular {
+  display: none;
+}
+
+.usuario {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  font: inherit;
+  cursor: pointer;
+  color: #fff;
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+
+.usuario:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--fc-amarelo);
+  color: var(--fc-roxo-escuro);
+  display: grid;
+  place-items: center;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.usuario-nome {
+  font-size: 14px;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menu-cabecalho {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 16px 12px;
+  border-bottom: 1px solid var(--fc-border);
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+.menu-cabecalho span {
+  color: var(--fc-muted);
+  font-size: 12px;
+}
+
+.menu-cabecalho .chip {
+  align-self: flex-start;
+  margin-top: 6px;
+}
+
+.btn-menu {
+  display: none;
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  padding: 6px;
+}
+
+/* ---------- Faixa branca com o nome da tela ---------- */
+.subbarra {
+  background: #fff;
+  border-bottom: 1px solid var(--fc-border);
+}
+
+.subbarra .interno {
+  height: 40px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fc-text);
+}
+
+.pagina {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 26px 28px 48px;
+}
+
+/* ---------- Celular: menu vira painel suspenso ---------- */
+@media (max-width: 900px) {
+  .interno {
+    padding: 0 12px;
+  }
+
+  .btn-menu {
+    display: inline-flex;
+  }
+
+  .marca {
+    margin-right: auto;
+  }
+
+  .menu {
+    display: none;
+    position: absolute;
+    top: 60px;
+    left: 0;
+    right: 0;
+    height: auto;
+    flex-direction: column;
+    background: var(--fc-roxo-escuro);
+    padding: 8px 0 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  }
+
+  .menu.aberto {
+    display: flex;
+  }
+
+  .item {
+    padding: 12px 20px;
+    border: none;
+    border-left: 3px solid transparent;
+  }
+
+  .item.ativo {
+    border-left-color: var(--fc-amarelo);
+  }
+
+  .so-celular {
+    display: inline-flex;
+  }
+
+  .usuario-nome {
+    display: none;
+  }
+
+  .pagina {
+    padding: 20px 16px 32px;
+  }
+}

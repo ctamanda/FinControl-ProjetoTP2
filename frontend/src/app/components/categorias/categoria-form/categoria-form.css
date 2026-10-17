@@ -1,0 +1,86 @@
+.form-card {
+  max-width: 560px;
+}
+
+.previa {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1.5px dashed #cfd4d8;
+  border-radius: 4px;
+  margin-bottom: 22px;
+}
+
+.bolinha {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.rotulo {
+  display: block;
+  font-size: 13px;
+  color: #555c63;
+  margin-bottom: 8px;
+}
+
+.opcoes {
+  max-width: 320px;
+}
+
+.opcao mat-icon.despesa {
+  color: var(--fc-danger);
+}
+
+.opcao mat-icon.receita {
+  color: var(--fc-azul);
+}
+
+.paleta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.amostra,
+.personalizada {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  outline-offset: 2px;
+}
+
+.amostra.selecionada {
+  outline: 2px solid var(--fc-text);
+}
+
+.personalizada {
+  position: relative;
+  display: grid;
+  place-items: center;
+  border: 1.5px dashed var(--fc-muted);
+  color: var(--fc-muted);
+}
+
+.personalizada mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.personalizada input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}

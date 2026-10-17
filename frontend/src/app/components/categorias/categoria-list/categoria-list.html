@@ -1,0 +1,51 @@
+<div class="page-header">
+  <div>
+    <h1>Categorias</h1>
+    <p>Organize seus lançamentos. Cada usuário tem as próprias categorias.</p>
+  </div>
+  <a mat-flat-button class="btn-primario" routerLink="/categorias/nova">
+    <mat-icon>add</mat-icon> Nova categoria
+  </a>
+</div>
+
+@if (carregando()) {
+  <mat-progress-bar mode="indeterminate" class="barra-carregando" />
+}
+
+@if (erro()) {
+  <div class="fc-card estado-vazio">
+    <mat-icon>cloud_off</mat-icon>
+    <p>{{ erro() }}</p>
+    <button mat-stroked-button (click)="carregar()">Tentar novamente</button>
+  </div>
+} @else {
+  <div class="colunas">
+    @for (g of grupos(); track g.titulo) {
+      <section class="fc-card">
+        <h2 class="fc-card-title">
+          <span class="chip {{ g.cor }}"><mat-icon class="mini">{{ g.icone }}</mat-icon> {{ g.titulo }}</span>
+          <span class="contagem">{{ g.itens.length }}</span>
+        </h2>
+
+        <ul class="lista">
+          @for (c of g.itens; track c.id) {
+            <li>
+              <span class="bolinha" [style.background]="c.cor || '#9aa5b5'">
+                {{ c.nome.charAt(0) }}
+              </span>
+              <span class="nome">{{ c.nome }}</span>
+              <a mat-icon-button [routerLink]="['/categorias', c.id]" matTooltip="Editar">
+                <mat-icon>edit</mat-icon>
+              </a>
+              <button mat-icon-button (click)="excluir(c)" matTooltip="Excluir">
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </li>
+          } @empty {
+            <li class="vazio">Nenhuma categoria de {{ g.titulo.toLowerCase() }}.</li>
+          }
+        </ul>
+      </section>
+    }
+  </div>
+}

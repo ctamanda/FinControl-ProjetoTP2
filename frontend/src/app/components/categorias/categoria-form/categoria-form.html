@@ -1,0 +1,80 @@
+<div class="page-header">
+  <div>
+    <h1>{{ id() ? 'Editar categoria' : 'Nova categoria' }}</h1>
+    <p>Defina o nome, o tipo e uma cor para identificar a categoria nos gráficos.</p>
+  </div>
+</div>
+
+<section class="fc-card form-card">
+  @if (carregando()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  <form [formGroup]="form" (ngSubmit)="salvar()" novalidate>
+    <div class="previa">
+      <span class="bolinha" [style.background]="cor()">{{ (nome() || '?').charAt(0) }}</span>
+      <span>{{ nome() || 'Nome da categoria' }}</span>
+    </div>
+
+    <div class="campo" [class.invalido]="nomeInvalido()">
+      <label for="nome">Nome</label>
+      <input id="nome" formControlName="nome" placeholder="Ex.: Saúde" />
+      @if (nomeInvalido()) {
+        <span class="erro">Informe um nome entre 2 e 60 caracteres.</span>
+      }
+    </div>
+
+    <span class="rotulo">Tipo</span>
+    <div class="opcoes" role="radiogroup" aria-label="Tipo da categoria">
+      <button
+        type="button"
+        role="radio"
+        class="opcao"
+        [class.selecionada]="tipo() === 'DESPESA'"
+        [attr.aria-checked]="tipo() === 'DESPESA'"
+        (click)="form.controls.tipo.setValue('DESPESA')"
+      >
+        <mat-icon class="despesa">trending_down</mat-icon>
+        <span class="opcao-titulo">Despesa</span>
+      </button>
+      <button
+        type="button"
+        role="radio"
+        class="opcao"
+        [class.selecionada]="tipo() === 'RECEITA'"
+        [attr.aria-checked]="tipo() === 'RECEITA'"
+        (click)="form.controls.tipo.setValue('RECEITA')"
+      >
+        <mat-icon class="receita">trending_up</mat-icon>
+        <span class="opcao-titulo">Receita</span>
+      </button>
+    </div>
+
+    <span class="rotulo">Cor</span>
+    <div class="paleta" role="radiogroup" aria-label="Cor da categoria">
+      @for (c of paleta; track c) {
+        <button
+          type="button"
+          role="radio"
+          class="amostra"
+          [style.background]="c"
+          [class.selecionada]="cor()?.toUpperCase() === c"
+          [attr.aria-checked]="cor()?.toUpperCase() === c"
+          [attr.aria-label]="c"
+          (click)="escolherCor(c)"
+        ></button>
+      }
+      <label class="personalizada" title="Cor personalizada">
+        <input type="color" formControlName="cor" />
+        <mat-icon>colorize</mat-icon>
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <button mat-flat-button class="btn-primario" type="submit" [disabled]="salvando() || carregando()">
+        <mat-icon>check</mat-icon> Salvar
+      </button>
+      <a class="link-acao" routerLink="/categorias"><mat-icon>arrow_back</mat-icon> Voltar</a>
+    </div>
+  </form>
+</section>

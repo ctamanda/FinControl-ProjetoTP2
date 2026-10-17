@@ -1,0 +1,172 @@
+<div class="saudacao">
+  <span class="avatar"><mat-icon>admin_panel_settings</mat-icon></span>
+  <div>
+    <h1>Painel administrativo</h1>
+    <p>
+      <mat-icon>verified_user</mat-icon>
+      Visão consolidada do sistema — somente dados agregados
+      @if (atualizadoEm(); as data) {
+        · atualizado às {{ data | date: 'HH:mm' }}
+      }
+    </p>
+  </div>
+  <div class="acoes-topo">
+    <button mat-stroked-button (click)="carregar()" [disabled]="carregando()">
+      <mat-icon>refresh</mat-icon> Atualizar
+    </button>
+    <a mat-flat-button class="btn-primario" routerLink="/admin/parametros/novo">
+      <mat-icon>add</mat-icon> Novo parâmetro
+    </a>
+  </div>
+</div>
+
+@if (carregando()) {
+  <mat-progress-bar mode="indeterminate" class="barra-carregando" />
+}
+
+@if (erro()) {
+  <div class="fc-card estado-vazio">
+    <mat-icon>cloud_off</mat-icon>
+    <p>{{ erro() }}</p>
+    <button mat-stroked-button (click)="carregar()">Tentar novamente</button>
+  </div>
+}
+
+@if (estatisticas(); as e) {
+  <div class="kpi-grid">
+    <div class="kpi blue">
+      <mat-icon>group</mat-icon>
+      <div class="kpi-label">Usuários cadastrados</div>
+      <div class="kpi-value">{{ e.totalUsuarios }}</div>
+    </div>
+    <div class="kpi purple">
+      <mat-icon>admin_panel_settings</mat-icon>
+      <div class="kpi-label">Administradores</div>
+      <div class="kpi-value">{{ e.totalAdmins }}</div>
+    </div>
+    <div class="kpi green">
+      <mat-icon>receipt_long</mat-icon>
+      <div class="kpi-label">Transações registradas</div>
+      <div class="kpi-value">{{ e.totalTransacoes }}</div>
+    </div>
+    <div class="kpi orange">
+      <mat-icon>sell</mat-icon>
+      <div class="kpi-label">Categorias criadas</div>
+      <div class="kpi-value">{{ e.totalCategorias }}</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <section class="fc-card">
+      <h2 class="fc-card-title">Volume de dados do sistema</h2>
+
+      <div class="barras">
+        @for (v of volumes(); track v.rotulo) {
+          <div class="barra-linha">
+            <span class="barra-rotulo">{{ v.rotulo }}</span>
+            <div class="barra-trilho">
+              <div class="barra" [style.width.%]="v.largura" [style.background]="v.cor"></div>
+            </div>
+            <span class="barra-valor">{{ v.valor }}</span>
+          </div>
+        }
+      </div>
+
+      <div class="medias">
+        <div>
+          <span class="media-rotulo">Transações por usuário</span>
+          <span class="media-valor">{{ e.mediaTransacoesPorUsuario | number: '1.1-1' }}</span>
+        </div>
+        <div>
+          <span class="media-rotulo">Categorias por usuário</span>
+          <span class="media-valor">{{ categoriasPorUsuario() | number: '1.1-1' }}</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="fc-card">
+      <h2 class="fc-card-title">Usuários por perfil de acesso</h2>
+
+      <div class="rosca-area">
+        <div
+          class="rosca"
+          [style.background]="
+            'conic-gradient(var(--fc-amarelo) 0 ' +
+            percentualAdmin() +
+            '%, var(--fc-roxo-medio) ' +
+            percentualAdmin() +
+            '% 100%)'
+          "
+          role="img"
+          [attr.aria-label]="e.totalAdmins + ' administradores e ' + e.totalUsers + ' usuários'"
+        >
+          <div class="rosca-centro">
+            <strong>{{ e.totalUsuarios }}</strong>
+            <span>contas</span>
+          </div>
+        </div>
+
+        <ul class="ranking">
+          <li style="border-color: var(--fc-roxo-medio)">
+            <span>Usuários</span><strong>{{ e.totalUsers }}</strong>
+          </li>
+          <li style="border-color: var(--fc-amarelo)">
+            <span>Administradores</span><strong>{{ e.totalAdmins }}</strong>
+          </li>
+        </ul>
+      </div>
+    </section>
+  </div>
+}
+
+<div class="grid-2 linha">
+  <section class="fc-card">
+    <div class="titulo-com-acao">
+      <h2 class="fc-card-title">Parâmetros fiscais vigentes</h2>
+      <a class="ver" routerLink="/admin/parametros">Gerenciar <mat-icon>chevron_right</mat-icon></a>
+    </div>
+
+    @if (parametrosVigentes().length) {
+      <ul class="lista">
+        @for (p of parametrosVigentes(); track p.id) {
+          <li>
+            <span class="icone-param"><mat-icon>tune</mat-icon></span>
+            <div class="info">
+              <span class="chave">{{ p.chave }}</span>
+              <span class="meta">Vigente até {{ p.vigenciaFim | date: 'dd/MM/yyyy' }}</span>
+            </div>
+            <app-valor [valor]="p.valor" />
+          </li>
+        }
+      </ul>
+    } @else {
+      <div class="estado-vazio">
+        <mat-icon>event_busy</mat-icon>
+        <p>Nenhum parâmetro vigente hoje.</p>
+        <a mat-stroked-button routerLink="/admin/parametros/novo">Cadastrar parâmetro</a>
+      </div>
+    }
+
+    <div class="resumo-vigencia">
+      <span class="chip green">{{ contagemVigencia().VIGENTE }} {{ contagemVigencia().VIGENTE === 1 ? 'vigente' : 'vigentes' }}</span>
+      <span class="chip blue">{{ contagemVigencia().FUTURO }} {{ contagemVigencia().FUTURO === 1 ? 'futuro' : 'futuros' }}</span>
+      <span class="chip">{{ contagemVigencia().ENCERRADO }} {{ contagemVigencia().ENCERRADO === 1 ? 'encerrado' : 'encerrados' }}</span>
+    </div>
+  </section>
+
+  <section class="fc-card">
+    <h2 class="fc-card-title">Privacidade (LGPD)</h2>
+    <div class="aviso verde">
+      <mat-icon>verified_user</mat-icon>
+      <span>
+        O administrador vê apenas <strong>dados agregados</strong> (totais e médias). Transações,
+        categorias e perfis de cada usuário ficam isolados e só o próprio dono tem acesso.
+      </span>
+    </div>
+    <ul class="lista-lgpd">
+      <li><mat-icon>lock_outline</mat-icon> Senhas armazenadas com BCrypt</li>
+      <li><mat-icon>key</mat-icon> Acesso por token JWT com expiração de 1 hora</li>
+      <li><mat-icon>person_off</mat-icon> Nenhum endpoint de listagem de usuários</li>
+    </ul>
+  </section>
+</div>

@@ -1,0 +1,71 @@
+<header class="barra">
+  <div class="interno">
+    <button class="btn-menu" type="button" (click)="menuAberto.set(!menuAberto())" aria-label="Abrir menu">
+      <mat-icon>{{ menuAberto() ? 'close' : 'menu' }}</mat-icon>
+    </button>
+
+    <a class="marca" [routerLink]="auth.rotaInicial()"><app-logo [pequeno]="true" /></a>
+
+    <nav class="menu" [class.aberto]="menuAberto()">
+      @for (item of menuPrincipal; track item.rota) {
+        <a class="item" [routerLink]="item.rota" routerLinkActive="ativo">
+          <mat-icon>{{ item.icone }}</mat-icon>{{ item.rotulo }}
+        </a>
+      }
+
+      @if (auth.isAdmin()) {
+        <button type="button" class="item" [class.ativo]="naAreaAdmin()" [matMenuTriggerFor]="menuAdminRef">
+          <mat-icon>admin_panel_settings</mat-icon>Administração<mat-icon class="seta">expand_more</mat-icon>
+        </button>
+      }
+
+      <a class="item so-celular" routerLink="/perfil" routerLinkActive="ativo">
+        <mat-icon>person_outline</mat-icon>Meu perfil
+      </a>
+      <button type="button" class="item so-celular" (click)="sair()">
+        <mat-icon>logout</mat-icon>Sair
+      </button>
+    </nav>
+
+    <mat-menu #menuAdminRef="matMenu">
+      @for (item of menuAdmin; track item.rota) {
+        <a mat-menu-item [routerLink]="item.rota">
+          <mat-icon>{{ item.icone }}</mat-icon>
+          <span>{{ item.rotulo }}</span>
+        </a>
+      }
+    </mat-menu>
+
+    <button type="button" class="usuario" [matMenuTriggerFor]="menuUsuario" aria-label="Menu do usuário">
+      <span class="avatar">{{ iniciais() }}</span>
+      <span class="usuario-nome">{{ nome() }}</span>
+      <mat-icon>expand_more</mat-icon>
+    </button>
+
+    <mat-menu #menuUsuario="matMenu" xPosition="before">
+      <div class="menu-cabecalho">
+        <strong>{{ nome() }}</strong>
+        <span>{{ auth.email() }}</span>
+        <span class="chip" [class.purple]="auth.isAdmin()" [class.green]="!auth.isAdmin()">
+          {{ auth.isAdmin() ? 'Administrador' : 'Usuário' }}
+        </span>
+      </div>
+      <a mat-menu-item routerLink="/perfil">
+        <mat-icon>person_outline</mat-icon>
+        <span>Meu perfil</span>
+      </a>
+      <button mat-menu-item (click)="sair()">
+        <mat-icon>logout</mat-icon>
+        <span>Sair</span>
+      </button>
+    </mat-menu>
+  </div>
+</header>
+
+<div class="subbarra">
+  <div class="interno">{{ titulo() }}</div>
+</div>
+
+<main class="pagina">
+  <router-outlet />
+</main>

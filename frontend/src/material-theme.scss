@@ -1,0 +1,42 @@
+// Tema Material 3 do FinControl: roxo (primária) + amarelo (destaque).
+// Learn more: https://material.angular.dev/guide/theming
+@use '@angular/material' as mat;
+
+html {
+  height: 100%;
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$violet-palette,
+        tertiary: mat.$yellow-palette,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
+
+  // Roxo da marca no lugar do violeta padrão do Material.
+  --mat-sys-primary: #4c1d95;
+  --mat-sys-on-primary: #ffffff;
+  --mat-sys-primary-container: #e9defb;
+  --mat-sys-on-primary-container: #2a0e57;
+  --mat-sys-secondary-container: #e9defb;
+  --mat-sys-on-secondary-container: #2a0e57;
+
+  // Botões retos (4px), como no restante da interface.
+  --mat-button-filled-container-shape: 4px;
+  --mat-button-outlined-container-shape: 4px;
+  --mat-button-text-container-shape: 4px;
+  --mat-button-protected-container-shape: 4px;
+  --mat-dialog-container-shape: 8px;
+  --mat-button-toggle-shape: 4px;
+}
+
+body {
+  color-scheme: light;
+  background-color: var(--fc-bg);
+  color: var(--fc-text);
+  font: var(--mat-sys-body-medium);
+  margin: 0;
+  height: 100%;
+}

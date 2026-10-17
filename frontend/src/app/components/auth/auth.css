@@ -1,0 +1,286 @@
+/* Layout compartilhado por Login e Cadastro: tudo centralizado sobre o fundo roxo. */
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.centro {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 26px;
+  padding: 40px 16px;
+}
+
+.logo-link {
+  text-decoration: none;
+}
+
+.card {
+  width: min(470px, 100%);
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(20, 6, 45, 0.4);
+  padding: 44px 46px 40px;
+}
+
+/* Cabeçalho centralizado do card */
+.cabecalho {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.icone-topo {
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  background: var(--fc-roxo-claro);
+  color: var(--fc-primary);
+  display: grid;
+  place-items: center;
+}
+
+.icone-topo mat-icon {
+  font-size: 30px;
+  width: 30px;
+  height: 30px;
+}
+
+h1 {
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--fc-text);
+  margin: 0 0 6px;
+}
+
+.subtitulo {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7178;
+}
+
+.subtitulo a {
+  color: var(--fc-primary);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+/* Etapas do cadastro */
+.etapas {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.etapas span {
+  width: 26px;
+  height: 5px;
+  border-radius: 999px;
+  background: #dfe3e6;
+}
+
+.etapas span.feita {
+  background: var(--fc-primary);
+}
+
+/* Campos mais arredondados que no restante do app */
+.campo input,
+.campo select {
+  height: 46px;
+  border-radius: 12px;
+  padding: 0 14px;
+  background: #fafbfb;
+}
+
+.caixa-input > mat-icon {
+  left: 14px;
+}
+
+.caixa-input > mat-icon + input {
+  padding-left: 42px;
+}
+
+.btn-olho {
+  right: 10px;
+}
+
+/* Botão principal largo e arredondado */
+.btn-principal.mat-mdc-unelevated-button {
+  width: 100%;
+  height: 48px;
+  border-radius: 12px;
+  font-size: 15px;
+  margin-top: 6px;
+  --mat-button-filled-container-shape: 12px;
+}
+
+.acoes-secundarias {
+  display: flex;
+  justify-content: center;
+  margin-top: 18px;
+}
+
+.troca {
+  text-align: center;
+  margin: 22px 0 0;
+  font-size: 14px;
+  color: #6b7178;
+}
+
+.troca a {
+  color: var(--fc-primary);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.voltar-inicio {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #d8ccf0;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.voltar-inicio:hover {
+  color: #fff;
+}
+
+.voltar-inicio mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.aviso {
+  border-radius: 12px;
+}
+
+/* Recado (sessão expirada / conta criada) */
+.recado {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff8d6;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 22px;
+  font-size: 13px;
+  color: var(--fc-text);
+}
+
+.recado mat-icon {
+  color: var(--fc-warning);
+  flex-shrink: 0;
+}
+
+.recado strong {
+  display: block;
+  font-weight: 500;
+}
+
+/* Cartões "Para mim / Para minha empresa" */
+.opcoes {
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.opcao {
+  border-radius: 14px;
+  padding: 30px 10px 20px;
+}
+
+.opcao::before {
+  top: 12px;
+  left: 12px;
+}
+
+/* Seletor MEI / Microempresa */
+.segmentado {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: #f1f3f4;
+  border-radius: 12px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.segmentado button {
+  border: none;
+  background: none;
+  border-radius: 9px;
+  padding: 10px 8px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--fc-muted);
+  cursor: pointer;
+}
+
+.segmentado button.ativo {
+  background: #fff;
+  color: var(--fc-primary);
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+/* Requisitos da senha */
+.requisitos {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: #6b7178;
+}
+
+.requisitos ul {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+}
+
+.requisitos li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.6;
+}
+
+.requisitos li::before {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1.5px solid #8a9199;
+}
+
+.requisitos li.ok {
+  color: var(--fc-success);
+}
+
+.requisitos li.ok::before {
+  border-color: var(--fc-success);
+  background: var(--fc-success);
+  box-shadow: inset 0 0 0 2px #fff;
+}
+
+.dupla {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 520px) {
+  .card {
+    padding: 32px 22px 28px;
+    border-radius: 16px;
+  }
+
+  .dupla {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}

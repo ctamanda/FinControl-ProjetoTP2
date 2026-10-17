@@ -1,0 +1,74 @@
+<div class="page-header">
+  <div>
+    <h1>Meu perfil</h1>
+    <p>Seus dados cadastrais e perfil fiscal.</p>
+  </div>
+</div>
+
+<section class="fc-card form-card">
+  @if (carregando()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  @if (usuario(); as u) {
+    <div class="identidade">
+      <span class="avatar"><mat-icon>person_outline</mat-icon></span>
+      <div>
+        <div class="nome">{{ u.nome }}</div>
+        <div class="email">{{ u.email }}</div>
+        <span class="chip" [class.purple]="u.role === 'ADMIN'" [class.green]="u.role === 'USER'">
+          {{ u.role === 'ADMIN' ? 'Administrador' : 'Usuário' }}
+        </span>
+      </div>
+    </div>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="salvar()" novalidate>
+    <div class="campo" [class.invalido]="form.controls.nome.invalid && form.controls.nome.touched">
+      <label for="nome">Nome</label>
+      <input id="nome" formControlName="nome" />
+      @if (form.controls.nome.invalid && form.controls.nome.touched) {
+        <span class="erro">Informe o nome (até 100 caracteres).</span>
+      }
+    </div>
+
+    <span class="rotulo">Perfil fiscal</span>
+    <div class="opcoes" role="radiogroup" aria-label="Perfil fiscal">
+      @for (p of perfis; track p.valor) {
+        <button
+          type="button"
+          role="radio"
+          class="opcao"
+          [class.selecionada]="perfilFiscal() === p.valor"
+          [attr.aria-checked]="perfilFiscal() === p.valor"
+          (click)="selecionarPerfil(p.valor)"
+        >
+          <mat-icon>{{ p.icone }}</mat-icon>
+          <span class="opcao-titulo">{{ p.titulo }}</span>
+          <span class="opcao-sub">{{ p.sub }}</span>
+        </button>
+      }
+    </div>
+
+    @if (perfilFiscal() === 'MEI') {
+      <div class="campo" [class.invalido]="form.controls.atividadeMei.invalid">
+        <label for="atividade">Atividade do MEI</label>
+        <select id="atividade" formControlName="atividadeMei">
+          <option [ngValue]="null" disabled>Selecione</option>
+          @for (a of atividades; track a[0]) {
+            <option [ngValue]="a[0]">{{ a[1] }}</option>
+          }
+        </select>
+        @if (form.controls.atividadeMei.invalid) {
+          <span class="erro">Informe a atividade do MEI.</span>
+        }
+      </div>
+    }
+
+    <div class="form-actions">
+      <button mat-flat-button class="btn-primario" type="submit" [disabled]="salvando() || carregando() || form.pristine">
+        <mat-icon>check</mat-icon> Salvar alterações
+      </button>
+    </div>
+  </form>
+</section>

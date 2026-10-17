@@ -1,0 +1,94 @@
+<div class="page-header">
+  <div>
+    <h1>{{ id() ? 'Editar parâmetro fiscal' : 'Novo parâmetro fiscal' }}</h1>
+    <p>Administração · Parâmetros fiscais</p>
+  </div>
+</div>
+
+<div class="layout">
+  <section class="fc-card form-card">
+    @if (carregando()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+
+    @if (erro()) {
+      <div class="aviso erro" role="alert">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ erro() }}</span>
+      </div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="salvar()" novalidate>
+      <div class="form-grid">
+        <div class="campo full" [class.invalido]="invalido('chave')">
+          <label for="chave">Chave</label>
+          <input
+            id="chave"
+            formControlName="chave"
+            list="sugestoes-chave"
+            (blur)="normalizarChave()"
+            placeholder="Ex.: LIMITE_FATURAMENTO_MEI"
+          />
+          <datalist id="sugestoes-chave">
+            @for (s of sugestoes; track s.chave) {
+              <option [value]="s.chave">{{ s.descricao }}</option>
+            }
+          </datalist>
+          @if (invalido('chave')) {
+            <span class="erro">Informe a chave (até 50 caracteres).</span>
+          } @else {
+            <span class="ajuda">Identificador do parâmetro, em MAIÚSCULAS e com "_".</span>
+          }
+        </div>
+
+        <div class="campo full" [class.invalido]="invalido('valor')">
+          <label for="valor">Valor</label>
+          <input id="valor" type="number" step="0.01" min="0.01" formControlName="valor" />
+          @if (invalido('valor')) {
+            <span class="erro">Informe um valor maior que zero.</span>
+          } @else {
+            <span class="ajuda">Em reais ou percentual, com até 2 casas decimais.</span>
+          }
+        </div>
+
+        <div class="campo" [class.invalido]="invalido('vigenciaInicio')">
+          <label for="inicio">Início da vigência</label>
+          <input id="inicio" type="date" formControlName="vigenciaInicio" />
+          @if (invalido('vigenciaInicio')) {
+            <span class="erro">Informe a data inicial.</span>
+          }
+        </div>
+
+        <div class="campo" [class.invalido]="invalido('vigenciaFim') || vigenciaInvalida()">
+          <label for="fim">Fim da vigência</label>
+          <input id="fim" type="date" formControlName="vigenciaFim" />
+          @if (invalido('vigenciaFim')) {
+            <span class="erro">Informe a data final.</span>
+          } @else if (vigenciaInvalida()) {
+            <span class="erro">Deve ser igual ou posterior à data inicial.</span>
+          }
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button mat-flat-button class="btn-primario" type="submit" [disabled]="salvando() || carregando()">
+          <mat-icon>check</mat-icon> Salvar
+        </button>
+        <a class="link-acao" routerLink="/admin/parametros"><mat-icon>arrow_back</mat-icon> Voltar</a>
+      </div>
+    </form>
+  </section>
+
+  <aside class="fc-card dica">
+    <h2 class="fc-card-title"><mat-icon>lightbulb_outline</mat-icon> Como funciona a vigência</h2>
+    <p>
+      Cada parâmetro vale apenas dentro do seu período. Para mudar um valor a partir de uma data
+      (ex.: novo teto do MEI em janeiro), <strong>cadastre um novo registro</strong> com a mesma
+      chave e a nova vigência.
+    </p>
+    <p>
+      O sistema não aceita dois períodos que se sobreponham para a mesma chave — assim sempre há
+      um único valor válido em cada dia.
+    </p>
+  </aside>
+</div>

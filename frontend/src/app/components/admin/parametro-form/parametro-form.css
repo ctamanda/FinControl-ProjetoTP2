@@ -1,0 +1,23 @@
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 760px) minmax(0, 320px);
+  gap: 20px;
+  align-items: start;
+}
+
+.layout > .fc-card + .fc-card {
+  margin-top: 0;
+}
+
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dica p {
+  color: var(--fc-muted);
+  line-height: 1.6;
+  font-size: 13px;
+  margin: 0 0 12px;
+}

@@ -1,0 +1,39 @@
+.form-card {
+  max-width: 620px;
+}
+
+.identidade {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 20px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid var(--fc-border);
+}
+
+.avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--fc-roxo);
+  color: #fff;
+  display: grid;
+  place-items: center;
+}
+
+.nome {
+  font-size: 17px;
+}
+
+.email {
+  font-size: 13px;
+  color: var(--fc-muted);
+  margin-bottom: 6px;
+}
+
+.rotulo {
+  display: block;
+  font-size: 13px;
+  color: #555c63;
+  margin-bottom: 8px;
+}

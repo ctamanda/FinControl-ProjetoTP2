@@ -1,0 +1,71 @@
+.barra-carregando {
+  margin-bottom: 16px;
+}
+
+.colunas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+
+.colunas > .fc-card + .fc-card {
+  margin-top: 0;
+}
+
+.fc-card-title {
+  justify-content: space-between;
+}
+
+.mini {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.contagem {
+  font-size: 13px;
+  color: var(--fc-muted);
+  font-weight: 400;
+}
+
+.lista {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.lista li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--fc-border);
+}
+
+.lista li:last-child {
+  border-bottom: none;
+}
+
+.bolinha {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  flex-shrink: 0;
+}
+
+.nome {
+  flex: 1;
+  font-weight: 500;
+}
+
+.vazio {
+  color: var(--fc-muted);
+  justify-content: center;
+  padding: 24px 0 !important;
+}

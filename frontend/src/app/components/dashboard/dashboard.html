@@ -1,0 +1,159 @@
+<div class="saudacao">
+  <span class="avatar"><mat-icon>person_outline</mat-icon></span>
+  <div>
+    <h1>Olá{{ primeiroNome() ? ', ' + primeiroNome() : '' }}</h1>
+    @if (qtdDespesasMes()) {
+      <p>
+        <mat-icon>warning_amber</mat-icon>
+        Você tem <strong>{{ qtdDespesasMes() }} {{ qtdDespesasMes() === 1 ? 'despesa' : 'despesas' }}</strong>
+        neste mês no total de <strong><app-valor [valor]="despesasMes()" [neutro]="true" /></strong>.
+      </p>
+    } @else {
+      <p>Este é o resumo das suas finanças.</p>
+    }
+  </div>
+  <a mat-flat-button class="btn-primario novo" routerLink="/transacoes/nova">
+    <mat-icon>add</mat-icon> Nova transação
+  </a>
+</div>
+
+@if (carregando()) {
+  <mat-progress-bar mode="indeterminate" class="barra-carregando" />
+}
+
+@if (erro()) {
+  <div class="fc-card estado-vazio">
+    <mat-icon>cloud_off</mat-icon>
+    <p>{{ erro() }}</p>
+  </div>
+}
+
+<!-- Linha 1: saldo + receitas + despesas -->
+<div class="linha-topo">
+  <div class="fc-card saldo">
+    <div>
+      <span class="rotulo">Saldo atual</span>
+      <app-valor class="grande" [valor]="saldo()" />
+      <a class="ver" routerLink="/transacoes">Ver lançamentos <mat-icon>chevron_right</mat-icon></a>
+    </div>
+    @if (linhaSaldo()) {
+      <svg viewBox="0 0 160 40" class="sparkline" aria-hidden="true">
+        <path [attr.d]="linhaSaldo()" />
+      </svg>
+    }
+  </div>
+
+  <div class="fc-card mes">
+    <span class="rotulo">Receitas no mês</span>
+    <div class="linha-valor">
+      <app-valor class="medio" [valor]="receitasMes()" />
+      @if (variacaoReceitas() !== null) {
+        <span class="chip" [class.green]="variacaoReceitas()! >= 0" [class.red]="variacaoReceitas()! < 0">
+          <mat-icon>{{ variacaoReceitas()! >= 0 ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+          {{ variacaoReceitas()! | number: '1.0-0' }}%
+        </span>
+      }
+    </div>
+  </div>
+
+  <div class="fc-card mes">
+    <span class="rotulo">Despesas no mês</span>
+    <div class="linha-valor">
+      <app-valor class="medio" [valor]="despesasMes()" [negativar]="true" />
+      @if (variacaoDespesas() !== null) {
+        <span class="chip" [class.red]="variacaoDespesas()! > 0" [class.green]="variacaoDespesas()! <= 0">
+          <mat-icon>{{ variacaoDespesas()! > 0 ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+          {{ variacaoDespesas()! | number: '1.0-0' }}%
+        </span>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- Linha 2: Pessoal / Empresa / Mês anterior -->
+<div class="grid-3 linha">
+  @for (b of blocos(); track b.titulo) {
+    <div class="kpi {{ b.cor }}">
+      <mat-icon>{{ b.icone }}</mat-icon>
+      <div class="kpi-label">{{ b.titulo }}<em>{{ b.sub }}</em></div>
+      <div class="par-valores">
+        <div><span>Receitas</span><app-valor [valor]="b.receitas" /></div>
+        <div><span>Despesas</span><app-valor [valor]="b.despesas" [negativar]="b.despesas > 0" /></div>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Linha 3: últimas transações + categorias -->
+<div class="grid-2 linha">
+  <section class="fc-card">
+    <div class="titulo-com-acao">
+      <h2 class="fc-card-title">Últimas transações</h2>
+      <a class="ver" routerLink="/transacoes">Ver todas <mat-icon>chevron_right</mat-icon></a>
+    </div>
+    @if (recentes().length) {
+      <ul class="lista">
+        @for (t of recentes(); track t.id) {
+          <li>
+            <span class="icone-tipo" [class.receita]="t.tipo === 'RECEITA'">
+              <mat-icon>{{ t.tipo === 'RECEITA' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
+            </span>
+            <div class="info">
+              <span class="desc">{{ t.descricao }}</span>
+              <span class="meta">{{ t.categoria?.nome }} · {{ t.data | date: 'dd/MM/yyyy' }}</span>
+            </div>
+            <app-valor [valor]="t.valor" [negativar]="t.tipo === 'DESPESA'" />
+          </li>
+        }
+      </ul>
+    } @else if (!carregando()) {
+      <div class="estado-vazio">
+        <mat-icon>receipt_long</mat-icon>
+        <p>Você ainda não lançou nenhuma transação.</p>
+        <a mat-stroked-button routerLink="/transacoes/nova">Lançar a primeira</a>
+      </div>
+    }
+  </section>
+
+  <section class="fc-card">
+    <h2 class="fc-card-title">Principais categorias de despesa</h2>
+    @if (categorias().length) {
+      <ul class="ranking">
+        @for (c of categorias(); track c.nome; let i = $index) {
+          <li [style.border-color]="c.cor">
+            <div>
+              <span class="nome">{{ i + 1 }}. {{ c.nome }}</span>
+              <span class="pct">{{ c.percentual | number: '1.1-1' }}%</span>
+            </div>
+            <app-valor [valor]="c.total" [neutro]="true" />
+          </li>
+        }
+      </ul>
+    } @else {
+      <div class="estado-vazio">
+        <mat-icon>donut_small</mat-icon>
+        <p>Nenhuma despesa neste mês.</p>
+      </div>
+    }
+  </section>
+</div>
+
+<!-- Linha 4: evolução -->
+<section class="fc-card linha">
+  <h2 class="fc-card-title">Receitas x despesas nos últimos 6 meses</h2>
+  <div class="colunas" role="img" aria-label="Gráfico de receitas e despesas dos últimos 6 meses">
+    @for (m of ultimosMeses(); track m.rotulo) {
+      <div class="coluna-mes">
+        <div class="par">
+          <div class="col receita" [style.height.%]="m.alturaReceitas" [title]="'Receitas: ' + (m.receitas | number: '1.2-2')"></div>
+          <div class="col despesa" [style.height.%]="m.alturaDespesas" [title]="'Despesas: ' + (m.despesas | number: '1.2-2')"></div>
+        </div>
+        <span class="mes-rotulo">{{ m.rotulo }}</span>
+      </div>
+    }
+  </div>
+  <div class="legenda">
+    <span><span class="color-dot" style="background: var(--fc-azul)"></span> Receitas</span>
+    <span><span class="color-dot" style="background: var(--fc-danger)"></span> Despesas</span>
+  </div>
+</section>

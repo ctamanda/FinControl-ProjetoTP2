@@ -1,0 +1,211 @@
+<header class="topo">
+  <div class="conteudo barra">
+    <a routerLink="/" class="marca" aria-label="FinControl"><app-logo /></a>
+
+    <nav class="links" [class.aberto]="menuAberto()">
+      <button type="button" (click)="rolar('recursos')">Recursos</button>
+      <button type="button" (click)="rolar('para-voce')">Para você</button>
+      <button type="button" (click)="rolar('para-empresa')">Para empresa</button>
+      <button type="button" (click)="rolar('seguranca')">Segurança</button>
+      <button type="button" (click)="rolar('tecnologia')">A API</button>
+    </nav>
+
+    <div class="acoes">
+      @if (logado) {
+        <a mat-flat-button class="btn-amarelo" [routerLink]="auth.rotaInicial()">
+          Ir para o painel <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+        </a>
+      } @else {
+        <a class="entrar" routerLink="/login"><mat-icon>login</mat-icon> Acessar conta</a>
+        <a mat-flat-button class="btn-claro" routerLink="/cadastro">Criar conta grátis</a>
+      }
+      <button class="btn-menu" type="button" (click)="menuAberto.set(!menuAberto())" aria-label="Abrir menu">
+        <mat-icon>{{ menuAberto() ? 'close' : 'menu' }}</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- ========== Destaque ========== -->
+  <section class="conteudo hero">
+    <div class="hero-texto">
+      <span class="selo"><mat-icon>auto_awesome</mat-icon> Para pessoas e pequenos negócios</span>
+      <h1>Seu dinheiro organizado, do jeito que deveria ser.</h1>
+      <p>
+        O FinControl reúne receitas, despesas e categorias em um só lugar. Entenda para onde vai cada
+        real — na sua vida pessoal e no seu MEI ou microempresa.
+      </p>
+      <div class="hero-botoes">
+        <a mat-flat-button class="btn-amarelo grande" routerLink="/cadastro">
+          Começar grátis <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+        </a>
+        <a mat-flat-button class="btn-escuro grande" routerLink="/login">Já tenho conta</a>
+      </div>
+      <ul class="hero-garantias">
+        <li><mat-icon>check_circle</mat-icon> Sem cartão de crédito</li>
+        <li><mat-icon>check_circle</mat-icon> Categorias prontas</li>
+        <li><mat-icon>check_circle</mat-icon> Dados protegidos</li>
+      </ul>
+    </div>
+
+    <!-- Ilustração do próprio sistema (computador + celular) -->
+    <div class="hero-arte" aria-hidden="true">
+      <div class="janela">
+        <div class="janela-barra"><i></i><i></i><i></i></div>
+        <div class="janela-menu">
+          <span class="mini-logo"></span><b></b><b></b><b></b>
+        </div>
+        <div class="janela-corpo">
+          <div class="ola"><span class="bolinha"></span><div><strong>Olá, Ana</strong><small>Resumo de outubro</small></div></div>
+          <div class="mini-cards">
+            <div class="mini-card azul">
+              <small>Saldo atual</small><strong>12.480<em>,90</em></strong>
+              <svg viewBox="0 0 100 30"><path d="M0 24 L15 20 L30 22 L45 12 L60 15 L75 6 L100 4" /></svg>
+            </div>
+            <div class="mini-card"><small>Receitas</small><strong class="pos">8.200<em>,00</em></strong></div>
+            <div class="mini-card"><small>Despesas</small><strong class="neg">-3.115<em>,40</em></strong></div>
+          </div>
+          <div class="mini-grafico">
+            @for (h of [40, 55, 35, 70, 60, 90]; track $index) {
+              <div class="par"><span class="r" [style.height.%]="h"></span><span class="d" [style.height.%]="h * 0.55"></span></div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="celular">
+        <div class="cel-topo">
+          <small>Saldo atual</small>
+          <strong>12.480<em>,90</em></strong>
+        </div>
+        <div class="cel-botoes">
+          <span><i class="neg"><mat-icon>arrow_upward</mat-icon></i>Despesa</span>
+          <span><i class="pos"><mat-icon>arrow_downward</mat-icon></i>Receita</span>
+          <span><i><mat-icon>sell</mat-icon></i>Categoria</span>
+        </div>
+        <div class="cel-lista">
+          <div><span class="dot" style="background: #facc15"></span>Vendas<b class="pos">+2.500</b></div>
+          <div><span class="dot" style="background: #e0384b"></span>Mercado<b class="neg">-312</b></div>
+          <div><span class="dot" style="background: #2b5fb4"></span>Transporte<b class="neg">-48</b></div>
+        </div>
+      </div>
+
+      <div class="notificacao">
+        <span><mat-icon>trending_up</mat-icon></span>
+        <div><small>Receita registrada</small><strong>+ R$ 2.500,00</strong></div>
+      </div>
+    </div>
+  </section>
+</header>
+
+<main>
+  <!-- ========== Recursos ========== -->
+  <section id="recursos" class="secao">
+    <div class="conteudo">
+      <span class="sobretitulo">Recursos</span>
+      <h2>Tudo o que você precisa, nada que atrapalhe</h2>
+      <div class="recursos">
+        @for (r of recursos; track r.titulo) {
+          <article class="recurso">
+            <span class="recurso-icone"><mat-icon>{{ r.icone }}</mat-icon></span>
+            <h3>{{ r.titulo }}</h3>
+            <p>{{ r.texto }}</p>
+          </article>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== Para você / Para sua empresa ========== -->
+  <section class="secao cinza">
+    <div class="conteudo publicos">
+      <article id="para-voce" class="publico">
+        <span class="publico-icone"><mat-icon>person_outline</mat-icon></span>
+        <h2>Para você</h2>
+        <p>Organize as contas da casa e descubra onde dá para economizar.</p>
+        <ul>
+          <li><mat-icon>check</mat-icon> Controle de gastos por categoria</li>
+          <li><mat-icon>check</mat-icon> Saldo sempre atualizado</li>
+          <li><mat-icon>check</mat-icon> Comparação mês a mês</li>
+        </ul>
+        <a mat-flat-button class="btn-roxo" routerLink="/cadastro" [queryParams]="{ perfil: 'mim' }">
+          Criar conta pessoal
+        </a>
+      </article>
+
+      <article id="para-empresa" class="publico destaque">
+        <span class="publico-icone"><mat-icon>storefront</mat-icon></span>
+        <h2>Para sua empresa</h2>
+        <p>Feito para MEI e microempresas que querem separar o pessoal do profissional.</p>
+        <ul>
+          <li><mat-icon>check</mat-icon> Lançamentos com escopo Pessoal ou Empresa</li>
+          <li><mat-icon>check</mat-icon> Perfil MEI com atividade (comércio, serviço)</li>
+          <li><mat-icon>check</mat-icon> Parâmetros fiscais como o teto do MEI</li>
+        </ul>
+        <a mat-flat-button class="btn-amarelo" routerLink="/cadastro" [queryParams]="{ perfil: 'empresa' }">
+          Criar conta empresarial
+        </a>
+      </article>
+    </div>
+  </section>
+
+  <!-- ========== Segurança ========== -->
+  <section id="seguranca" class="secao">
+    <div class="conteudo seguranca">
+      <div>
+        <span class="sobretitulo">Segurança e privacidade</span>
+        <h2>Seus dados são só seus</h2>
+        <p class="texto-secao">
+          Cada usuário enxerga apenas os próprios lançamentos. Nem o administrador do sistema tem
+          acesso às suas transações — ele vê somente números agregados, como pede a LGPD.
+        </p>
+      </div>
+      <ul class="itens-seguranca">
+        <li><mat-icon>lock_outline</mat-icon><div><strong>Senha criptografada</strong>Armazenada com BCrypt, nunca em texto puro.</div></li>
+        <li><mat-icon>key</mat-icon><div><strong>Acesso por token</strong>Login com JWT que expira em 1 hora.</div></li>
+        <li><mat-icon>verified_user</mat-icon><div><strong>Isolamento por usuário</strong>Cada consulta é filtrada pelo dono dos dados.</div></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ========== A API ========== -->
+  <section id="tecnologia" class="secao roxa">
+    <div class="conteudo tecnologia">
+      <span class="sobretitulo claro">Sobre o projeto</span>
+      <h2>Uma API REST feita para crescer</h2>
+      <p class="texto-secao">
+        O FinControl é um projeto da disciplina de Tópicos II: um back-end em Quarkus que expõe
+        endpoints REST protegidos por JWT e um front-end em Angular que consome essa API.
+      </p>
+      <div class="tecs">
+        @for (t of tecnologias; track t) {
+          <span>{{ t }}</span>
+        }
+      </div>
+      <div class="endpoints">
+        <code><b>POST</b> /auth/register</code>
+        <code><b>POST</b> /auth/login</code>
+        <code><b>GET</b> /transacoes</code>
+        <code><b>GET</b> /categorias</code>
+        <code><b>GET</b> /admin/estatisticas</code>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== Chamada final ========== -->
+  <section class="secao chamada">
+    <div class="conteudo">
+      <h2>Pronto para colocar as finanças em dia?</h2>
+      <p>Crie sua conta em menos de um minuto.</p>
+      <a mat-flat-button class="btn-amarelo grande" routerLink="/cadastro">
+        Criar conta grátis <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+      </a>
+    </div>
+  </section>
+</main>
+
+<footer class="rodape">
+  <div class="conteudo">
+    <app-logo [pequeno]="true" />
+    <span>© {{ ano }} FinControl · Projeto acadêmico de Tópicos II</span>
+  </div>
+</footer>

@@ -1,0 +1,37 @@
+.tipos {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  max-width: 340px;
+  border: 1px solid var(--fc-border);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.tipo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 10px;
+  background: #fff;
+  border: none;
+  font: inherit;
+  font-size: 12px;
+  color: var(--fc-text);
+  cursor: pointer;
+}
+
+.tipo + .tipo {
+  border-left: 1px solid var(--fc-border);
+}
+
+.tipo.selecionado {
+  background: var(--fc-roxo-claro);
+  box-shadow: inset 0 -3px 0 var(--fc-primary);
+}
+
+.link-mini {
+  font-size: 12px;
+  text-decoration: none;
+}
