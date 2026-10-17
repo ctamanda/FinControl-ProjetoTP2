@@ -1,71 +1,72 @@
-<header class="barra">
-  <div class="interno">
-    <button class="btn-menu" type="button" (click)="menuAberto.set(!menuAberto())" aria-label="Abrir menu">
-      <mat-icon>{{ menuAberto() ? 'close' : 'menu' }}</mat-icon>
-    </button>
+<div class="fundo-celular" [class.visivel]="menuAberto()" (click)="menuAberto.set(false)"></div>
 
-    <a class="marca" [routerLink]="auth.rotaInicial()"><app-logo [pequeno]="true" /></a>
+<aside class="lateral" [class.aberta]="menuAberto()">
+  <a class="marca" [routerLink]="auth.rotaInicial()" aria-label="Início"><app-logo [fundoClaro]="true" /></a>
 
-    <nav class="menu" [class.aberto]="menuAberto()">
-      @for (item of menuPrincipal; track item.rota) {
-        <a class="item" [routerLink]="item.rota" routerLinkActive="ativo">
+  <a class="cartao-usuario" routerLink="/perfil">
+    <span class="avatar">{{ iniciais() }}</span>
+    <span class="quem">
+      <strong>{{ nome() }}</strong>
+      <span>{{ auth.email() }}</span>
+    </span>
+    <mat-icon>chevron_right</mat-icon>
+  </a>
+
+  <span class="ambiente" [attr.data-ambiente]="ambiente()">
+    <mat-icon>{{ ambiente() === 'ADMIN' ? 'admin_panel_settings' : ambiente() === 'EMPRESA' ? 'storefront' : 'person' }}</mat-icon>
+    {{ rotuloAmbiente() }}
+    @if (perfil()?.empresa; as e) {
+      <em>{{ e.nome }}</em>
+    }
+  </span>
+
+  <nav aria-label="Menu principal">
+    @for (s of secoes(); track s.titulo) {
+      <span class="secao">{{ s.titulo }}</span>
+      @for (item of s.itens; track item.rota) {
+        <a
+          class="item"
+          [routerLink]="item.rota"
+          routerLinkActive="ativo"
+          [routerLinkActiveOptions]="{ exact: !!item.exato }"
+        >
           <mat-icon>{{ item.icone }}</mat-icon>{{ item.rotulo }}
         </a>
       }
+    }
 
-      @if (auth.isAdmin()) {
-        <button type="button" class="item" [class.ativo]="naAreaAdmin()" [matMenuTriggerFor]="menuAdminRef">
-          <mat-icon>admin_panel_settings</mat-icon>Administração<mat-icon class="seta">expand_more</mat-icon>
-        </button>
-      }
-
-      <a class="item so-celular" routerLink="/perfil" routerLinkActive="ativo">
-        <mat-icon>person_outline</mat-icon>Meu perfil
-      </a>
-      <button type="button" class="item so-celular" (click)="sair()">
-        <mat-icon>logout</mat-icon>Sair
-      </button>
-    </nav>
-
-    <mat-menu #menuAdminRef="matMenu">
-      @for (item of menuAdmin; track item.rota) {
-        <a mat-menu-item [routerLink]="item.rota">
-          <mat-icon>{{ item.icone }}</mat-icon>
-          <span>{{ item.rotulo }}</span>
-        </a>
-      }
-    </mat-menu>
-
-    <button type="button" class="usuario" [matMenuTriggerFor]="menuUsuario" aria-label="Menu do usuário">
-      <span class="avatar">{{ iniciais() }}</span>
-      <span class="usuario-nome">{{ nome() }}</span>
-      <mat-icon>expand_more</mat-icon>
-    </button>
-
-    <mat-menu #menuUsuario="matMenu" xPosition="before">
-      <div class="menu-cabecalho">
-        <strong>{{ nome() }}</strong>
-        <span>{{ auth.email() }}</span>
-        <span class="chip" [class.purple]="auth.isAdmin()" [class.green]="!auth.isAdmin()">
-          {{ auth.isAdmin() ? 'Administrador' : 'Usuário' }}
+    @if (emBreve().length) {
+      <span class="secao">Em breve</span>
+      @for (m of emBreve(); track m.rotulo) {
+        <span class="item desabilitado" matTooltip="Funcionalidade em desenvolvimento" matTooltipPosition="right">
+          <mat-icon>{{ m.icone }}</mat-icon>{{ m.rotulo }}
         </span>
-      </div>
-      <a mat-menu-item routerLink="/perfil">
-        <mat-icon>person_outline</mat-icon>
-        <span>Meu perfil</span>
-      </a>
-      <button mat-menu-item (click)="sair()">
-        <mat-icon>logout</mat-icon>
-        <span>Sair</span>
-      </button>
-    </mat-menu>
-  </div>
-</header>
+      }
+    }
+  </nav>
 
-<div class="subbarra">
-  <div class="interno">{{ titulo() }}</div>
+  <button type="button" class="sair" (click)="sair()"><mat-icon>logout</mat-icon> Sair</button>
+</aside>
+
+<div class="conteudo">
+  <header class="cabecalho">
+    <button class="btn-menu" type="button" (click)="menuAberto.set(true)" aria-label="Abrir menu">
+      <mat-icon>menu</mat-icon>
+    </button>
+    <nav class="trilha" aria-label="Você está em">
+      <span>{{ rotuloAmbiente() }}</span>
+      <mat-icon>chevron_right</mat-icon>
+      <strong>{{ titulo() }}</strong>
+    </nav>
+    @if (perfil(); as u) {
+      <span class="chip papel" [class.purple]="u.role !== 'PESSOAL'" [class.green]="u.role === 'PESSOAL'">
+        {{ rotulosRole[u.role] }}
+      </span>
+    }
+    <a class="avatar mini" routerLink="/perfil" aria-label="Meu perfil">{{ iniciais() }}</a>
+  </header>
+
+  <main class="pagina">
+    <router-outlet />
+  </main>
 </div>
-
-<main class="pagina">
-  <router-outlet />
-</main>
