@@ -59,6 +59,7 @@ public final class AdminMapper {
                 c.getNome(),
                 c.getTipo(),
                 c.getCor(),
+                c.getIcone(),
                 c.isAtivo(),
                 c.getDataAlteracao() != null ? c.getDataAlteracao() : c.getDataCadastro());
     }

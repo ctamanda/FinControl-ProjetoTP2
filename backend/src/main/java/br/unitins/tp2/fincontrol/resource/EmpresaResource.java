@@ -1,14 +1,19 @@
 package br.unitins.tp2.fincontrol.resource;
 
+import java.util.List;
+
 import org.eclipse.microprofile.jwt.JsonWebToken;
 
 import br.unitins.tp2.fincontrol.dto.EmpresaRequestDTO;
 import br.unitins.tp2.fincontrol.dto.EmpresaResponseDTO;
+import br.unitins.tp2.fincontrol.dto.ParametroFiscalResponseDTO;
 import br.unitins.tp2.fincontrol.mapper.EmpresaResponseMapper;
+import br.unitins.tp2.fincontrol.mapper.ParametroFiscalResponseMapper;
 import br.unitins.tp2.fincontrol.model.Empresa;
 import br.unitins.tp2.fincontrol.model.Usuario;
 import br.unitins.tp2.fincontrol.security.PermiteEmpresaPendente;
 import br.unitins.tp2.fincontrol.service.EmpresaService;
+import br.unitins.tp2.fincontrol.service.ParametroFiscalService;
 import br.unitins.tp2.fincontrol.service.UsuarioService;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -36,12 +41,26 @@ public class EmpresaResource {
     UsuarioService usuarioService;
 
     @Inject
+    ParametroFiscalService parametroService;
+
+    @Inject
     JsonWebToken jwt;
 
     @GET
     @RolesAllowed({"ADMIN_EMPRESA", "USUARIO_EMPRESA"})
     public EmpresaResponseDTO buscar() {
         return EmpresaResponseMapper.toResponse(service.buscar(getUsuarioLogado()));
+    }
+
+    // Parâmetros fiscais vigentes para o tipo da empresa (ex.: teto de faturamento do MEI).
+    @GET
+    @Path("parametros")
+    @RolesAllowed({"ADMIN_EMPRESA", "USUARIO_EMPRESA"})
+    public List<ParametroFiscalResponseDTO> parametrosVigentes() {
+        return parametroService.findVigentes(service.buscar(getUsuarioLogado()).getTipo())
+                .stream()
+                .map(ParametroFiscalResponseMapper::toResponse)
+                .toList();
     }
 
     @POST

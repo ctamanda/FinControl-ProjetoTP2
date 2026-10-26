@@ -9,6 +9,7 @@ public record CategoriaPadraoResponseDTO(
         String nome,
         TipoCategoria tipo,
         String cor,
+        String icone,
         boolean ativo,
         LocalDateTime ultimaAlteracao
 ) {

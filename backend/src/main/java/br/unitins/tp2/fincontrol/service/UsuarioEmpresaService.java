@@ -12,6 +12,7 @@ import br.unitins.tp2.fincontrol.model.Modulo;
 import br.unitins.tp2.fincontrol.model.Role;
 import br.unitins.tp2.fincontrol.model.Usuario;
 import br.unitins.tp2.fincontrol.repository.CategoriaRepository;
+import br.unitins.tp2.fincontrol.repository.ContaFinanceiraRepository;
 import br.unitins.tp2.fincontrol.repository.TransacaoRepository;
 import br.unitins.tp2.fincontrol.repository.UsuarioRepository;
 import br.unitins.tp2.fincontrol.security.Permissoes;
@@ -26,6 +27,9 @@ import jakarta.ws.rs.BadRequestException;
 // Só enxerga e altera usuários da própria empresa (os de outra empresa dão 404).
 @ApplicationScoped
 public class UsuarioEmpresaService {
+
+    @Inject
+    ContaFinanceiraRepository contaRepository;
 
     @Inject
     UsuarioRepository repository;
@@ -111,7 +115,7 @@ public class UsuarioEmpresaService {
         Usuario usuario = buscar(admin, id);
         exigirOutroUsuario(admin, usuario, "excluir");
 
-        if (AdminUsuarioService.temHistorico(transacaoRepository, categoriaRepository, usuario)) {
+        if (AdminUsuarioService.temHistorico(transacaoRepository, categoriaRepository, contaRepository, usuario)) {
             throw ValidationException.of("usuario",
                     "Este usuário já registrou lançamentos ou categorias. Desative-o para remover o acesso sem perder o histórico.");
         }

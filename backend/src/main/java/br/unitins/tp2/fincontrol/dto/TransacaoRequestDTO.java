@@ -12,6 +12,9 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 // O escopo (PESSOAL ou EMPRESA) não vem do cliente: sai do tipo de conta de quem lança.
+// "data" é a data do lançamento ou, se ainda não foi pago, o vencimento.
+// Opcionais: idConta (padrão: a conta ativa mais antiga), pago (padrão: data até hoje)
+// e dataPagamento (padrão: a própria data, ou hoje se a data for futura).
 public record TransacaoRequestDTO(
     @NotBlank(message = "O campo descricao deve ser informado.")
     @Length(min = 2, max = 150, message = "O campo deve conter entre 2 e 150 caracteres.")
@@ -29,6 +32,12 @@ public record TransacaoRequestDTO(
     TipoTransacao tipo,
 
     @NotNull(message = "A categoria deve ser informada.")
-    Long idCategoria
+    Long idCategoria,
+
+    Long idConta,
+
+    Boolean pago,
+
+    LocalDate dataPagamento
 ) {
 }

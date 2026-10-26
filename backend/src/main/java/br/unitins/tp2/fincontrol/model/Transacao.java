@@ -19,8 +19,20 @@ public class Transacao extends DefaultEntity {
     @Column(precision = 15, scale = 2, nullable = false)
     private BigDecimal valor;
 
+    // Data do lançamento; quando ainda não foi pago, é o vencimento.
     @Column(nullable = false)
     private LocalDate data;
+
+    // false = conta a pagar/receber (pendente). Só lançamentos pagos mexem no saldo da conta.
+    @Column(nullable = false)
+    private boolean pago = true;
+
+    @Column(name = "data_pagamento")
+    private LocalDate dataPagamento;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "conta_id", nullable = false)
+    private ContaFinanceira conta;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 10, nullable = false)
@@ -106,5 +118,37 @@ public class Transacao extends DefaultEntity {
 
     public void setEmpresa(Empresa empresa) {
         this.empresa = empresa;
+    }
+
+    public boolean isPago() {
+        return pago;
+    }
+
+    public void setPago(boolean pago) {
+        this.pago = pago;
+    }
+
+    public LocalDate getDataPagamento() {
+        return dataPagamento;
+    }
+
+    public void setDataPagamento(LocalDate dataPagamento) {
+        this.dataPagamento = dataPagamento;
+    }
+
+    public ContaFinanceira getConta() {
+        return conta;
+    }
+
+    public void setConta(ContaFinanceira conta) {
+        this.conta = conta;
+    }
+
+    // Pendente com o vencimento já passado = atrasado.
+    public StatusPagamento getStatus() {
+        if (pago) {
+            return StatusPagamento.PAGO;
+        }
+        return data.isBefore(LocalDate.now()) ? StatusPagamento.ATRASADO : StatusPagamento.PENDENTE;
     }
 }

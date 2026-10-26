@@ -12,7 +12,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
-// Categorias padrão: o modelo que toda conta nova recebe (ver CategoriasIniciais).
+// Categorias padrão: o modelo que toda conta nova recebe (ver DadosIniciais).
 // Alterar ou desativar não mexe nas categorias que as contas já têm.
 @ApplicationScoped
 public class CategoriaPadraoService {
@@ -71,6 +71,7 @@ public class CategoriaPadraoService {
         categoria.setNome(nome);
         categoria.setTipo(dto.tipo());
         categoria.setCor(dto.cor() == null || dto.cor().isBlank() ? null : dto.cor().toUpperCase());
+        categoria.setIcone(dto.icone() == null || dto.icone().isBlank() ? null : dto.icone());
     }
 
     private static String alvo(CategoriaPadrao categoria) {

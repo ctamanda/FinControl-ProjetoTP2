@@ -1,5 +1,6 @@
 package br.unitins.tp2.fincontrol.dto;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 // Indicadores do sistema para o SUPER_ADMIN.
@@ -15,6 +16,10 @@ public record EstatisticaResponseDTO(
         long totalEmpresas,
         long empresasAtivas,
         long totalUsuariosEmpresa,
+        long totalAdminsEmpresa,
+        long totalColaboradores,
+        long totalMeis,
+        long totalMicroempresas,
         long totalTransacoes,
         long totalCategorias,
         double mediaTransacoesPorUsuario,
@@ -23,10 +28,15 @@ public record EstatisticaResponseDTO(
         long novosUsuarios30Dias,
         long transacoes30Dias,
         List<CategoriaRankingDTO> categoriasMaisUtilizadas,
-        List<TransacoesMesDTO> transacoesPorMes
+        List<TransacoesMesDTO> transacoesPorMes,
+        List<CadastrosMesDTO> cadastrosPorMes
 ) {
 
-    // "mes" no formato yyyy-MM.
-    public record TransacoesMesDTO(String mes, long quantidade) {
+    // "mes" no formato yyyy-MM; valor = soma movimentada (receitas + despesas) no mês.
+    public record TransacoesMesDTO(String mes, long quantidade, BigDecimal valor) {
+    }
+
+    // Novas contas pessoais e novas empresas cadastradas no mês ("mes" no formato yyyy-MM).
+    public record CadastrosMesDTO(String mes, long contasPessoais, long empresas) {
     }
 }

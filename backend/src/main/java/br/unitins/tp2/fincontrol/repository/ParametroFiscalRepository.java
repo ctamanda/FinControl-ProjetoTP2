@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import br.unitins.tp2.fincontrol.model.ParametroFiscal;
+import br.unitins.tp2.fincontrol.model.TipoEmpresa;
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -20,6 +21,16 @@ public class ParametroFiscalRepository implements PanacheRepository<ParametroFis
                 chave,
                 data
         ).firstResult();
+    }
+
+    // Parâmetros ativos e vigentes na data que valem para o tipo de empresa (ou para todos).
+    public List<ParametroFiscal> findVigentes(TipoEmpresa tipo, LocalDate data) {
+        return find(
+                "ativo = true and vigenciaInicio <= ?1 and vigenciaFim >= ?1"
+                        + " and (tipoEmpresa is null or tipoEmpresa = ?2) order by chave",
+                data,
+                tipo
+        ).list();
     }
 
     public ParametroFiscal findByChaveAndVigenciaInicio(String chave, LocalDate inicio) {

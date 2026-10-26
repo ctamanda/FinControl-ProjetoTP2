@@ -31,7 +31,7 @@ public class EmpresaService {
     UsuarioRepository usuarioRepository;
 
     @Inject
-    CategoriasIniciais categoriasIniciais;
+    DadosIniciais dadosIniciais;
 
     @Inject
     AuditoriaService auditoria;
@@ -59,7 +59,7 @@ public class EmpresaService {
                 empresa, Escopo.EMPRESA, admin);
 
         if (categoriaRepository.countByDono(admin) == 0) {
-            categoriasIniciais.criar(admin, empresa);
+            dadosIniciais.criar(admin, empresa);
         }
 
         auditoria.registrar(admin, "EMPRESA_CADASTRADA", AuditoriaService.alvo(empresa),

@@ -20,7 +20,11 @@ public record CategoriaRequestDTO(
     @Length(max = 20, message = "A cor deve conter no maximo 20 caracteres.")
     @Pattern(regexp = "^$|^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
             message = "A cor deve estar no formato hexadecimal (ex: #FFFFFF).")
-    String cor
+    String cor,
+
+    // Nome de um ícone do Material Icons (ex.: "restaurant"); vazio = ícone padrão do tipo.
+    @Pattern(regexp = "^$|^[a-z0-9_]{2,40}$", message = "Ícone inválido.")
+    String icone
 
 ) {
 }

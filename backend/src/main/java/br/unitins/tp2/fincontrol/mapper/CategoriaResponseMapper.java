@@ -13,6 +13,7 @@ public final class CategoriaResponseMapper {
                 categoria.getId(),
                 categoria.getNome(),
                 categoria.getTipo(),
-                categoria.getCor());
+                categoria.getCor(),
+                categoria.getIcone());
     }
 }

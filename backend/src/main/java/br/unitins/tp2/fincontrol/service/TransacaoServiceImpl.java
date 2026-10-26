@@ -1,19 +1,24 @@
 package br.unitins.tp2.fincontrol.service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import br.unitins.tp2.fincontrol.dto.PagamentoRequestDTO;
 import br.unitins.tp2.fincontrol.dto.TransacaoRequestDTO;
 import br.unitins.tp2.fincontrol.exception.Problem;
 import br.unitins.tp2.fincontrol.exception.ResourceNotFoundException;
 import br.unitins.tp2.fincontrol.exception.ValidationException;
 import br.unitins.tp2.fincontrol.model.Categoria;
+import br.unitins.tp2.fincontrol.model.ContaFinanceira;
 import br.unitins.tp2.fincontrol.model.Escopo;
 import br.unitins.tp2.fincontrol.model.TipoTransacao;
 import br.unitins.tp2.fincontrol.model.Transacao;
 import br.unitins.tp2.fincontrol.model.Usuario;
 import br.unitins.tp2.fincontrol.repository.CategoriaRepository;
+import br.unitins.tp2.fincontrol.repository.ContaFinanceiraRepository;
+import br.unitins.tp2.fincontrol.repository.TransacaoFiltro;
 import br.unitins.tp2.fincontrol.repository.TransacaoRepository;
 import br.unitins.tp2.fincontrol.security.Permissoes;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -24,6 +29,8 @@ import jakarta.ws.rs.ForbiddenException;
 // Transações da conta pessoal ou da empresa do usuário (ver repository.Dono).
 // Com os módulos Receitas/Despesas, o usuário só vê e altera o tipo liberado;
 // Lançamentos libera os dois tipos.
+// Todo lançamento cai numa conta financeira; os pendentes (não pagos) são as contas
+// a pagar e a receber e só entram no saldo da conta quando são pagos.
 @ApplicationScoped
 public class TransacaoServiceImpl implements TransacaoService {
 
@@ -34,6 +41,12 @@ public class TransacaoServiceImpl implements TransacaoService {
 
     @Inject
     CategoriaRepository categoriaRepository;
+
+    @Inject
+    ContaFinanceiraRepository contaRepository;
+
+    @Inject
+    ContaFinanceiraService contaService;
 
     @Override
     @Transactional
@@ -74,26 +87,45 @@ public class TransacaoServiceImpl implements TransacaoService {
     }
 
     @Override
-    public List<Transacao> findAll(int page, int pageSize, Usuario usuario) {
+    public List<Transacao> buscar(TransacaoFiltro filtro, int page, int pageSize, Usuario usuario) {
         validarPaginacao(page, pageSize);
-        return transacaoRepository.findByDono(usuario, tiposVisiveis(usuario)).page(page, pageSize).list();
+        return transacaoRepository.buscar(usuario, tiposVisiveis(usuario), filtro).page(page, pageSize).list();
     }
 
     @Override
-    public List<Transacao> findByDescricao(String descricao, int page, int pageSize, Usuario usuario) {
-        validarPaginacao(page, pageSize);
-        return transacaoRepository.findByDonoAndDescricao(usuario, tiposVisiveis(usuario), descricao)
-                .page(page, pageSize).list();
+    public long contar(TransacaoFiltro filtro, Usuario usuario) {
+        return transacaoRepository.buscar(usuario, tiposVisiveis(usuario), filtro).count();
     }
 
     @Override
-    public long count(Usuario usuario) {
-        return transacaoRepository.findByDono(usuario, tiposVisiveis(usuario)).count();
+    @Transactional
+    public Transacao pagar(long id, PagamentoRequestDTO pagamento, Usuario usuario) {
+        Transacao transacao = buscarTransacaoOuFalhar(id, usuario);
+        exigirTipoEditavel(transacao.getTipo(), usuario);
+        if (transacao.isPago()) {
+            throw ValidationException.of("pago", "Este lançamento já está pago.");
+        }
+        if (pagamento != null && pagamento.idConta() != null) {
+            transacao.setConta(buscarContaOuFalhar(pagamento.idConta(), usuario, transacao.getConta()));
+        }
+        LocalDate data = pagamento != null && pagamento.dataPagamento() != null ? pagamento.dataPagamento() : LocalDate.now();
+        exigirDataPagamentoValida(data);
+        transacao.setPago(true);
+        transacao.setDataPagamento(data);
+        return transacao;
     }
 
     @Override
-    public long count(String descricao, Usuario usuario) {
-        return transacaoRepository.findByDonoAndDescricao(usuario, tiposVisiveis(usuario), descricao).count();
+    @Transactional
+    public Transacao reabrir(long id, Usuario usuario) {
+        Transacao transacao = buscarTransacaoOuFalhar(id, usuario);
+        exigirTipoEditavel(transacao.getTipo(), usuario);
+        if (!transacao.isPago()) {
+            throw ValidationException.of("pago", "Este lançamento ainda não foi pago.");
+        }
+        transacao.setPago(false);
+        transacao.setDataPagamento(null);
+        return transacao;
     }
 
     // O AcessoFilter já garante algum dos módulos de transação; aqui fica a regra por tipo.
@@ -135,11 +167,37 @@ public class TransacaoServiceImpl implements TransacaoService {
                             + " e não combina com uma transação de " + origem.tipo().name().toLowerCase() + ".");
         }
 
+        // Sem conta informada: mantém a atual (edição) ou usa a conta padrão (novo lançamento).
+        ContaFinanceira conta = origem.idConta() != null
+                ? buscarContaOuFalhar(origem.idConta(), usuario, destino.getConta())
+                : destino.getConta() != null ? destino.getConta() : contaService.padrao(usuario);
+
+        LocalDate hoje = LocalDate.now();
+        boolean pago = origem.pago() != null ? origem.pago() : !origem.data().isAfter(hoje);
+        LocalDate dataPagamento = null;
+        if (pago) {
+            dataPagamento = origem.dataPagamento() != null
+                    ? origem.dataPagamento()
+                    : origem.data().isAfter(hoje) ? hoje : origem.data();
+            exigirDataPagamentoValida(dataPagamento);
+        }
+
         destino.setDescricao(origem.descricao().trim());
         destino.setValor(origem.valor());
         destino.setData(origem.data());
         destino.setTipo(origem.tipo());
         destino.setCategoria(categoria);
+        destino.setConta(conta);
+        destino.setPago(pago);
+        destino.setDataPagamento(dataPagamento);
+    }
+
+    // Pago = o dinheiro já saiu/entrou: a data de pagamento não pode estar no futuro.
+    private void exigirDataPagamentoValida(LocalDate dataPagamento) {
+        if (dataPagamento.isAfter(LocalDate.now())) {
+            throw ValidationException.of("dataPagamento",
+                    "A data de pagamento não pode ser futura. Deixe o lançamento como pendente.");
+        }
     }
 
     // Só aceita categoria do mesmo dono (conta pessoal ou empresa): sem isso daria para
@@ -152,6 +210,17 @@ public class TransacaoServiceImpl implements TransacaoService {
             throw ValidationException.of("idCategoria", "Categoria não encontrada.");
 
         return categoria;
+    }
+
+    // Mesma regra para a conta; conta arquivada só vale se o lançamento já estava nela.
+    private ContaFinanceira buscarContaOuFalhar(Long idConta, Usuario usuario, ContaFinanceira atual) {
+        ContaFinanceira conta = contaRepository.findByDonoAndId(usuario, idConta);
+        if (conta == null)
+            throw ValidationException.of("idConta", "Conta não encontrada.");
+        if (!conta.isAtiva() && (atual == null || !atual.getId().equals(conta.getId())))
+            throw ValidationException.of("idConta", "Esta conta está arquivada.");
+
+        return conta;
     }
 
     private Transacao buscarTransacaoOuFalhar(long id, Usuario usuario) {

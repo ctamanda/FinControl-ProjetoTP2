@@ -86,6 +86,7 @@ public class CategoriaServiceImpl implements CategoriaService {
         categoria.setNome(nome);
         categoria.setTipo(dto.tipo());
         categoria.setCor(dto.cor() == null || dto.cor().isBlank() ? null : dto.cor().toUpperCase());
+        categoria.setIcone(dto.icone() == null || dto.icone().isBlank() ? null : dto.icone());
     }
 
     private boolean possuiTransacoes(Categoria categoria) {

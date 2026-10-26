@@ -12,6 +12,7 @@ import br.unitins.tp2.fincontrol.model.Modulo;
 import br.unitins.tp2.fincontrol.model.Role;
 import br.unitins.tp2.fincontrol.model.Usuario;
 import br.unitins.tp2.fincontrol.repository.CategoriaRepository;
+import br.unitins.tp2.fincontrol.repository.ContaFinanceiraRepository;
 import br.unitins.tp2.fincontrol.repository.EmpresaRepository;
 import br.unitins.tp2.fincontrol.repository.TransacaoRepository;
 import br.unitins.tp2.fincontrol.repository.UsuarioRepository;
@@ -48,7 +49,10 @@ public class AdminUsuarioService {
     CategoriaRepository categoriaRepository;
 
     @Inject
-    CategoriasIniciais categoriasIniciais;
+    DadosIniciais dadosIniciais;
+
+    @Inject
+    ContaFinanceiraRepository contaRepository;
 
     @Inject
     AuditoriaService auditoria;
@@ -101,7 +105,7 @@ public class AdminUsuarioService {
         repository.persist(usuario);
 
         if (usuario.getRole() == Role.PESSOAL) {
-            categoriasIniciais.criar(usuario, null);
+            dadosIniciais.criar(usuario, null);
         }
 
         auditoria.registrar(autor, "USUARIO_CRIADO", AuditoriaService.alvo(usuario),
@@ -148,22 +152,25 @@ public class AdminUsuarioService {
         exigirOutroUsuario(usuario, autor, "excluir");
         exigirOutroSuperAdminAtivo(usuario);
 
-        if (temHistorico(transacaoRepository, categoriaRepository, usuario)) {
+        if (temHistorico(transacaoRepository, categoriaRepository, contaRepository, usuario)) {
             throw ValidationException.of("usuario",
                     "Este usuário já registrou lançamentos ou categorias. Desative-o para remover o acesso sem perder o histórico.");
         }
 
         auditoria.registrar(autor, "USUARIO_EXCLUIDO", AuditoriaService.alvo(usuario), "Perfil " + usuario.getRole());
-        // Categorias da conta pessoal (as iniciais, sem lançamentos) vão junto com a conta.
+        // Categorias e contas da conta pessoal (as iniciais, sem lançamentos) vão junto com o usuário.
         categoriaRepository.delete("usuario = ?1 and empresa is null", usuario);
+        contaRepository.delete("usuario = ?1 and empresa is null", usuario);
         repository.delete(usuario);
     }
 
-    // Histórico = lançamentos feitos pelo usuário ou categorias que ele criou numa empresa
-    // (compartilhadas com a equipe). As categorias iniciais da conta pessoal não contam.
-    static boolean temHistorico(TransacaoRepository transacoes, CategoriaRepository categorias, Usuario usuario) {
+    // Histórico = lançamentos feitos pelo usuário ou categorias/contas que ele criou numa empresa
+    // (compartilhadas com a equipe). As categorias e a conta iniciais da conta pessoal não contam.
+    static boolean temHistorico(TransacaoRepository transacoes, CategoriaRepository categorias,
+            ContaFinanceiraRepository contas, Usuario usuario) {
         return transacoes.count("usuario", usuario) > 0
-                || categorias.count("usuario = ?1 and empresa is not null", usuario) > 0;
+                || categorias.count("usuario = ?1 and empresa is not null", usuario) > 0
+                || contas.count("usuario = ?1 and empresa is not null", usuario) > 0;
     }
 
     private Empresa empresaDoPerfil(Role role, Long idEmpresa) {

@@ -20,6 +20,10 @@ public class Categoria extends DefaultEntity {
     @Column(length = 20)
     private String cor;
 
+    // Nome de um ícone do Material Icons (ex.: "restaurant", "home").
+    @Column(length = 40)
+    private String icone;
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
@@ -68,5 +72,13 @@ public class Categoria extends DefaultEntity {
 
     public void setEmpresa(Empresa empresa) {
         this.empresa = empresa;
+    }
+
+    public String getIcone() {
+        return icone;
+    }
+
+    public void setIcone(String icone) {
+        this.icone = icone;
     }
 }

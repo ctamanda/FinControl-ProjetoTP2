@@ -6,6 +6,7 @@ public record CategoriaResponseDTO(
     Long id,
     String nome,
     TipoCategoria tipo,
-    String cor
+    String cor,
+    String icone
 ) {
 }

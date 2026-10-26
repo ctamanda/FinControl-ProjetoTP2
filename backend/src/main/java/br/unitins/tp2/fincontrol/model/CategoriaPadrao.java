@@ -22,6 +22,10 @@ public class CategoriaPadrao extends DefaultEntity {
     @Column(length = 20)
     private String cor;
 
+    // Nome de um ícone do Material Icons (ex.: "restaurant", "home").
+    @Column(length = 40)
+    private String icone;
+
     @Column(nullable = false)
     private boolean ativo = true;
 
@@ -55,5 +59,13 @@ public class CategoriaPadrao extends DefaultEntity {
 
     public void setAtivo(boolean ativo) {
         this.ativo = ativo;
+    }
+
+    public String getIcone() {
+        return icone;
+    }
+
+    public void setIcone(String icone) {
+        this.icone = icone;
     }
 }

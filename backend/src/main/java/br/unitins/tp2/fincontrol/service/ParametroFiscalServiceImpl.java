@@ -6,6 +6,7 @@ import java.util.List;
 import br.unitins.tp2.fincontrol.dto.ParametroFiscalRequestDTO;
 import br.unitins.tp2.fincontrol.exception.ResourceNotFoundException;
 import br.unitins.tp2.fincontrol.model.ParametroFiscal;
+import br.unitins.tp2.fincontrol.model.TipoEmpresa;
 import br.unitins.tp2.fincontrol.model.Usuario;
 import br.unitins.tp2.fincontrol.repository.ParametroFiscalRepository;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -27,6 +28,11 @@ public class ParametroFiscalServiceImpl implements ParametroFiscalService {
     @Override
     public List<ParametroFiscal> findAll() {
         return repository.find("order by chave asc, vigenciaInicio desc").list();
+    }
+
+    @Override
+    public List<ParametroFiscal> findVigentes(TipoEmpresa tipo) {
+        return repository.findVigentes(tipo, LocalDate.now());
     }
 
     @Override
