@@ -10,9 +10,8 @@
 </p>
 
 <p align="center">
-  <a href="../README.md">README geral</a> ·
-  <a href="../frontend/README.md">Frontend (Angular)</a> ·
-  <a href="https://ctamanda.github.io/FinControl-ProjetoTP2/">Frontend online</a>
+  <a href="https://github.com/ctamanda/topicos-2-front">Frontend (Angular)</a> ·
+  <a href="https://ctamanda.github.io/topicos-2-front/">Frontend online</a>
 </p>
 
 ---
@@ -162,6 +161,28 @@ Na primeira execução, o Flyway cria as tabelas e o **usuário administrador**.
 
 Criado pela migration `V10__cria_admin.sql` (perfil **SUPER_ADMIN** desde a V12). **Troque a senha antes de qualquer uso fora do ambiente acadêmico.**
 
+### Contas de demonstração (opcional)
+
+Para testar e apresentar os dashboards com dados, com a API no ar:
+
+```bash
+python scripts/criar-contas-demo.py                         # usa http://localhost:8080
+python scripts/criar-contas-demo.py http://outro-host:8080  # ou informe a URL da API
+```
+
+O script usa só a API pública (cadastro, empresa, usuários da empresa e transações) e pode ser
+rodado de novo: o que já existe não é duplicado. Os valores mudam um pouco a cada banco (são sorteados)
+e as datas são relativas ao dia em que o script roda (últimos 6 meses + algumas despesas futuras).
+
+| Perfil | E-mail | Senha | Conteúdo |
+|---|---|---|---|
+| PESSOAL | `demo.pessoal@fincontrol.com` | `Senha@123` | Lucas Pereira, salário, aluguel, mercado etc. em 6 meses; 3 despesas futuras |
+| ADMIN_EMPRESA | `demo.mei@fincontrol.com` | `Senha@123` | Ana Souza, empresa **Studio Aurora** (MEI, CNPJ gerado na hora), receitas de serviços e despesas do estúdio |
+| USUARIO_EMPRESA | `demo.colab@fincontrol.com` | `Senha@123` | Marina Costa (Studio Aurora), módulos `DASHBOARD`, `LANCAMENTOS`, `RELATORIOS`; 3 lançamentos próprios |
+| USUARIO_EMPRESA | `demo.vendas@fincontrol.com` | `Senha@123` | Pedro Alves (Studio Aurora), só `LANCAMENTOS` |
+
+> Contas só para ambiente local/apresentação: a senha é pública. Não rode o script em produção.
+
 ## Variáveis de ambiente
 
 | Variável | Padrão | Para quê |
@@ -259,7 +280,16 @@ A conta **EMPRESA** volta com `"empresaPendente": true`: o próximo passo é `PO
 | Método | Rota | Acesso | Corpo | Resposta |
 |---|---|---|---|---|
 | GET | `/usuarios/me` | 👤 | — | **200** `UsuarioResponseDTO` |
-| PUT | `/usuarios/me` | 👤 | `UsuarioUpdateDTO` | **200** `UsuarioResponseDTO` |
+| PUT | `/usuarios/me` | 👤 | `UsuarioUpdateDTO` (com `senhaAtual`) | **200** `UsuarioResponseDTO` |
+| PUT | `/usuarios/me/modulos` | PESSOAL | `{ "modulos": [...] }` | **200** `UsuarioResponseDTO` |
+| PUT | `/usuarios/me/senha` | 👤 | `{ "senhaAtual", "novaSenha", "confirmacaoSenha" }` | **200** `LoginResponseDTO` (token novo) |
+| PUT | `/usuarios/me/email` | 👤 | `{ "novoEmail", "senhaAtual" }` | **200** `LoginResponseDTO` (token novo) |
+| POST | `/usuarios/me/encerrar-sessoes` | 👤 | `{ "senhaAtual" }` | **200** `LoginResponseDTO` (token novo) |
+
+**Reautenticação:** alterar dados pessoais, senha ou e-mail e encerrar as sessões exigem a **senha atual**,
+mesmo com o token válido. Senha errada responde **400** com o campo `senhaAtual` e conta como tentativa
+errada para o bloqueio (ver [Segurança e LGPD](#segurança-e-lgpd)). Senha, e-mail e "encerrar sessões"
+invalidam todos os tokens anteriores e devolvem um token novo para a sessão atual continuar.
 
 ```jsonc
 // UsuarioResponseDTO
@@ -270,9 +300,9 @@ A conta **EMPRESA** volta com `"empresaPendente": true`: o próximo passo é `PO
   "empresaPendente": false }
 
 // UsuarioUpdateDTO (e-mail e perfil de acesso não mudam por aqui)
-// "profissao" e "modulos" só valem na conta PESSOAL; "modulos" nulo mantém os atuais.
-{ "nome": "Maria S. Souza", "telefone": "63999990000",
-  "profissao": "Professora", "modulos": ["DASHBOARD", "LANCAMENTOS", "CATEGORIAS"] }
+// "profissao" só vale na conta PESSOAL; os módulos mudam em PUT /usuarios/me/modulos.
+{ "nome": "Maria S. Souza", "telefone": "63999990000", "profissao": "Professora",
+  "senhaAtual": "Senha@123" }
 ```
 
 ### Empresa — `/empresa`
@@ -321,15 +351,20 @@ Quem cadastra a empresa vira o **administrador principal** (`idResponsavel`) e a
 
 | Método | Rota | Acesso | Corpo | Resposta |
 |---|---|---|---|---|
-| GET | `/transacoes?page=0&pageSize=10&descricao=` | 👤 `DASHBOARD`, `LANCAMENTOS`, `RECEITAS` ou `DESPESAS` | — | **200** `PageResponse<TransacaoResponseDTO>` |
+| GET | `/transacoes?page=0&pageSize=10` + filtros | 👤 `DASHBOARD`, `LANCAMENTOS`, `RECEITAS` ou `DESPESAS` | — | **200** `PageResponse<TransacaoResponseDTO>` |
 | GET | `/transacoes/{id}` | idem | — | **200** · **404** se não existir ou for de outra conta |
 | POST | `/transacoes` | 👤 `LANCAMENTOS`, `RECEITAS` ou `DESPESAS` | `TransacaoRequestDTO` | **201** · **403** tipo não liberado |
 | PUT | `/transacoes/{id}` | idem | `TransacaoRequestDTO` | **204** |
+| PATCH | `/transacoes/{id}/pagar` | idem | `{ "dataPagamento"?, "idConta"? }` (opcional) | **200** · **400** se já estiver pago |
+| PATCH | `/transacoes/{id}/reabrir` | idem | — | **200** (volta a pendente) · **400** se não estiver pago |
 | DELETE | `/transacoes/{id}` | idem | — | **204** |
 
 - `page` começa em 0. `pageSize` vai de 1 a **100**.
-- `descricao` é opcional e filtra por trecho, sem diferenciar maiúsculas.
-- A lista vem ordenada por data, da mais recente para a mais antiga.
+- Filtros opcionais: `descricao` (trecho, sem diferenciar maiúsculas), `tipo` (`RECEITA`/`DESPESA`),
+  `status` (`PAGO`, `PENDENTE` — inclui os atrasados — ou `ATRASADO`), `mes` (`aaaa-mm`, pela data) e `idConta`.
+- A lista vem da data mais recente para a mais antiga; filtrando pendentes, do vencimento mais próximo.
+- **Contas a pagar e a receber:** lançamento com `pago: false` é pendente e a `data` é o vencimento.
+  Só os pagos mexem no saldo da conta. O `status` é calculado: `PAGO`, `PENDENTE` ou `ATRASADO` (vencido).
 - Com só `RECEITAS` (ou só `DESPESAS`), a lista traz e aceita apenas aquele tipo.
 - O `escopo` (`PESSOAL` ou `EMPRESA`) não é enviado: sai do tipo de conta de quem lança.
 
@@ -338,15 +373,21 @@ Quem cadastra a empresa vira o **administrador principal** (`idResponsavel`) e a
 {
   "descricao": "Mercado",        // 2 a 150 caracteres
   "valor": 152.37,               // > 0, até 2 casas
-  "data": "2026-10-10",          // yyyy-MM-dd
+  "data": "2026-10-10",          // yyyy-MM-dd; se pendente, é o vencimento
   "tipo": "DESPESA",             // RECEITA | DESPESA
-  "idCategoria": 3               // categoria da mesma conta/empresa e do mesmo tipo
+  "idCategoria": 3,              // categoria da mesma conta/empresa e do mesmo tipo
+  "idConta": 2,                  // opcional: padrão = conta ativa mais antiga (não aceita arquivada)
+  "pago": true,                  // opcional: padrão = data até hoje (data futura vira pendente)
+  "dataPagamento": "2026-10-10"  // opcional: padrão = a data (ou hoje); não pode ser futura
 }
 
 // PageResponse
 { "items": [ { "id": 1, "descricao": "Mercado", "valor": 152.37, "data": "2026-10-10",
                "tipo": "DESPESA", "escopo": "PESSOAL",
-               "categoria": { "id": 3, "nome": "Alimentação", "tipo": "DESPESA", "cor": "#FF5733" } } ],
+               "categoria": { "id": 3, "nome": "Alimentação", "tipo": "DESPESA", "cor": "#FF5733", "icone": "restaurant" },
+               "usuario": { "id": 7, "nome": "Maria", "email": "maria@ex.com" },
+               "conta": { "id": 2, "nome": "Nubank", "tipo": "CONTA_CORRENTE", "cor": "#820AD1" },
+               "pago": true, "dataPagamento": "2026-10-10", "status": "PAGO" } ],
   "page": 0, "pageSize": 10, "totalItems": 1, "totalPages": 1 }
 ```
 
@@ -361,8 +402,36 @@ Quem cadastra a empresa vira o **administrador principal** (`idResponsavel`) e a
 | DELETE | `/categorias/{id}` | 👤 `CATEGORIAS` | — | **204** · **400** se houver transações na categoria |
 
 ```jsonc
-// CategoriaRequestDTO
-{ "nome": "Saúde", "tipo": "DESPESA", "cor": "#8E24AA" }   // nome 2–60; cor hexadecimal opcional
+// CategoriaRequestDTO (cor hexadecimal e ícone do Material Icons opcionais)
+{ "nome": "Saúde", "tipo": "DESPESA", "cor": "#8E24AA", "icone": "favorite" }
+```
+
+### Contas financeiras — `/contas`
+
+Onde o dinheiro está (banco, poupança, carteira...). O saldo é calculado a cada consulta:
+`saldoAtual` = saldo inicial + receitas pagas − despesas pagas. Toda conta pessoal nasce com a conta
+**Carteira** e toda empresa com **Caixa**.
+
+| Método | Rota | Acesso | Corpo | Resposta |
+|---|---|---|---|---|
+| GET | `/contas?mes=aaaa-mm&inativas=false` | 👤 `CONTAS` ou algum módulo de transações/dashboard | — | **200** lista com os saldos do mês |
+| GET | `/contas/{id}?mes=` | idem | — | **200** · **404** de outra conta/empresa |
+| POST | `/contas` | 👤 `CONTAS` | `ContaFinanceiraRequestDTO` | **201** |
+| PUT | `/contas/{id}` | 👤 `CONTAS` | `ContaFinanceiraRequestDTO` | **200** |
+| PATCH | `/contas/{id}/arquivar` · `/reativar` | 👤 `CONTAS` | — | **200** · **400** se for a última conta ativa |
+| DELETE | `/contas/{id}` | 👤 `CONTAS` | — | **204** · **400** se tiver lançamentos (arquive) ou for a última ativa |
+
+```jsonc
+// ContaFinanceiraRequestDTO (nome único por dono; saldo inicial pode ser negativo)
+{ "nome": "Nubank", "tipo": "CONTA_CORRENTE", "saldoInicial": 1500.00, "cor": "#820AD1" }
+// tipo: CONTA_CORRENTE | POUPANCA | CARTEIRA | INVESTIMENTO | OUTRA
+
+// ContaFinanceiraResponseDTO (mês pedido; padrão = mês atual)
+{ "id": 2, "nome": "Nubank", "tipo": "CONTA_CORRENTE", "cor": "#820AD1", "ativa": true,
+  "saldoInicial": 1500.00, "saldoAtual": 2940.10,
+  "receitasMes": 5400.00, "despesasMes": 3610.30,   // lançamentos do mês, pagos ou não
+  "saldoPrevisto": 2328.40,                          // atual + pendentes que vencem até o fim do mês
+  "totalLancamentos": 37 }
 ```
 
 ### Painel administrativo — `/admin` (só SUPER_ADMIN)
@@ -509,7 +578,10 @@ Os erros da aplicação seguem o padrão **RFC 7807 / 9457** (`application/probl
 | Conta PESSOAL exige profissão | `RegisterRequestDTO`, `UsuarioService.atualizarPerfil` |
 | CNPJ com dígitos verificadores válidos e **único**; gravado só com números | `validation/Cnpj` + `EmpresaService` |
 | ADMIN_EMPRESA só usa o sistema depois de cadastrar a empresa (uma única vez) | `AcessoFilter` + `EmpresaService.criar` |
-| Conta pessoal e empresa começam com 6 categorias: Alimentação, Moradia, Transporte, Lazer (despesas), Salário e Vendas (receitas) | `CategoriasIniciais` |
+| Conta pessoal e empresa começam com as categorias padrão ativas (de início: Alimentação, Moradia, Transporte, Lazer, Salário e Vendas) e uma conta financeira ("Carteira" ou "Caixa") | `DadosIniciais` |
+| Só lançamento pago mexe no saldo; pendente é conta a pagar/receber e a data é o vencimento | `TransacaoServiceImpl`, `ContaFinanceiraService` |
+| Data de pagamento não pode ser futura; conta arquivada não recebe lançamento novo | `TransacaoServiceImpl` |
+| Sempre sobra uma conta ativa; conta com lançamentos não é excluída (só arquivada) | `ContaFinanceiraService` |
 | Dados da empresa (categorias e transações) são **compartilhados** entre os usuários dela; os da conta pessoal são só do titular | `repository/Dono` |
 | Usuário comum não recebe o módulo `USUARIOS`; conta pessoal não escolhe `CLIENTES`/`FORNECEDORES` (400 listando os inválidos) | `Permissoes.exigirPermitidos` |
 | O administrador **não altera o próprio perfil** nem se desativa/exclui | `UsuarioEmpresaService` |
@@ -530,7 +602,7 @@ Os erros da aplicação seguem o padrão **RFC 7807 / 9457** (`application/probl
 | Empresa desativada: nenhum usuário dela entra (401 no login e em qualquer requisição) | `Permissoes.motivoBloqueio` |
 | Sempre existe **pelo menos um SUPER_ADMIN ativo**; ninguém altera o próprio perfil nem se desativa/exclui | `AdminUsuarioService` |
 | Exclusão só de quem não tem histórico (lançamentos ou categorias criadas numa empresa); as categorias iniciais da conta pessoal vão junto | `AdminUsuarioService.temHistorico` |
-| Categorias iniciais das contas novas vêm das **categorias padrão ativas** | `CategoriasIniciais` + `categoria_padrao` |
+| Categorias iniciais das contas novas vêm das **categorias padrão ativas** (com cor e ícone) | `DadosIniciais` + `categoria_padrao` |
 | Parâmetro fiscal: só os **ativos** contam na vigência e na regra de sobreposição | `ParametroFiscalServiceImpl` |
 | Alterações administrativas importantes ficam na **auditoria** | `AuditoriaService` |
 
@@ -544,6 +616,7 @@ empresa  1 ───< transacao         (transacao.empresa_id; nulo = conta pess
 usuario  1 ───< categoria         (categoria.usuario_id = dono pessoal ou quem criou)
 usuario  1 ───< transacao         (transacao.usuario_id = dono pessoal ou quem lançou)
 categoria 1 ─< transacao          (transacao.id_categoria)
+conta_financeira 1 ─< transacao   (transacao.conta_id; dono igual ao da categoria)
 parametro_fiscal                  (global, administrado pelo SUPER_ADMIN)
 ```
 
@@ -552,8 +625,9 @@ parametro_fiscal                  (global, administrado pelo SUPER_ADMIN)
 | `usuario` | `email` (único, sem diferenciar maiúsculas), `nome`, `password` (BCrypt), `telefone`, `profissao`, `role`, `ativo`, `empresa_id` |
 | `usuario_modulo` | `usuario_id`, `modulo` |
 | `empresa` | `razao_social`, `nome_fantasia`, `cnpj` (único), `tipo`, `telefone`, `email`, `responsavel_id` |
-| `categoria` | `nome`, `tipo`, `cor`, `usuario_id`, `empresa_id` |
-| `transacao` | `descricao`, `valor` NUMERIC(15,2), `data`, `tipo`, `escopo`, `id_categoria`, `usuario_id`, `empresa_id` |
+| `categoria` | `nome`, `tipo`, `cor`, `icone`, `usuario_id`, `empresa_id` |
+| `conta_financeira` | `nome`, `tipo`, `saldo_inicial` NUMERIC(15,2), `cor`, `ativa`, `usuario_id`, `empresa_id` |
+| `transacao` | `descricao`, `valor` NUMERIC(15,2), `data` (vencimento se pendente), `tipo`, `escopo`, `pago`, `data_pagamento`, `id_categoria`, `conta_id`, `usuario_id`, `empresa_id` |
 | `parametro_fiscal` | `chave`, `valor` NUMERIC(15,2), `vigencia_inicio`, `vigencia_fim` · único (`chave`, `vigencia_inicio`) |
 
 Todas as entidades herdam de `DefaultEntity`: `id` (IDENTITY), `dataCadastro` e `dataAlteracao`, preenchidas automaticamente.
@@ -568,6 +642,8 @@ Todas as entidades herdam de `DefaultEntity`: `id` (IDENTITY), `dataCadastro` e 
 | `Modulo` | ver [Módulos](#módulos-funcionalidades) |
 | `TipoTransacao` / `TipoCategoria` | `RECEITA`, `DESPESA` |
 | `Escopo` | `PESSOAL`, `EMPRESA` |
+| `TipoContaFinanceira` | `CONTA_CORRENTE`, `POUPANCA`, `CARTEIRA`, `INVESTIMENTO`, `OUTRA` |
+| `StatusPagamento` (calculado) | `PAGO`, `PENDENTE`, `ATRASADO` |
 
 ## Migrations
 
@@ -587,6 +663,8 @@ Quem cria e altera tabelas é o **Flyway**; o Hibernate só valida (`database.ge
 
 | V13 | Painel administrativo: empresa ativa/inativa, `categoria_padrao` (as 6 iniciais saem do código), descrição/tipo de empresa/ativo/"alterado por" no parâmetro fiscal, tabela `auditoria` e os tetos de faturamento do MEI e da ME de 2026 |
 | V14 | Remove a coluna `whatsapp` do usuário (o cadastro pede só o telefone) |
+| V15 | Segurança da conta: tentativas de login, bloqueio temporário e versão da sessão |
+| V16 | Contas financeiras; lançamento com conta, `pago` e data de pagamento; ícone nas categorias (os lançamentos antigos vão para a conta "Carteira"/"Caixa" criada para cada dono, e os de data futura viram pendentes) |
 
 > **Regra do time:** migration que já foi para a `main` **nunca é editada**. Para mudar algo, crie uma nova (`V15__...`).
 
@@ -596,10 +674,18 @@ Contas MEI/ME antigas viram ADMIN_EMPRESA com a empresa pendente. Ao cadastrar a
 
 - **Senhas** com BCrypt; nunca saem nas respostas.
 - **JWT RSA** com validade de 1 hora; a chave privada fica fora do repositório.
+- **Reautenticação:** alterar os próprios dados pessoais, a senha ou o e-mail pede a senha atual de novo.
+  Uma sessão esquecida aberta não basta para mudar os dados de ninguém.
+- **Bloqueio contra força bruta:** 5 senhas erradas seguidas (no login ou na confirmação de senha)
+  bloqueiam a conta por 15 minutos (**429**); acertar a senha zera a contagem. O bloqueio vai para a auditoria.
+- **Encerramento de sessões:** o token leva a versão da sessão do usuário (claim `sv`). Trocar a senha
+  ou o e-mail, ou usar "sair de todos os outros aparelhos", sobe a versão e os tokens antigos passam a
+  responder **401** na hora.
 - **Checagem em toda requisição** (`AcessoFilter`): usuário ativo, cadastro da empresa concluído e módulo liberado.
 - **Isolamento pelo dono:** transações e categorias são sempre buscadas pelo dono (conta pessoal ou empresa), que vem do token. Um id de outra conta responde **404**, como se não existisse.
 - **Painel administrativo:** o SUPER_ADMIN gerencia usuários e empresas e **consulta** as transações de todos (sem alterar), e cada pesquisa de transações fica na auditoria. Essa visão foi uma decisão do projeto e substitui a regra anterior de "só dados agregados".
-- **Auditoria** de toda alteração administrativa importante (usuários, perfis, empresas, categorias padrão, parâmetros fiscais).
+- **Auditoria** de toda alteração administrativa importante (usuários, perfis, empresas, categorias padrão, parâmetros fiscais)
+  e dos eventos de segurança da conta (dados pessoais, senha e e-mail alterados, sessões encerradas, conta bloqueada).
 - **Logs:** a exibição de SQL com parâmetros reais vale só no perfil `dev`.
 
 ## Testes automatizados
