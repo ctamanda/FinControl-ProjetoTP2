@@ -10,9 +10,8 @@
 </p>
 
 <p align="center">
-  <a href="https://ctamanda.github.io/FinControl-ProjetoTP2/"><b>Ver online (GitHub Pages)</b></a> ·
-  <a href="../README.md">README geral</a> ·
-  <a href="../backend/README.md">Backend (API)</a>
+  <a href="https://ctamanda.github.io/topicos-2-front/"><b>Ver online (GitHub Pages)</b></a> ·
+  <a href="https://github.com/ctamanda/topicos-2-back">Backend (API)</a>
 </p>
 
 ---
@@ -65,7 +64,10 @@ ENTRAR NO FINCONTROL
                           Ambiente pessoal   Ambiente empresarial   Painel administrativo
 ```
 
-Na área logada, a **barra lateral** mostra o ambiente e só as funções que o perfil pode usar (no celular ela vira gaveta, aberta pelo ☰). Funcionalidades liberadas que ainda não têm tela aparecem em "Em breve".
+Na área logada, a **barra superior** roxa traz o mês do dashboard, o botão **+** (ações rápidas), as notificações, a conta ativa e o avatar.
+No computador, a **barra lateral** mostra só os ícones das funções que o perfil pode usar; clicar nela (fora de um ícone) abre a lista com os nomes.
+Funcionalidades liberadas que ainda não têm tela ficam num ícone ⋯ ("Em breve"), e o colaborador vê com cadeado o que não foi liberado.
+No celular, os atalhos principais ficam na **barra inferior**, com o **+** no centro; o restante abre pelo avatar ("Todas as telas").
 
 ## Tecnologias
 
@@ -84,13 +86,13 @@ Na área logada, a **barra lateral** mostra o ambiente e só as funções que o 
 ### Pré-requisitos
 
 - **Node.js 22** (ou superior) e npm
-- **Backend rodando** em `http://localhost:8080` — veja o [README do backend](../backend/README.md)
+- **Backend rodando** em `http://localhost:8080` — veja o [README do backend](https://github.com/ctamanda/topicos-2-back)
 
 ### Passos
 
 ```bash
-git clone https://github.com/ctamanda/FinControl-ProjetoTP2.git
-cd FinControl-ProjetoTP2/frontend
+git clone https://github.com/ctamanda/topicos-2-front.git
+cd topicos-2-front
 npm install
 npm start
 ```
@@ -111,7 +113,20 @@ Abra **http://localhost:4200**.
 |---|---|---|---|
 | SUPER_ADMIN | `admin@fincontrol.com` | `admin123` | Criado pelas migrations `V10`/`V12` do backend |
 | PESSOAL ou ADMIN_EMPRESA | — | — | Crie em **Criar conta** (ou o super admin cria em Usuários) |
-| USUARIO_EMPRESA | — | — | Criado pelo administrador da empresa em **Gestão → Usuários e acessos** |
+| USUARIO_EMPRESA | — | — | Criado pelo administrador da empresa em **Colaboradores** |
+
+### Contas de demonstração (com dados)
+
+Para ver os dashboards preenchidos, rode uma vez, com o backend no ar, o script do backend
+`python scripts/criar-contas-demo.py` (detalhes no README do backend). Ele cria pela API:
+
+| Dashboard | E-mail | Senha | O que dá para ver |
+|---|---|---|---|
+| Pessoal | `demo.pessoal@fincontrol.com` | `Senha@123` | Lucas Pereira: 6 meses de receitas e despesas, ranking de categorias e próximas contas (despesas com data futura) |
+| Empresa / MEI | `demo.mei@fincontrol.com` | `Senha@123` | Ana Souza, administradora do **Studio Aurora** (MEI): fluxo de caixa, limite de faturamento, contas a pagar e colaboradores |
+| Colaborador | `demo.colab@fincontrol.com` | `Senha@123` | Marina Costa: módulos Dashboard, Lançamentos e Relatórios; tem lançamentos próprios em "Meus registros" |
+| Colaborador | `demo.vendas@fincontrol.com` | `Senha@123` | Pedro Alves: só o módulo Lançamentos (abre direto em Lançamentos, sem dashboard) |
+| Administração | `admin@fincontrol.com` | `admin123` | Painel do sistema com as contas acima nos indicadores, usuários, empresas e auditoria |
 
 > Toda conta pessoal e toda empresa começam com as **categorias padrão** ativas (de início: Alimentação, Moradia, Transporte, Lazer, Salário e Vendas), que o super admin administra.
 
@@ -162,10 +177,12 @@ public/
 | `/cadastro` | Criar conta: tipo → cadastro + senha → completar perfil (`?perfil=empresa` já marca "MEI / Microempresa") | Só visitante¹ |
 | `/empresa/cadastro` | Cadastro da empresa (etapa da conta MEI/Microempresa) | Admin de empresa **com a empresa pendente** |
 | `/bem-vindo` | Configuração inicial: funcionalidades (pessoal) ou primeiros passos (empresa) | Logado |
-| `/dashboard` | Visão geral: cards coloridos (saldo, receitas, despesas, equipe), este mês × mês anterior, categorias, 6 meses | Módulo `DASHBOARD` |
-| `/transacoes` · `/transacoes/nova` · `/transacoes/:id` | Lançamentos (só os tipos liberados) | `LANCAMENTOS`, `RECEITAS` ou `DESPESAS` |
-| `/categorias` · `/categorias/nova` · `/categorias/:id` | Categorias | `CATEGORIAS` |
-| `/perfil` | Meu perfil: identidade, dados pessoais (nome, telefone, profissão) e acesso | Logado |
+| `/dashboard` | Visão geral do mês escolhido no topo: um modelo para cada perfil (pessoal, empresa/MEI, colaborador) — saldo início → atual → previsto, categorias, contas, próximas contas a pagar | Módulo `DASHBOARD` |
+| `/transacoes` · `/transacoes/nova` · `/transacoes/:id` | Lançamentos com abas Todos / A pagar / A receber / Pagos / Atrasados, conta, situação e "marcar como pago" (`?conta=ID` filtra por conta; `?tipo=` e `?pendente=1` preenchem o formulário) | `LANCAMENTOS`, `RECEITAS` ou `DESPESAS` |
+| `/a-pagar` | Contas a pagar e a receber: atrasadas, próximos 7 dias e mais adiante, com pagar/receber e desfazer | `LANCAMENTOS`, `RECEITAS` ou `DESPESAS` |
+| `/contas` | Contas financeiras (banco, carteira, poupança): saldo atual e previsto no mês, cadastro, arquivar, excluir | `CONTAS` |
+| `/categorias` · `/categorias/nova` · `/categorias/:id` | Categorias com ícone e cor | `CATEGORIAS` |
+| `/perfil` | Meu perfil: identidade, dados pessoais (nome, telefone, profissão), **segurança da conta** (senha, e-mail de acesso, sair dos outros aparelhos) e acesso | Logado |
 | `/configuracoes` | Funcionalidades da conta pessoal | `PESSOAL` |
 | `/empresa` | Dados da empresa (só o administrador edita) | `ADMIN_EMPRESA` ou `USUARIO_EMPRESA` |
 | `/empresa/usuarios` · `/novo` · `/:id` | Usuários e acessos da empresa | `ADMIN_EMPRESA` |
@@ -209,8 +226,16 @@ Login ──POST /auth/login──▶ { token, expiresIn }
         ├─ AuthService lê o payload do JWT: upn (e-mail), groups (perfil), exp (validade)
         ├─ authInterceptor envia  Authorization: Bearer <token>  em toda chamada à API
         ├─ UsuarioService carrega o perfil (GET /usuarios/me): role, módulos, empresa, empresaPendente
-        └─ resposta 401 ─▶ logout automático e volta ao login ("Sua sessão expirou" ou "Seu acesso foi desativado")
+        └─ resposta 401 ─▶ logout automático e volta ao login ("Sua sessão expirou", "Seu acesso foi desativado"
+                           ou "Sessão encerrada", quando a senha/e-mail mudou em outro aparelho)
 ```
+
+**Segurança da conta (Meu perfil).** Alterar os dados pessoais abre o diálogo **"Confirme que é você"**
+(`shared/confirmar-senha`), que pede a senha atual; o back confere e responde 400 se estiver errada.
+Trocar a senha, trocar o e-mail de acesso e "sair de todos os outros aparelhos" também pedem a senha e
+recebem do back um **token novo** (`AuthService.alterarSenha`, `alterarEmail`, `encerrarOutrasSessoes`):
+esta sessão continua e as outras caem. Depois de 5 senhas erradas seguidas a conta fica bloqueada por
+15 minutos, e o login mostra a mensagem do back (429).
 
 | Peça | Arquivo | Função |
 |---|---|---|
@@ -261,6 +286,14 @@ export const API_URL = 'http://localhost:8080';
 - **Favicon:** `public/favicon.svg`.
 - Todos os tokens ficam no `:root` de `src/styles.css`, e o tema do Material em `src/material-theme.scss`.
 
+**Acabamento estilo iOS** (vale para o site todo):
+
+- Fonte do sistema (SF Pro no iPhone/Mac; Inter nos demais), fundo cinza claro `--fc-bg: #F2F2F7` e cartões brancos com `--fc-radius: 20px` e sombra suave.
+- Campos preenchidos (`--fc-campo`) com cantos de 12px e anel roxo no foco; botões, chips e busca em pílula; diálogos com 24px.
+- `.segmentado` (controle segmentado do iOS) para escolhas lado a lado: Despesa/Receita, Pago/A pagar, abas de filtro.
+- `.status-pg` (Pago, A pagar, Atrasado) e `.btn-pagar` para as contas a pagar.
+- Categorias com ícone: `core/icones.ts` (ícones oferecidos), `<app-icone-categoria>` (ícone no círculo da cor da categoria) e `<app-seletor-icone>` (grade de escolha).
+
 ## Padrões de código
 
 - **Componentes standalone** com `inject()` e estado em **signals** (`signal`, `computed`, `toSignal`).
@@ -272,9 +305,9 @@ export const API_URL = 'http://localhost:8080';
 
 ## Publicação no GitHub Pages
 
-O workflow **`.github/workflows/deploy-pages.yml`** (na raiz do repositório) roda a cada push na `main` que altere a pasta `frontend/` e:
+O workflow **`.github/workflows/deploy-pages.yml`** roda a cada push na `main` (ou na branch de trabalho) e:
 
-1. instala as dependências e compila com `--base-href /<nome-do-repositório>/` (hoje `/FinControl-ProjetoTP2/`);
+1. instala as dependências e compila com `--base-href /topicos-2-front/`;
 2. copia o `index.html` para `404.html`, para que links diretos (ex.: `/admin/painel`) abram o app;
 3. publica o resultado na branch **`gh-pages`**.
 
