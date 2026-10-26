@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
 import { Observable, of, tap } from 'rxjs';
 import { API_URL } from '../api';
-import { Usuario, UsuarioUpdate } from '../../models/usuario.model';
+import { Modulo, Usuario, UsuarioUpdate } from '../../models/usuario.model';
 
 @Injectable({ providedIn: 'root' })
 export class UsuarioService {
@@ -24,6 +24,11 @@ export class UsuarioService {
 
   atualizarPerfil(dados: UsuarioUpdate): Observable<Usuario> {
     return this.http.put<Usuario>(this.apiUrl, dados).pipe(tap((u) => this.perfil.set(u)));
+  }
+
+  // Funcionalidades da conta pessoal (não pede senha: é preferência, não dado pessoal).
+  atualizarModulos(modulos: Modulo[]): Observable<Usuario> {
+    return this.http.put<Usuario>(`${this.apiUrl}/modulos`, { modulos }).pipe(tap((u) => this.perfil.set(u)));
   }
 
   limpar(): void {

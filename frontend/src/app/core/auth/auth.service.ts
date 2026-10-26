@@ -1,11 +1,11 @@
 import { HttpClient } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, tap } from 'rxjs';
+import { Observable, switchMap, tap } from 'rxjs';
 import { API_URL } from '../api';
 import { rotaInicial } from '../acesso';
 import { UsuarioService } from '../usuario/usuario.service';
-import { JwtClaims, LoginRequest, LoginResponse, RegisterRequest } from '../../models/auth.model';
+import { AlteracaoSenha, JwtClaims, LoginRequest, LoginResponse, MotivoSaida, RegisterRequest } from '../../models/auth.model';
 import { Usuario } from '../../models/usuario.model';
 
 const TOKEN_KEY = 'fincontrol_token';
@@ -47,7 +47,29 @@ export class AuthService {
     return this.http.post<Usuario>(`${API_URL}/auth/register`, dados);
   }
 
-  logout(motivo?: 'expirou' | 'desativado'): void {
+  // ---------------------------------------------------------- credenciais da própria conta
+  // O back pede a senha atual, derruba as outras sessões e devolve um token novo para esta.
+
+  alterarSenha(dados: AlteracaoSenha): Observable<Usuario> {
+    return this.renovar(this.http.put<LoginResponse>(`${API_URL}/usuarios/me/senha`, dados));
+  }
+
+  alterarEmail(novoEmail: string, senhaAtual: string): Observable<Usuario> {
+    return this.renovar(this.http.put<LoginResponse>(`${API_URL}/usuarios/me/email`, { novoEmail, senhaAtual }));
+  }
+
+  encerrarOutrasSessoes(senhaAtual: string): Observable<Usuario> {
+    return this.renovar(this.http.post<LoginResponse>(`${API_URL}/usuarios/me/encerrar-sessoes`, { senhaAtual }));
+  }
+
+  private renovar(resposta: Observable<LoginResponse>): Observable<Usuario> {
+    return resposta.pipe(
+      tap((res) => this.salvar(res.token)),
+      switchMap(() => this.usuarios.carregarPerfil()),
+    );
+  }
+
+  logout(motivo?: MotivoSaida): void {
     this.limpar();
     this.router.navigate(['/login'], { queryParams: motivo ? { motivo } : {} });
   }

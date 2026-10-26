@@ -39,6 +39,7 @@ export class Login {
   private readonly params = this.route.snapshot.queryParamMap;
   protected readonly sessaoExpirou = this.params.get('motivo') === 'expirou';
   protected readonly desativado = this.params.get('motivo') === 'desativado';
+  protected readonly sessaoEncerrada = this.params.get('motivo') === 'encerrada';
   protected readonly cadastrado = this.params.get('cadastrado') === '1';
 
   constructor() {
@@ -74,12 +75,15 @@ export class Login {
         error: (error: HttpErrorResponse) => {
           this.carregando.set(false);
           const detalhe: string = error.error?.detail ?? '';
+          // 429: conta bloqueada por alguns minutos depois de várias senhas erradas.
           this.erro.set(
             error.status === 401
               ? /desativad/i.test(detalhe)
                 ? detalhe
                 : 'E-mail ou senha inválidos.'
-              : mensagemDeErro(error, 'Não foi possível entrar. Tente novamente.'),
+              : error.status === 429
+                ? detalhe
+                : mensagemDeErro(error, 'Não foi possível entrar. Tente novamente.'),
           );
         },
       });

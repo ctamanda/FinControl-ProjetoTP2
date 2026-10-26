@@ -50,7 +50,7 @@
             <div class="campo">
               <label for="email">E-mail de acesso</label>
               <input id="email" [value]="u.email" disabled />
-              <span class="ajuda">Usado para entrar; não pode ser alterado.</span>
+              <span class="ajuda">Usado para entrar; para trocar, veja <strong>Segurança da conta</strong>.</span>
             </div>
 
             <div class="campo" [class.invalido]="invalido('telefone')">
@@ -76,8 +76,87 @@
             <button mat-flat-button class="btn-primario" type="submit" [disabled]="salvando() || form.pristine">
               <mat-icon>check</mat-icon> Salvar alterações
             </button>
+            <span class="nota-senha"><mat-icon>lock</mat-icon> Pediremos a sua senha para confirmar.</span>
           </div>
         </form>
+      </section>
+
+      <!-- Segurança da conta -->
+      <section class="fc-card" id="seguranca">
+        <h2 class="fc-card-title"><mat-icon>shield</mat-icon> Segurança da conta</h2>
+
+        <!-- Senha -->
+        <form class="bloco" [formGroup]="formSenha" (ngSubmit)="alterarSenha()" novalidate>
+          <h3>Alterar senha</h3>
+          <p class="texto">Ao trocar a senha, as sessões abertas em outros aparelhos são encerradas.</p>
+          <div class="form-grid">
+            <div class="campo full" [class.invalido]="invalidoSenha('senhaAtual')">
+              <label for="senhaAtual">Senha atual</label>
+              <input id="senhaAtual" [type]="mostrarSenhas() ? 'text' : 'password'" formControlName="senhaAtual" autocomplete="current-password" />
+              @if (invalidoSenha('senhaAtual')) {
+                <span class="erro">Informe a senha atual.</span>
+              }
+            </div>
+            <div class="campo" [class.invalido]="invalidoSenha('novaSenha')">
+              <label for="novaSenha">Nova senha</label>
+              <input id="novaSenha" [type]="mostrarSenhas() ? 'text' : 'password'" formControlName="novaSenha" autocomplete="new-password" />
+            </div>
+            <div class="campo" [class.invalido]="invalidoSenha('confirmacaoSenha')">
+              <label for="confirmacaoSenha">Confirmar nova senha</label>
+              <input id="confirmacaoSenha" [type]="mostrarSenhas() ? 'text' : 'password'" formControlName="confirmacaoSenha" autocomplete="new-password" />
+              @if (formSenha.hasError('senhasDiferentes') && formSenha.controls.confirmacaoSenha.touched) {
+                <span class="erro">As senhas não são iguais.</span>
+              }
+            </div>
+          </div>
+          <app-requisitos-senha [senha]="novaSenha()" [confirmacao]="confirmacao()" />
+          <div class="form-actions">
+            <button mat-flat-button class="btn-primario" type="submit" [disabled]="trocandoSenha()">
+              <mat-icon>key</mat-icon> Alterar senha
+            </button>
+            <button type="button" class="link-acao" (click)="mostrarSenhas.set(!mostrarSenhas())">
+              <mat-icon>{{ mostrarSenhas() ? 'visibility_off' : 'visibility' }}</mat-icon>
+              {{ mostrarSenhas() ? 'Ocultar senhas' : 'Mostrar senhas' }}
+            </button>
+          </div>
+        </form>
+
+        <!-- E-mail -->
+        <div class="bloco">
+          <h3>E-mail de acesso</h3>
+          <p class="texto">Hoje você entra com <strong>{{ u.email }}</strong>.</p>
+          @if (editandoEmail()) {
+            <form [formGroup]="formEmail" (ngSubmit)="alterarEmail()" novalidate>
+              <div class="campo" [class.invalido]="formEmail.controls.novoEmail.invalid && formEmail.controls.novoEmail.touched">
+                <label for="novoEmail">Novo e-mail</label>
+                <input id="novoEmail" type="email" formControlName="novoEmail" autocomplete="email" />
+                @if (formEmail.controls.novoEmail.invalid && formEmail.controls.novoEmail.touched) {
+                  <span class="erro">Informe um e-mail válido.</span>
+                }
+              </div>
+              <div class="form-actions">
+                <button mat-flat-button class="btn-primario" type="submit" [disabled]="trocandoEmail()">
+                  <mat-icon>check</mat-icon> Alterar e-mail
+                </button>
+                <button mat-button type="button" (click)="editandoEmail.set(false); formEmail.reset()">Cancelar</button>
+              </div>
+            </form>
+          } @else {
+            <button mat-stroked-button type="button" (click)="editandoEmail.set(true)"><mat-icon>alternate_email</mat-icon> Alterar e-mail</button>
+          }
+        </div>
+
+        <!-- Sessões -->
+        <div class="bloco">
+          <h3>Sessões abertas</h3>
+          <p class="texto">
+            Esqueceu a conta aberta em outro computador ou perdeu o celular? Encerre as outras sessões; esta continua aberta.
+            Por segurança, a sessão também expira sozinha depois de 1 hora, e a conta é bloqueada por 15 minutos após 5 senhas erradas seguidas.
+          </p>
+          <button mat-stroked-button type="button" (click)="encerrarOutrasSessoes()" [disabled]="encerrando()">
+            <mat-icon>devices</mat-icon> Sair de todos os outros aparelhos
+          </button>
+        </div>
       </section>
 
       <!-- O que a pessoa acessa -->

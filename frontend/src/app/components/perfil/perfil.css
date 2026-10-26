@@ -127,3 +127,35 @@
   color: var(--fc-muted);
   margin: 0 0 14px;
 }
+
+/* ---------- Segurança da conta ---------- */
+.bloco + .bloco {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--fc-border);
+}
+
+.bloco h3 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--fc-roxo);
+}
+
+.bloco .texto {
+  margin: 0 0 16px;
+}
+
+.nota-senha {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--fc-muted);
+}
+
+.nota-senha mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
