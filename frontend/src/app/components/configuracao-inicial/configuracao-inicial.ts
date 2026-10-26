@@ -68,7 +68,7 @@ export class ConfiguracaoInicial {
     }
     this.salvando.set(true);
     this.usuarios
-      .atualizarPerfil({ nome: u.nome, telefone: u.telefone ?? '', profissao: u.profissao, modulos: this.modulos() })
+      .atualizarModulos(this.modulos())
       .subscribe({
         next: (atualizado) => this.router.navigateByUrl(rotaInicial(atualizado)),
         error: (error: HttpErrorResponse) => {

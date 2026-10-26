@@ -12,7 +12,7 @@
   <div class="filtros">
     <label class="busca">
       <mat-icon>search</mat-icon>
-      <input (input)="buscar($event)" placeholder="Buscar por nome ou e-mail" aria-label="Buscar por nome ou e-mail" />
+      <input [value]="busca" (input)="buscar($event)" placeholder="Buscar por nome ou e-mail" aria-label="Buscar por nome ou e-mail" />
     </label>
     <div class="campo">
       <select [(ngModel)]="role" (change)="filtrar()" aria-label="Perfil">

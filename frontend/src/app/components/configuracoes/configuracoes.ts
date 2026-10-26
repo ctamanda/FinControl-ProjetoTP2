@@ -52,7 +52,7 @@ export class Configuracoes implements OnInit {
     if (!u) return;
     this.salvando.set(true);
     this.usuarios
-      .atualizarPerfil({ nome: u.nome, telefone: u.telefone ?? '', profissao: u.profissao, modulos: this.modulos() })
+      .atualizarModulos(this.modulos())
       .subscribe({
         next: (atualizado) => {
           this.original.set([...atualizado.modulos].sort().join());

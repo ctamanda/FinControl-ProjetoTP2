@@ -1,0 +1,638 @@
+/* =====================================================================
+   Blocos comuns dos dashboards (pessoal, empresa, colaborador e admin).
+   Computador: coluna principal + coluna lateral. Celular: uma coluna,
+   com a ordem dos cards definida no CSS de cada dashboard (order).
+   ===================================================================== */
+:host {
+  display: block;
+}
+
+.painel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 440px);
+  gap: 24px;
+  align-items: start;
+}
+
+.col-principal,
+.col-lateral {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+.linha-topo {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.75fr) minmax(0, 1fr);
+  gap: 24px;
+}
+
+.indicadores {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.titulo-secao {
+  margin: 4px 0 -8px;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--fc-roxo);
+}
+
+/* ---------- Card ---------- */
+.cartao {
+  background: var(--fc-surface);
+  border-radius: 20px;
+  box-shadow: var(--fc-shadow);
+  padding: 24px 28px;
+  min-width: 0;
+}
+
+.cartao-cabeca {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-bottom: 16px;
+}
+
+.cartao-cabeca h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--fc-roxo);
+}
+
+.cartao-cabeca .link,
+.link-roxo {
+  color: var(--fc-roxo);
+  font-size: 14px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+  background: none;
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.cartao-cabeca .discreto {
+  font-size: 14px;
+  color: var(--fc-muted);
+}
+
+.rodape-cartao {
+  margin: 16px 0 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--fc-muted);
+}
+
+.carregando {
+  margin: -20px 0 16px;
+}
+
+.vazio.erro {
+  color: var(--fc-danger);
+}
+
+.vazio {
+  padding: 20px 0 8px;
+  text-align: center;
+  color: var(--fc-muted);
+  font-size: 14px;
+}
+
+/* ---------- Ranking em barras ---------- */
+.barras {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.barras li {
+  display: grid;
+  grid-template-columns: minmax(90px, 160px) minmax(0, 1fr) 52px;
+  align-items: center;
+  gap: 16px;
+  font-size: 15px;
+}
+
+.barras .nome {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.barras .trilha {
+  display: block;
+  height: 14px;
+}
+
+.barras .barra {
+  display: block;
+  height: 100%;
+  min-width: 6px;
+  border-radius: 4px;
+  background: var(--cor);
+}
+
+.barras .pct {
+  text-align: right;
+  font-size: 13px;
+  color: var(--fc-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Agenda (contas com a data em destaque) ---------- */
+.agenda {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.agenda li {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--fc-border);
+}
+
+.agenda li:first-child {
+  padding-top: 4px;
+}
+
+.dia {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: #efeafb;
+  color: var(--fc-roxo);
+  font-weight: 500;
+}
+
+.dia.urgente {
+  background: var(--fc-danger-soft);
+  color: #d0343f;
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.info strong {
+  font-weight: 400;
+  font-size: 16px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.info span {
+  font-size: 13px;
+  color: var(--fc-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.valor-despesa,
+.valor-receita {
+  font-size: 16px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.valor-despesa {
+  color: #d0343f;
+}
+
+.valor-receita {
+  color: #15803d;
+}
+
+/* ---------- Gráfico de colunas (pares por mês) ---------- */
+.legenda {
+  display: flex;
+  gap: 18px;
+  font-size: 14px;
+  color: var(--fc-muted);
+}
+
+.legenda span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bolinha {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.grafico {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: 200px auto;
+  column-gap: 12px;
+}
+
+.eixo-y {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--fc-muted);
+  text-align: right;
+  margin: -6px 0;
+}
+
+.area {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  border-bottom: 1px solid var(--fc-border);
+  background: linear-gradient(var(--fc-border) 1px, transparent 1px) 0 0 / 100% 50%;
+}
+
+.mes-col {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 100%;
+}
+
+.mes-col .col {
+  width: 16px;
+  min-height: 2px;
+  border-radius: 4px 4px 0 0;
+  background: var(--cor);
+}
+
+.rotulos-x {
+  grid-column: 2;
+  display: flex;
+  justify-content: space-around;
+  padding-top: 8px;
+  font-size: 13px;
+  color: var(--fc-muted);
+}
+
+.rotulos-x span {
+  width: 36px;
+  text-align: center;
+}
+
+/* ---------- Rosca ---------- */
+.rosca {
+  width: 180px;
+  height: 180px;
+  margin: 8px auto 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+
+.rosca-centro {
+  width: 126px;
+  height: 126px;
+  border-radius: 50%;
+  background: var(--fc-surface);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.rosca-centro strong {
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--fc-roxo);
+}
+
+.rosca-centro span {
+  font-size: 13px;
+  color: var(--fc-muted);
+}
+
+.legenda-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.legenda-lista li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--fc-border);
+  font-size: 15px;
+}
+
+.legenda-lista li:last-child {
+  border-bottom: none;
+}
+
+.legenda-lista strong {
+  margin-left: auto;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Tabela ---------- */
+.tabela-rolagem {
+  overflow-x: auto;
+  margin: 0 -4px;
+}
+
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.tabela th {
+  padding: 10px 16px;
+  text-align: left;
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--fc-muted);
+  border-bottom: 1px solid var(--fc-border);
+  white-space: nowrap;
+}
+
+.tabela td {
+  padding: 16px;
+  border-bottom: 1px solid var(--fc-border);
+  vertical-align: middle;
+}
+
+.tabela .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.tabela .sub {
+  display: block;
+  font-size: 13px;
+  color: var(--fc-muted);
+}
+
+.tabela tfoot td {
+  border-bottom: none;
+  font-weight: 500;
+}
+
+/* Sigla redonda (NU, MC, AS…) */
+.sigla {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: #efeafb;
+  color: var(--fc-roxo);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.pessoa {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+/* Abas Todos / Receitas / Despesas */
+.abas {
+  display: flex;
+  gap: 4px;
+}
+
+.abas button {
+  height: 36px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 18px;
+  background: none;
+  color: var(--fc-muted);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.abas button.ativa {
+  background: var(--fc-roxo);
+  color: #fff;
+}
+
+.abas.claras button.ativa {
+  background: #efeafb;
+  color: var(--fc-roxo);
+}
+
+/* Status (Ativo / Pendente / Inativo) */
+.status {
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.status.ok {
+  color: #15803d;
+}
+
+.status.aviso {
+  color: #a16207;
+}
+
+.status.off {
+  color: var(--fc-muted);
+}
+
+.etiqueta {
+  display: inline-block;
+  margin: 2px 4px 2px 0;
+  padding: 3px 10px;
+  border-radius: 12px;
+  background: #efeafb;
+  color: var(--fc-roxo);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* ---------- Em breve (bloco que ainda não tem dados no back) ---------- */
+.em-breve-corpo {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px;
+  border: 1.5px dashed #d9d3e8;
+  border-radius: 14px;
+  color: var(--fc-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.em-breve-corpo mat-icon {
+  flex-shrink: 0;
+  font-size: 30px;
+  width: 30px;
+  height: 30px;
+  color: #b9a8e6;
+}
+
+.selo {
+  padding: 2px 10px;
+  border-radius: 10px;
+  background: #fff6d6;
+  color: #8a6100;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.acao-icone {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--fc-muted);
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.acao-icone:hover {
+  background: #f1eef8;
+  color: var(--fc-roxo);
+}
+
+.acao-icone mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+/* ---------- Cabeçalho roxo do celular (continua a barra superior) ---------- */
+.cabeca-celular {
+  margin: -20px -16px -56px;
+  padding: 8px 16px 76px;
+  background: var(--fc-roxo);
+  color: #fff;
+}
+
+.cabeca-celular h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 500;
+}
+
+.cabeca-celular p {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.chip-contexto {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 16px 0 6px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 16px;
+}
+
+.chip-contexto .bola {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--fc-amarelo);
+  color: var(--fc-roxo-escuro);
+  display: grid;
+  place-items: center;
+}
+
+.chip-contexto .bola mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+/* ---------- Responsivo ---------- */
+@media (max-width: 1280px) {
+  .painel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .indicadores {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  /* Uma coluna só: os cards se reordenam pelo "order" de cada dashboard */
+  .painel,
+  .col-principal,
+  .col-lateral,
+  .linha-topo {
+    display: contents;
+  }
+
+  .conteudo-celular {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .cartao {
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .cartao-cabeca h2 {
+    font-size: 17px;
+  }
+
+  .indicadores {
+    gap: 12px;
+  }
+
+  .barras li {
+    grid-template-columns: 100px minmax(0, 1fr) 46px;
+    gap: 10px;
+  }
+
+  .tabela {
+    font-size: 14px;
+  }
+
+  .tabela th,
+  .tabela td {
+    padding: 12px 8px;
+  }
+}

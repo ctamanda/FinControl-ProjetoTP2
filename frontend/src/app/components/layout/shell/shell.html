@@ -1,72 +1,178 @@
-<div class="fundo-celular" [class.visivel]="menuAberto()" (click)="menuAberto.set(false)"></div>
+<!-- ===== Barra superior ===== -->
+<header class="topo">
+  <a class="marca" [routerLink]="auth.rotaInicial()" aria-label="Início"><app-logo [pequeno]="true" /></a>
 
-<aside class="lateral" [class.aberta]="menuAberto()">
-  <a class="marca" [routerLink]="auth.rotaInicial()" aria-label="Início"><app-logo [fundoClaro]="true" /></a>
-
-  <a class="cartao-usuario" routerLink="/perfil">
-    <span class="avatar">{{ iniciais() }}</span>
-    <span class="quem">
-      <strong>{{ nome() }}</strong>
-      <span>{{ auth.email() }}</span>
-    </span>
-    <mat-icon>chevron_right</mat-icon>
-  </a>
-
-  <span class="ambiente" [attr.data-ambiente]="ambiente()">
-    <mat-icon>{{ ambiente() === 'ADMIN' ? 'admin_panel_settings' : ambiente() === 'EMPRESA' ? 'storefront' : 'person' }}</mat-icon>
-    {{ rotuloAmbiente() }}
-    @if (perfil()?.empresa; as e) {
-      <em>{{ e.nome }}</em>
+  <div class="centro">
+    @if (comMes()) {
+      <div class="seletor-mes" role="group" aria-label="Mês exibido">
+        <button type="button" (click)="mes.mover(-1)" [disabled]="!mes.podeVoltar()" aria-label="Mês anterior">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+        <span aria-live="polite">{{ mes.rotulo() }}</span>
+        <button type="button" (click)="mes.mover(1)" [disabled]="!mes.podeAvancar()" aria-label="Próximo mês">
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+      </div>
+    } @else {
+      <span class="titulo-celular">{{ titulo() }}</span>
     }
-  </span>
+  </div>
 
-  <nav aria-label="Menu principal">
-    @for (s of secoes(); track s.titulo) {
-      <span class="secao">{{ s.titulo }}</span>
+  <div class="acoes">
+    @if (acoesRapidas().length) {
+      <button class="btn-redondo amarelo so-computador" type="button" [matMenuTriggerFor]="menuMais" aria-label="Adicionar">
+        <mat-icon>add</mat-icon>
+      </button>
+    }
+    <button class="btn-redondo translucido so-computador" type="button" [matMenuTriggerFor]="menuAvisos" aria-label="Notificações">
+      <mat-icon>notifications_none</mat-icon>
+    </button>
+    @if (contexto().rotulo) {
+      <button class="contexto so-computador" type="button" [matMenuTriggerFor]="menuContexto">
+        <span class="contexto-icone"><mat-icon>{{ contexto().icone }}</mat-icon></span>
+        <span class="contexto-rotulo">{{ contexto().rotulo }}</span>
+        <mat-icon>expand_more</mat-icon>
+      </button>
+    }
+    <button class="avatar" type="button" [class.admin]="perfil()?.role === 'SUPER_ADMIN'" [matMenuTriggerFor]="menuConta" aria-label="Minha conta">
+      {{ iniciais() }}
+    </button>
+  </div>
+</header>
+
+<!-- ===== Trilho lateral: clicar nele (fora de um link) abre com os nomes ===== -->
+<div class="fundo-menu" [class.visivel]="menuAberto()" (click)="menuAberto.set(false)"></div>
+
+<aside class="trilho" [class.aberto]="menuAberto()" (click)="aoClicarNoTrilho($event)" aria-label="Menu principal">
+  <button type="button" class="expandir" [attr.aria-expanded]="menuAberto()" [attr.aria-label]="menuAberto() ? 'Recolher menu' : 'Expandir menu'">
+    <mat-icon>{{ menuAberto() ? 'chevron_left' : 'chevron_right' }}</mat-icon>
+    <span class="rotulo">Recolher</span>
+  </button>
+  <nav>
+    @for (s of secoes(); track s.titulo; let ultima = $last) {
+      @if (ultima && !menuAberto()) {
+        <span class="separador"></span>
+      } @else if (menuAberto()) {
+        <span class="secao">{{ s.titulo }}</span>
+      }
       @for (item of s.itens; track item.rota) {
         <a
           class="item"
           [routerLink]="item.rota"
           routerLinkActive="ativo"
           [routerLinkActiveOptions]="{ exact: !!item.exato }"
+          [matTooltip]="item.rotulo"
+          matTooltipPosition="right"
+          [matTooltipDisabled]="menuAberto()"
         >
-          <mat-icon>{{ item.icone }}</mat-icon>{{ item.rotulo }}
+          <mat-icon>{{ item.icone }}</mat-icon>
+          <span class="rotulo">{{ item.rotulo }}</span>
         </a>
       }
-    }
-
-    @if (emBreve().length) {
-      <span class="secao">Em breve</span>
-      @for (m of emBreve(); track m.rotulo) {
-        <span class="item desabilitado" matTooltip="Funcionalidade em desenvolvimento" matTooltipPosition="right">
-          <mat-icon>{{ m.icone }}</mat-icon>{{ m.rotulo }}
-        </span>
+      @if ($first && inativos().length) {
+        @if (!menuAberto()) {
+          <span class="separador"></span>
+        } @else {
+          <span class="secao">Indisponíveis</span>
+        }
+        <!-- Recolhido: só os cadeados aparecem; os "em breve" viram um único ícone ⋯ -->
+        @for (m of inativos(); track m.rotulo) {
+          @if (m.cadeado || menuAberto()) {
+            <span class="item inativo" [matTooltip]="m.rotulo + ' · ' + m.motivo" matTooltipPosition="right" [matTooltipDisabled]="menuAberto()">
+              <mat-icon>{{ m.icone }}</mat-icon>
+              @if (m.cadeado) {
+                <mat-icon class="cadeado">lock</mat-icon>
+              }
+              <span class="rotulo">{{ m.rotulo }}<em>{{ m.motivo }}</em></span>
+            </span>
+          }
+        }
+        @if (!menuAberto() && qtdEmBreve()) {
+          <span class="item inativo" [matTooltip]="qtdEmBreve() + ' funcionalidades em breve · clique para ver'" matTooltipPosition="right">
+            <mat-icon>more_horiz</mat-icon>
+          </span>
+        }
       }
     }
   </nav>
 
-  <button type="button" class="sair" (click)="sair()"><mat-icon>logout</mat-icon> Sair</button>
+  <button type="button" class="item sair" (click)="sair()" matTooltip="Sair" matTooltipPosition="right" [matTooltipDisabled]="menuAberto()">
+    <mat-icon>logout</mat-icon>
+    <span class="rotulo">Sair</span>
+  </button>
 </aside>
 
-<div class="conteudo">
-  <header class="cabecalho">
-    <button class="btn-menu" type="button" (click)="menuAberto.set(true)" aria-label="Abrir menu">
-      <mat-icon>menu</mat-icon>
-    </button>
-    <nav class="trilha" aria-label="Você está em">
-      <span>{{ rotuloAmbiente() }}</span>
-      <mat-icon>chevron_right</mat-icon>
-      <strong>{{ titulo() }}</strong>
-    </nav>
-    @if (perfil(); as u) {
-      <span class="chip papel" [class.purple]="u.role !== 'PESSOAL'" [class.green]="u.role === 'PESSOAL'">
-        {{ rotulosRole[u.role] }}
-      </span>
-    }
-    <a class="avatar mini" routerLink="/perfil" aria-label="Meu perfil">{{ iniciais() }}</a>
-  </header>
+<!-- ===== Conteúdo ===== -->
+<main class="pagina">
+  <router-outlet />
+</main>
 
-  <main class="pagina">
-    <router-outlet />
-  </main>
-</div>
+<!-- ===== Barra inferior (celular) ===== -->
+<nav class="barra-inferior" aria-label="Atalhos">
+  @for (item of atalhos().esquerda; track item.rota) {
+    <a class="atalho" [routerLink]="item.rota" routerLinkActive="ativo" [routerLinkActiveOptions]="{ exact: !!item.exato }" [attr.aria-label]="item.rotulo">
+      <mat-icon>{{ item.icone }}</mat-icon>
+    </a>
+  }
+  @if (acoesRapidas().length) {
+    <button class="mais" type="button" [matMenuTriggerFor]="menuMais" aria-label="Adicionar">
+      <mat-icon>add</mat-icon>
+    </button>
+  }
+  @for (item of atalhos().direita; track item.rota) {
+    <a class="atalho" [routerLink]="item.rota" routerLinkActive="ativo" [routerLinkActiveOptions]="{ exact: !!item.exato }" [attr.aria-label]="item.rotulo">
+      <mat-icon>{{ item.icone }}</mat-icon>
+    </a>
+  }
+</nav>
+
+<!-- ===== Menus ===== -->
+<mat-menu #menuMais="matMenu" class="menu-fc">
+  <span class="menu-titulo">Adicionar</span>
+  @for (a of acoesRapidas(); track a.rotulo) {
+    <a mat-menu-item [routerLink]="a.rota" [queryParams]="a.queryParams ?? {}">
+      <mat-icon>{{ a.icone }}</mat-icon>{{ a.rotulo }}
+    </a>
+  }
+</mat-menu>
+
+<mat-menu #menuAvisos="matMenu" class="menu-fc">
+  <div class="menu-vazio">
+    <mat-icon>notifications_none</mat-icon>
+    <span>Nenhuma notificação por enquanto.</span>
+  </div>
+</mat-menu>
+
+<mat-menu #menuContexto="matMenu" class="menu-fc">
+  @if (perfil(); as u) {
+    <span class="menu-titulo">Conta ativa</span>
+    <div class="menu-info">
+      <strong>{{ contexto().rotulo }}</strong>
+      <span>{{ rotulosRole[u.role] }}</span>
+    </div>
+    @if (u.empresa) {
+      <a mat-menu-item routerLink="/empresa"><mat-icon>business</mat-icon>Dados da empresa</a>
+    }
+    @if (u.role === 'PESSOAL') {
+      <a mat-menu-item routerLink="/configuracoes"><mat-icon>tune</mat-icon>Funcionalidades</a>
+    }
+  }
+</mat-menu>
+
+<mat-menu #menuConta="matMenu" class="menu-fc">
+  <div class="menu-info">
+    <strong>{{ nome() }}</strong>
+    <span>{{ auth.email() }}</span>
+    @if (contexto().rotulo) {
+      <span class="so-celular">{{ contexto().rotulo }}</span>
+    }
+  </div>
+  <a mat-menu-item routerLink="/perfil"><mat-icon>person_outline</mat-icon>Meu perfil</a>
+  <button mat-menu-item class="so-celular" type="button" (click)="menuAberto.set(true)">
+    <mat-icon>menu</mat-icon>Todas as telas
+  </button>
+  <button mat-menu-item class="so-celular" type="button" [matMenuTriggerFor]="menuAvisos">
+    <mat-icon>notifications_none</mat-icon>Notificações
+  </button>
+  <button mat-menu-item type="button" class="menu-sair" (click)="sair()"><mat-icon>logout</mat-icon>Sair</button>
+</mat-menu>

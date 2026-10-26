@@ -34,6 +34,11 @@ const ACOES: Record<string, string> = {
   PARAMETRO_DESATIVADO: 'Parâmetro desativado',
   PARAMETRO_EXCLUIDO: 'Parâmetro excluído',
   CONSULTA_TRANSACOES: 'Consulta de transações',
+  DADOS_PESSOAIS_ALTERADOS: 'Dados pessoais alterados',
+  SENHA_ALTERADA: 'Senha alterada',
+  EMAIL_ALTERADO: 'E-mail de acesso alterado',
+  SESSOES_ENCERRADAS: 'Sessões encerradas',
+  CONTA_BLOQUEADA: 'Conta bloqueada (senhas erradas)',
 };
 
 @Component({

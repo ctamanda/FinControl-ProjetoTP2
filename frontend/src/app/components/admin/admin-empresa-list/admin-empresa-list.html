@@ -9,7 +9,7 @@
   <div class="filtros">
     <label class="busca">
       <mat-icon>search</mat-icon>
-      <input (input)="buscar($event)" placeholder="Buscar por nome ou CNPJ" aria-label="Buscar por nome ou CNPJ" />
+      <input [value]="busca" (input)="buscar($event)" placeholder="Buscar por nome ou CNPJ" aria-label="Buscar por nome ou CNPJ" />
     </label>
     <div class="campo">
       <select [(ngModel)]="ativo" (change)="filtrar()" aria-label="Situação">

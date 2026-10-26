@@ -101,7 +101,7 @@ export class AdminService {
 
   salvarCategoriaPadrao(
     id: number | null,
-    dados: { nome: string; tipo: TipoCategoria; cor: string | null },
+    dados: { nome: string; tipo: TipoCategoria; cor: string | null; icone: string | null },
   ): Observable<CategoriaPadrao> {
     return id
       ? this.http.put<CategoriaPadrao>(`${this.apiUrl}/categorias-padrao/${id}`, dados)

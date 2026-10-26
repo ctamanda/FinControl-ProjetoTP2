@@ -1,6 +1,10 @@
-// Tema Material 3 do FinControl: roxo (primária) + amarelo (destaque).
+// Tema Material 3 do FinControl: roxo (primária) + amarelo (destaque), com acabamento
+// no estilo iOS: fonte do sistema, botões em pílula e diálogos/menus bem arredondados.
 // Learn more: https://material.angular.dev/guide/theming
 @use '@angular/material' as mat;
+
+// SF Pro no iPhone/Mac; Inter (parecida) nos demais; Roboto como reserva.
+$fonte: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Roboto', 'Segoe UI', sans-serif;
 
 html {
   height: 100%;
@@ -10,7 +14,10 @@ html {
         primary: mat.$violet-palette,
         tertiary: mat.$yellow-palette,
       ),
-      typography: Roboto,
+      typography: (
+        plain-family: $fonte,
+        brand-family: $fonte,
+      ),
       density: 0,
     )
   );
@@ -23,13 +30,18 @@ html {
   --mat-sys-secondary-container: #e9defb;
   --mat-sys-on-secondary-container: #2a0e57;
 
-  // Botões retos (4px), como no restante da interface.
-  --mat-button-filled-container-shape: 4px;
-  --mat-button-outlined-container-shape: 4px;
-  --mat-button-text-container-shape: 4px;
-  --mat-button-protected-container-shape: 4px;
-  --mat-dialog-container-shape: 8px;
-  --mat-button-toggle-shape: 4px;
+  // Botões em pílula; diálogos, menus e avisos com cantos grandes (iOS).
+  --mat-button-filled-container-shape: 999px;
+  --mat-button-outlined-container-shape: 999px;
+  --mat-button-text-container-shape: 999px;
+  --mat-button-protected-container-shape: 999px;
+  --mat-button-tonal-container-shape: 999px;
+  --mat-button-toggle-shape: 999px;
+  --mat-dialog-container-shape: 24px;
+  --mat-menu-container-shape: 16px;
+  --mat-snack-bar-container-shape: 14px;
+  --mat-tooltip-container-shape: 8px;
+  --mat-paginator-container-background-color: transparent;
 }
 
 body {
@@ -37,6 +49,8 @@ body {
   background-color: var(--fc-bg);
   color: var(--fc-text);
   font: var(--mat-sys-body-medium);
+  font-family: $fonte;
   margin: 0;
   height: 100%;
+  -webkit-font-smoothing: antialiased;
 }

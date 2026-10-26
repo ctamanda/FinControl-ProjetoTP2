@@ -1,0 +1,84 @@
+.busca-celular {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 60px;
+  padding: 0 10px 0 12px;
+  border-radius: 18px;
+  background: var(--fc-surface);
+  box-shadow: var(--fc-shadow);
+}
+
+.busca-celular .mini-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--fc-roxo);
+  color: var(--fc-amarelo);
+  display: grid;
+  place-items: center;
+}
+
+.busca-celular input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  font: inherit;
+  font-size: 16px;
+  background: none;
+}
+
+.busca-celular button {
+  border: none;
+  background: none;
+  color: var(--fc-roxo);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.link-conta {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.total-saldo {
+  color: var(--fc-roxo);
+}
+
+.valor-conta {
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.total-celular {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 14px;
+  padding: 16px 20px;
+  border-radius: 14px;
+  background: #efeafb;
+  color: var(--fc-roxo);
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.atrasada {
+  color: #d0343f !important;
+}
+
+/* Celular: ordem da imagem (saldo, busca, recebido/gasto, contas, ranking, orçamentos…) */
+@media (max-width: 760px) {
+  .cabeca-celular { order: 0; }
+  .c-saldo { order: 1; }
+  .busca-celular { order: 2; }
+  .c-indicadores { order: 3; }
+  .c-contas { order: 4; }
+  .c-ranking { order: 5; }
+  .c-orcamentos { order: 6; }
+  .c-proximas { order: 7; }
+  .c-recorrencia { order: 8; }
+  .vazio.erro { order: 1; }
+}

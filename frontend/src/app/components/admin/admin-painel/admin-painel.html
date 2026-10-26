@@ -1,172 +1,267 @@
-<div class="saudacao">
-  <span class="avatar"><mat-icon>admin_panel_settings</mat-icon></span>
-  <div>
-    <h1>Gestão do FinControl</h1>
-    <p>
-      <mat-icon>verified_user</mat-icon>
-      Indicadores de uso do sistema
-      @if (atualizadoEm(); as data) {
-        · atualizado às {{ data | date: 'HH:mm' }}
-      }
-    </p>
-  </div>
-  <div class="acoes-topo">
-    <button mat-stroked-button (click)="carregar()" [disabled]="carregando()">
-      <mat-icon>refresh</mat-icon> Atualizar
-    </button>
-  </div>
-</div>
-
 @if (carregando()) {
-  <mat-progress-bar mode="indeterminate" class="barra-carregando" />
+  <mat-progress-bar mode="indeterminate" class="carregando" />
 }
 
-@if (erro()) {
-  <div class="fc-card estado-vazio">
-    <mat-icon>cloud_off</mat-icon>
-    <p>{{ erro() }}</p>
-    <button mat-stroked-button (click)="carregar()">Tentar novamente</button>
+<div class="conteudo-celular">
+  <div class="cabeca-celular so-celular">
+    <p class="sobre">Administração</p>
+    <h1>Visão geral do sistema</h1>
   </div>
-}
 
-@if (estatisticas(); as e) {
-  <!-- Cards principais -->
-  <div class="cards-cor">
-    <a class="card-cor azul" routerLink="/admin/usuarios">
-      <span class="icone"><mat-icon>group</mat-icon></span>
-      <span class="numero">{{ e.totalUsuarios | number }}</span>
-      <span class="rotulo">Usuários</span>
-      <span class="detalhe">{{ e.usuariosAtivos }} ativos · {{ e.usuariosInativos }} inativos</span>
-    </a>
-    <a class="card-cor verde" routerLink="/admin/empresas">
-      <span class="icone"><mat-icon>storefront</mat-icon></span>
-      <span class="numero">{{ e.totalEmpresas | number }}</span>
-      <span class="rotulo">Empresas / MEIs</span>
-      <span class="detalhe">{{ e.empresasAtivas }} ativas</span>
-    </a>
-    <a class="card-cor amarelo" routerLink="/admin/transacoes">
-      <span class="icone"><mat-icon>receipt_long</mat-icon></span>
-      <span class="numero">{{ e.totalTransacoes | number }}</span>
-      <span class="rotulo">Transações</span>
-      <span class="detalhe">{{ e.transacoes30Dias }} nos últimos 30 dias</span>
-    </a>
-    <div class="card-cor roxo">
-      <span class="icone"><mat-icon>storage</mat-icon></span>
-      <span class="numero">{{ volume() }}</span>
-      <span class="rotulo">Volume de dados</span>
-      <span class="detalhe">{{ e.totalRegistros | number }} registros</span>
+  @if (erro()) {
+    <p class="cartao vazio erro">{{ erro() }}</p>
+  }
+
+  <div class="painel">
+    <div class="col-principal">
+      <h2 class="titulo-secao so-computador">Visão geral do sistema</h2>
+
+      @if (estatisticas(); as e) {
+        <div class="indicadores c-indicadores">
+          <app-indicador
+            icone="person_outline"
+            cor="amarelo"
+            [destaque]="true"
+            [valor]="(e.usuariosAtivos | number) ?? ''"
+            rotulo="Usuários ativos"
+            [detalhe]="'+' + e.novosUsuarios30Dias + ' nos últimos 30 dias'"
+          />
+          <app-indicador
+            icone="business"
+            cor="amarelo"
+            [valor]="(e.totalEmpresas | number) ?? ''"
+            rotulo="Empresas e MEIs"
+            [detalhe]="e.totalMeis + ' MEIs · ' + e.totalMicroempresas + ' MEs'"
+          />
+          <app-indicador
+            icone="swap_vert"
+            cor="azul"
+            [valor]="(doMes().quantidade | number) ?? ''"
+            [rotulo]="'Transações em ' + mes.nome().toLowerCase()"
+            [variacao]="doMes().variacaoQuantidade"
+          />
+          <app-indicador icone="trending_up" cor="verde" [valor]="volume()" rotulo="Volume movimentado" [variacao]="doMes().variacaoValor" />
+        </div>
+      }
+
+      <section class="cartao c-cadastros">
+        <div class="cartao-cabeca">
+          <h2>Novos cadastros</h2>
+          <div class="legenda">
+            <span><span class="bolinha" style="background: #3b1478"></span>Contas pessoais</span>
+            <span><span class="bolinha" style="background: #f5c518"></span>Empresas e MEIs</span>
+          </div>
+        </div>
+        <div class="grafico" role="img" aria-label="Novos cadastros nos últimos 6 meses">
+          <div class="eixo-y">
+            <span>{{ cadastros().maior | number }}</span>
+            <span>{{ cadastros().maior / 2 | number }}</span>
+            <span>0</span>
+          </div>
+          <div class="area">
+            @for (m of cadastros().meses; track m.mes) {
+              <div class="mes-col">
+                <span class="col" style="--cor: #3b1478" [style.height.%]="m.altPessoais" [title]="m.contasPessoais + ' contas pessoais'"></span>
+                <span class="col" style="--cor: #f5c518" [style.height.%]="m.altEmpresas" [title]="m.empresas + ' empresas'"></span>
+              </div>
+            }
+          </div>
+          <div class="rotulos-x">
+            @for (m of cadastros().meses; track m.mes) {
+              <span>{{ m.rotulo }}</span>
+            }
+          </div>
+        </div>
+      </section>
+
+      <section class="cartao c-usuarios">
+        <div class="cartao-cabeca">
+          <h2>Usuários</h2>
+          <div class="abas claras so-computador" role="tablist">
+            @for (a of abas; track a.id) {
+              <button type="button" [class.ativa]="aba() === a.id" (click)="aba.set(a.id)">{{ a.rotulo }}</button>
+            }
+          </div>
+          <a class="link so-celular" routerLink="/admin/usuarios">Ver todos</a>
+        </div>
+
+        @if (usuarios().length) {
+          <div class="tabela-rolagem so-computador">
+            <table class="tabela">
+              <thead>
+                <tr>
+                  <th>Usuário</th>
+                  <th>Perfil</th>
+                  <th>Empresa</th>
+                  <th>Cadastro</th>
+                  <th>Status</th>
+                  <th class="num">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (u of usuarios(); track u.id) {
+                  <tr>
+                    <td>
+                      <div class="pessoa">
+                        <span class="sigla cinza">{{ iniciais(u.nome) }}</span>
+                        <div class="quem">{{ u.nome }}<span class="sub">{{ u.email }}</span></div>
+                      </div>
+                    </td>
+                    <td class="perfil"><span class="bolinha" [style.background]="corPerfil(u.role)"></span>{{ u.role }}</td>
+                    <td>{{ u.empresa?.nome ?? (u.role === 'SUPER_ADMIN' ? 'FinControl' : 'Conta pessoal') }}</td>
+                    <td>{{ quando(u.dataCadastro) }}</td>
+                    <td>
+                      <div class="toggle">
+                        <mat-slide-toggle
+                          #t
+                          [checked]="u.ativo"
+                          [disabled]="u.id === eu()?.id"
+                          (change)="alterarAtivo(u, t)"
+                          [attr.aria-label]="(u.ativo ? 'Desativar ' : 'Reativar ') + u.nome"
+                        />
+                        <span>{{ u.ativo ? 'Ativo' : 'Inativo' }}</span>
+                      </div>
+                    </td>
+                    <td class="num">
+                      <a class="acao-icone" [routerLink]="['/admin/usuarios', u.id]" aria-label="Editar"><mat-icon>edit</mat-icon></a>
+                      @if (u.id !== eu()?.id) {
+                        <button class="acao-icone" type="button" (click)="excluir(u)" aria-label="Excluir"><mat-icon>delete_outline</mat-icon></button>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <ul class="agenda so-celular">
+            @for (u of usuarios(); track u.id) {
+              <li>
+                <span class="sigla grande">{{ iniciais(u.nome) }}</span>
+                <a class="info link-linha" [routerLink]="['/admin/usuarios', u.id]">
+                  <strong>{{ u.nome }}</strong>
+                  <span><span class="bolinha" [style.background]="corPerfil(u.role)"></span> {{ u.role }}</span>
+                </a>
+                <mat-slide-toggle #tc [checked]="u.ativo" [disabled]="u.id === eu()?.id" (change)="alterarAtivo(u, tc)" [attr.aria-label]="(u.ativo ? 'Desativar ' : 'Reativar ') + u.nome" />
+              </li>
+            }
+          </ul>
+
+          <p class="rodape-cartao so-computador"><a class="link-roxo" routerLink="/admin/usuarios">Ver todos os usuários</a></p>
+        } @else {
+          <p class="vazio">Nenhum usuário neste filtro.</p>
+        }
+      </section>
+
+      <section class="cartao c-empresas">
+        <div class="cartao-cabeca">
+          <h2>Empresas e MEIs</h2>
+          <a class="link" routerLink="/admin/empresas">Ver todas</a>
+        </div>
+        @if (empresas().length) {
+          <div class="tabela-rolagem">
+            <table class="tabela">
+              <thead>
+                <tr>
+                  <th>Empresa</th>
+                  <th class="so-computador">CNPJ</th>
+                  <th>Tipo</th>
+                  <th class="so-computador">Usuários</th>
+                  <th class="so-computador">Administrador</th>
+                  <th class="num">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (emp of empresas(); track emp.id) {
+                  <tr>
+                    <td><a class="link-linha" [routerLink]="['/admin/empresas', emp.id]">{{ emp.nomeFantasia || emp.razaoSocial }}</a></td>
+                    <td class="so-computador cinza">{{ formatarCnpj(emp.cnpj) }}</td>
+                    <td class="cinza">{{ emp.tipo === 'MEI' ? 'MEI' : 'ME' }}</td>
+                    <td class="so-computador">{{ emp.totalUsuarios }}</td>
+                    <td class="so-computador cinza">{{ emp.responsavel.nome }}</td>
+                    <td class="num"><span class="status" [class.ok]="emp.ativo" [class.off]="!emp.ativo">{{ emp.ativo ? 'Ativa' : 'Inativa' }}</span></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <p class="vazio">Nenhuma empresa cadastrada ainda.</p>
+        }
+      </section>
+    </div>
+
+    <div class="col-lateral">
+      <form class="cartao busca-admin c-busca" (submit)="$event.preventDefault(); buscar(termo.value)">
+        <mat-icon>search</mat-icon>
+        <input #termo type="search" placeholder="Buscar usuário, empresa ou CNPJ" aria-label="Buscar usuário, empresa ou CNPJ" />
+      </form>
+
+      @if (estatisticas(); as e) {
+        <section class="cartao c-perfis">
+          <div class="cartao-cabeca">
+            <h2>Usuários por perfil</h2>
+            <span class="discreto so-celular">{{ e.totalUsuarios | number }}</span>
+          </div>
+          <div class="rosca so-computador" [style.background]="rosca()" role="img" aria-label="Distribuição dos usuários por perfil">
+            <div class="rosca-centro">
+              <strong>{{ e.totalUsuarios | number }}</strong>
+              <span>usuários</span>
+            </div>
+          </div>
+          <div class="barra-empilhada so-celular" role="img" aria-label="Distribuição dos usuários por perfil">
+            @for (p of perfis(); track p.rotulo) {
+              <span [style.background]="p.cor" [style.width.%]="p.fim - p.inicio"></span>
+            }
+          </div>
+          <ul class="legenda-lista">
+            @for (p of perfis(); track p.rotulo) {
+              <li><span class="bolinha" [style.background]="p.cor"></span>{{ p.rotulo }}<strong>{{ p.valor | number }}</strong></li>
+            }
+          </ul>
+        </section>
+      }
+
+      <section class="cartao c-auditoria">
+        <div class="cartao-cabeca">
+          <h2>Auditoria recente</h2>
+          <a class="link" routerLink="/admin/auditoria">Ver log</a>
+        </div>
+        @if (auditoria().length) {
+          <ul class="auditoria">
+            @for (r of auditoria(); track r.id) {
+              <li>
+                <span class="bolinha" [style.background]="corAuditoria(r.acao)"></span>
+                <div>
+                  <p><strong>{{ r.autorEmail }}</strong> {{ frase(r) }}</p>
+                  <span>{{ quando(r.dataHora) }}</span>
+                </div>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="vazio">Nenhuma ação registrada ainda.</p>
+        }
+      </section>
+
+      <section class="cartao c-parametros">
+        <div class="cartao-cabeca">
+          <h2>Parâmetros fiscais</h2>
+          <a class="link" routerLink="/admin/parametros">Editar</a>
+        </div>
+        @if (vigentes().length) {
+          <ul class="legenda-lista parametros">
+            @for (p of vigentes(); track p.id) {
+              <li>
+                <span class="cinza">{{ p.descricao || p.chave }}</span>
+                <strong>{{ valorParametro(p) }}</strong>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="vazio">Nenhum parâmetro vigente hoje.</p>
+        }
+      </section>
     </div>
   </div>
-
-  <div class="grid-2 linha">
-    <!-- Categorias mais utilizadas -->
-    <section class="fc-card">
-      <div class="titulo-com-acao">
-        <h2 class="fc-card-title">Categorias mais utilizadas</h2>
-        <a class="ver" routerLink="/admin/categorias">Ranking completo <mat-icon>chevron_right</mat-icon></a>
-      </div>
-      @if (ranking().length) {
-        <ol class="top-categorias">
-          @for (c of ranking(); track c.nome + c.tipo; let i = $index) {
-            <li>
-              <span class="posicao">{{ i + 1 }}.</span>
-              <div class="cat-info">
-                <div class="cat-linha">
-                  <span>{{ c.nome }}</span>
-                  <strong>{{ c.totalTransacoes | number }}</strong>
-                </div>
-                <div class="barra-trilho">
-                  <div class="barra" [class.receita]="c.tipo === 'RECEITA'" [style.width.%]="c.largura"></div>
-                </div>
-              </div>
-            </li>
-          }
-        </ol>
-      } @else {
-        <div class="estado-vazio">
-          <mat-icon>sell</mat-icon>
-          <p>Nenhuma transação registrada ainda.</p>
-        </div>
-      }
-    </section>
-
-    <!-- Contas por tipo -->
-    <section class="fc-card">
-      <h2 class="fc-card-title">Contas por tipo</h2>
-      <div class="rosca-area">
-        <div class="rosca" [style.background]="rosca()" role="img" aria-label="Distribuição das contas por tipo">
-          <div class="rosca-centro">
-            <strong>{{ e.totalUsuarios }}</strong>
-            <span>contas</span>
-          </div>
-        </div>
-        <ul class="ranking">
-          @for (p of perfis(); track p.rotulo) {
-            <li [style.border-color]="p.cor">
-              <span>{{ p.rotulo }}</span><strong>{{ p.valor }}</strong>
-            </li>
-          }
-        </ul>
-      </div>
-    </section>
-  </div>
-
-  <div class="grid-2 linha">
-    <!-- Uso nos últimos 6 meses -->
-    <section class="fc-card">
-      <h2 class="fc-card-title">Transações por mês</h2>
-      <div class="colunas" role="img" aria-label="Quantidade de transações nos últimos 6 meses">
-        @for (m of meses(); track m.rotulo) {
-          <div class="coluna-mes">
-            <span class="qtd">{{ m.quantidade }}</span>
-            <div class="col" [style.height.%]="m.altura"></div>
-            <span class="mes-rotulo">{{ m.rotulo }}</span>
-          </div>
-        }
-      </div>
-      <div class="medias">
-        <div>
-          <span class="media-rotulo">Transações por usuário</span>
-          <span class="media-valor">{{ e.mediaTransacoesPorUsuario | number: '1.1-1' }}</span>
-        </div>
-        <div>
-          <span class="media-rotulo">Novos usuários (30 dias)</span>
-          <span class="media-valor">{{ e.novosUsuarios30Dias }}</span>
-        </div>
-        <div>
-          <span class="media-rotulo">Categorias criadas</span>
-          <span class="media-valor">{{ e.totalCategorias | number }}</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- Parâmetros fiscais -->
-    <section class="fc-card">
-      <div class="titulo-com-acao">
-        <h2 class="fc-card-title">Parâmetros fiscais vigentes</h2>
-        <a class="ver" routerLink="/admin/parametros">Gerenciar <mat-icon>chevron_right</mat-icon></a>
-      </div>
-
-      @if (parametrosVigentes().length) {
-        <ul class="lista">
-          @for (p of parametrosVigentes(); track p.id) {
-            <li>
-              <span class="icone-param"><mat-icon>tune</mat-icon></span>
-              <div class="info">
-                <span class="chave">{{ p.chave }}</span>
-                <span class="meta">{{ p.descricao || 'Vigente' }} · até {{ p.vigenciaFim | date: 'dd/MM/yyyy' }}</span>
-              </div>
-              <app-valor [valor]="p.valor" />
-            </li>
-          }
-        </ul>
-      } @else {
-        <div class="estado-vazio">
-          <mat-icon>event_busy</mat-icon>
-          <p>Nenhum parâmetro vigente hoje.</p>
-          <a mat-stroked-button routerLink="/admin/parametros/novo">Cadastrar parâmetro</a>
-        </div>
-      }
-    </section>
-  </div>
-}
+</div>

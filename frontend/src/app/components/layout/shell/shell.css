@@ -2,308 +2,506 @@
   display: block;
   min-height: 100vh;
   background: var(--fc-bg);
-  --lateral: 264px;
+  --topo: 64px;
+  --trilho: 64px;
 }
 
-/* ---------- Barra lateral ---------- */
-.lateral {
+/* ---------- Barra superior ---------- */
+.topo {
   position: fixed;
-  inset: 0 auto 0 0;
-  width: var(--lateral);
-  background: var(--fc-surface);
-  border-right: 1px solid var(--fc-border);
+  inset: 0 0 auto 0;
+  z-index: 40;
+  height: var(--topo);
   display: flex;
-  flex-direction: column;
-  padding: 22px 16px 16px;
-  overflow-y: auto;
-  z-index: 30;
+  align-items: center;
+  gap: 12px;
+  padding: 0 20px 0 16px;
+  background: var(--fc-roxo);
+  color: #fff;
 }
 
 .marca {
   display: inline-flex;
-  padding: 0 8px 18px;
   text-decoration: none;
+  margin-left: 4px;
 }
 
-.cartao-usuario {
+.centro {
+  flex: 1;
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px;
-  border-radius: 12px;
-  background: var(--fc-roxo-claro);
-  color: var(--fc-text);
-  text-decoration: none;
-  transition: background 0.15s;
-}
-
-.cartao-usuario:hover {
-  background: #ebe2fa;
-}
-
-.cartao-usuario mat-icon {
-  color: var(--fc-muted);
-  margin-left: auto;
-}
-
-.avatar {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: var(--fc-amarelo);
-  color: var(--fc-roxo-escuro);
-  display: grid;
-  place-items: center;
-  font-size: 14px;
-  font-weight: 600;
-  flex-shrink: 0;
-  text-decoration: none;
-}
-
-.quem {
-  display: flex;
-  flex-direction: column;
+  justify-content: flex-end;
   min-width: 0;
 }
 
-.quem strong {
-  font-size: 14px;
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.quem span {
-  font-size: 12px;
-  color: var(--fc-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.ambiente {
+.acoes {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 4px 6px;
-  margin: 14px 8px 6px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--fc-primary);
+  gap: 10px;
 }
 
-.ambiente[data-ambiente='EMPRESA'] {
-  color: #8f5f00;
+.btn-redondo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  display: grid;
+  place-items: center;
+  background: none;
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, transform 0.15s;
 }
 
-.ambiente[data-ambiente='ADMIN'] {
+.btn-redondo:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-redondo.amarelo {
+  background: var(--fc-amarelo);
   color: var(--fc-roxo-escuro);
 }
 
-.ambiente mat-icon {
-  font-size: 16px;
-  width: 16px;
-  height: 16px;
+.btn-redondo.amarelo:hover {
+  transform: scale(1.05);
 }
 
-.ambiente em {
-  flex-basis: 100%;
-  font-style: normal;
-  font-weight: 400;
-  color: var(--fc-muted);
-  padding-left: 22px;
+.btn-redondo.translucido {
+  background: rgba(255, 255, 255, 0.1);
 }
 
-.lateral nav {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
+.btn-redondo.translucido:hover {
+  background: rgba(255, 255, 255, 0.18);
 }
 
-.secao {
-  margin: 16px 12px 6px;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #9aa1a8;
-}
-
-.item {
+/* Seletor "‹ Outubro 2026 ›" */
+.seletor-mes {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  color: #5b6168;
-  text-decoration: none;
-  font-size: 14px;
-  transition: background 0.15s, color 0.15s;
+  gap: 4px;
+  height: 40px;
+  padding: 0 4px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.1);
 }
 
-.item mat-icon {
-  font-size: 20px;
-  width: 20px;
-  height: 20px;
-  color: #8a9199;
+.seletor-mes span {
+  min-width: 132px;
+  text-align: center;
+  font-size: 15px;
+  white-space: nowrap;
 }
 
-.item:hover {
-  background: #f4f2f8;
-  color: var(--fc-text);
+.seletor-mes button {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
 }
 
-.item.ativo {
-  background: var(--fc-roxo-claro);
-  color: var(--fc-primary);
-  font-weight: 500;
+.seletor-mes button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
 }
 
-.item.ativo mat-icon {
-  color: var(--fc-primary);
-}
-
-.item.desabilitado {
-  color: #b2b7bd;
+.seletor-mes button:disabled {
+  opacity: 0.3;
   cursor: default;
 }
 
-.item.desabilitado:hover {
-  background: none;
+.titulo-celular {
+  display: none;
 }
 
-.item.desabilitado mat-icon {
-  color: #c4c8cc;
-}
-
-.sair {
+/* Conta ativa (Pessoal / Empresa · MEI / Administração) */
+.contexto {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-top: 16px;
-  padding: 10px 12px;
+  gap: 8px;
+  height: 40px;
+  max-width: 300px;
+  padding: 0 10px 0 4px;
   border: none;
-  border-radius: 10px;
-  background: none;
-  color: var(--fc-danger);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
   font: inherit;
   font-size: 14px;
   cursor: pointer;
 }
 
-.sair:hover {
-  background: var(--fc-danger-soft);
+.contexto:hover {
+  background: rgba(255, 255, 255, 0.16);
 }
 
-/* ---------- Conteúdo ---------- */
-.conteudo {
-  margin-left: var(--lateral);
-  min-height: 100vh;
+.contexto-icone {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--fc-amarelo);
+  color: var(--fc-roxo-escuro);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
 }
 
-.cabecalho {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  height: 64px;
-  padding: 0 32px;
-  background: rgba(242, 243, 245, 0.92);
-  backdrop-filter: blur(6px);
-  border-bottom: 1px solid var(--fc-border);
-}
-
-.trilha {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 14px;
-  color: var(--fc-muted);
-  min-width: 0;
-  flex: 1;
-}
-
-.trilha mat-icon {
+.contexto-icone mat-icon {
   font-size: 18px;
   width: 18px;
   height: 18px;
 }
 
-.trilha strong {
-  color: var(--fc-text);
-  font-weight: 500;
+.contexto-rotulo {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.avatar.mini {
-  width: 34px;
-  height: 34px;
-  font-size: 13px;
-}
-
-.btn-menu {
-  display: none;
-  background: none;
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
   border: none;
-  color: var(--fc-text);
+  background: #fff;
+  color: var(--fc-roxo);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  display: grid;
+  place-items: center;
   cursor: pointer;
-  padding: 4px;
+  flex-shrink: 0;
 }
 
-.pagina {
-  max-width: 1360px;
-  padding: 28px 32px 48px;
+.avatar.admin {
+  background: var(--fc-amarelo);
+  color: var(--fc-roxo-escuro);
 }
 
-.fundo-celular {
+/* ---------- Trilho lateral ---------- */
+.trilho {
+  position: fixed;
+  top: var(--topo);
+  bottom: 0;
+  left: 0;
+  z-index: 35;
+  width: var(--trilho);
+  display: flex;
+  flex-direction: column;
+  padding: 8px 10px 12px;
+  background: var(--fc-roxo);
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: none; /* a barra de rolagem empurrava os ícones para fora do centro */
+  cursor: pointer;
+  transition: width 0.2s ease, box-shadow 0.2s ease;
+}
+
+.trilho::-webkit-scrollbar {
   display: none;
 }
 
-/* ---------- Celular / tablet: barra lateral vira gaveta ---------- */
-@media (max-width: 1000px) {
-  .lateral {
-    transform: translateX(-100%);
-    transition: transform 0.2s ease;
-    box-shadow: 0 0 40px rgba(20, 6, 45, 0.25);
+/* Seta no topo do trilho: mostra que ele abre */
+.expandir {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  height: 28px;
+  margin-bottom: 6px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: rgba(255, 255, 255, 0.55);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.expandir:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.trilho.aberto .expandir {
+  justify-content: flex-start;
+  padding: 0 10px;
+}
+
+.trilho.aberto {
+  width: 260px;
+  box-shadow: 8px 0 32px rgba(20, 6, 45, 0.3);
+}
+
+.trilho nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.separador {
+  height: 1px;
+  margin: 10px 8px;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.secao {
+  margin: 14px 10px 4px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+  white-space: nowrap;
+}
+
+.item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-shrink: 0;
+  height: 44px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 12px;
+  background: none;
+  color: rgba(255, 255, 255, 0.78);
+  font: inherit;
+  font-size: 14px;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.item mat-icon {
+  flex-shrink: 0;
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
+}
+
+.item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.item.ativo {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--fc-amarelo);
+}
+
+/* Recolhido: só o ícone, centralizado. Aberto: ícone + nome alinhados à esquerda. */
+.rotulo {
+  display: none;
+}
+
+.trilho.aberto .item {
+  justify-content: flex-start;
+}
+
+.trilho.aberto .rotulo {
+  display: flex;
+  flex-direction: column;
+}
+
+.item .rotulo em {
+  font-style: normal;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.item.inativo {
+  color: rgba(255, 255, 255, 0.4);
+  cursor: default;
+}
+
+.item.inativo:hover {
+  background: none;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.item .cadeado {
+  position: absolute;
+  left: calc(50% + 2px);
+  top: 22px;
+  font-size: 13px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--fc-roxo);
+  color: #fff;
+}
+
+.trilho.aberto .item .cadeado {
+  left: 24px;
+}
+
+.sair {
+  margin-top: auto;
+}
+
+.fundo-menu {
+  display: none;
+}
+
+.fundo-menu.visivel {
+  display: block;
+  position: fixed;
+  inset: var(--topo) 0 0 0;
+  z-index: 34;
+  background: rgba(20, 6, 45, 0.3);
+}
+
+/* ---------- Conteúdo ---------- */
+.pagina {
+  margin-left: var(--trilho);
+  padding: calc(var(--topo) + 28px) 32px 48px;
+  max-width: 1480px;
+}
+
+.barra-inferior {
+  display: none;
+}
+
+/* ---------- Celular ---------- */
+@media (max-width: 760px) {
+  :host {
+    --topo: 64px;
   }
 
-  .lateral.aberta {
-    transform: none;
-  }
-
-  .fundo-celular.visivel {
-    display: block;
-    position: fixed;
-    inset: 0;
-    background: rgba(20, 6, 45, 0.35);
-    z-index: 25;
-  }
-
-  .conteudo {
-    margin-left: 0;
-  }
-
-  .btn-menu {
-    display: inline-flex;
-  }
-
-  .cabecalho {
+  .topo {
     padding: 0 16px;
   }
 
-  .trilha > span,
-  .trilha > mat-icon,
-  .papel {
+  .marca app-logo ::ng-deep .nome {
+    display: none;
+  }
+
+  .marca {
+    margin: 0;
+  }
+
+  .centro {
+    justify-content: center;
+  }
+
+  .seletor-mes {
+    background: none;
+  }
+
+  .seletor-mes span {
+    min-width: 0;
+    font-size: 17px;
+  }
+
+  .titulo-celular {
+    display: block;
+    font-size: 17px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .so-computador {
+    display: none;
+  }
+
+  /* O trilho vira gaveta, aberta pelo menu da conta ("Todas as telas") */
+  .trilho {
+    width: 260px;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+  }
+
+  .trilho.aberto {
+    transform: none;
+  }
+
+  .trilho .item {
+    justify-content: flex-start;
+  }
+
+  .trilho .rotulo {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .expandir {
     display: none;
   }
 
   .pagina {
-    padding: 20px 16px 40px;
+    margin-left: 0;
+    padding: calc(var(--topo) + 20px) 16px 112px;
+  }
+
+  .barra-inferior {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 30;
+    height: 76px;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 8px env(safe-area-inset-bottom);
+    background: var(--fc-surface);
+    border-radius: 24px 24px 0 0;
+    box-shadow: 0 -4px 24px rgba(20, 6, 45, 0.08);
+  }
+
+  .atalho {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    display: grid;
+    place-items: center;
+    color: #8a8f98;
+    text-decoration: none;
+  }
+
+  .atalho mat-icon {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+  }
+
+  .atalho.ativo {
+    color: var(--fc-roxo);
+  }
+
+  .atalho.ativo::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--fc-amarelo);
+  }
+
+  .mais {
+    width: 60px;
+    height: 60px;
+    margin-top: -18px;
+    border: none;
+    border-radius: 50%;
+    background: var(--fc-roxo);
+    color: var(--fc-amarelo);
+    display: grid;
+    place-items: center;
+    box-shadow: 0 8px 20px -6px rgba(59, 20, 120, 0.6);
+    cursor: pointer;
+  }
+
+  .mais mat-icon {
+    font-size: 34px;
+    width: 34px;
+    height: 34px;
   }
 }

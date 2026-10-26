@@ -32,7 +32,7 @@ export interface InfoModulo {
 // Mesma regra do enum Modulo do back.
 export const MODULOS: Record<Modulo, InfoModulo> = {
   DASHBOARD: { rotulo: 'Dashboard', descricao: 'Resumo do mês, saldo e gráficos', icone: 'home', pessoal: true, empresa: true, disponivel: true },
-  CONTAS: { rotulo: 'Contas financeiras', descricao: 'Bancos, carteiras e saldos', icone: 'account_balance', pessoal: true, empresa: true, disponivel: false },
+  CONTAS: { rotulo: 'Contas financeiras', descricao: 'Bancos, carteiras e saldos', icone: 'account_balance', pessoal: true, empresa: true, disponivel: true },
   RECEITAS: { rotulo: 'Receitas', descricao: 'Registrar entradas de dinheiro', icone: 'arrow_downward', pessoal: true, empresa: true, disponivel: true },
   DESPESAS: { rotulo: 'Despesas', descricao: 'Registrar saídas de dinheiro', icone: 'arrow_upward', pessoal: true, empresa: true, disponivel: true },
   LANCAMENTOS: { rotulo: 'Lançamentos', descricao: 'Receitas e despesas juntas', icone: 'swap_vert', pessoal: true, empresa: true, disponivel: true },
@@ -82,9 +82,10 @@ export interface Usuario {
   dataCadastro?: string;
 }
 
+// Alterar os próprios dados exige a senha atual (o back confere).
 export interface UsuarioUpdate {
   nome: string;
   telefone: string;
-  profissao?: string | null;
-  modulos?: Modulo[] | null; // só conta pessoal
+  profissao?: string | null; // só conta pessoal
+  senhaAtual: string;
 }

@@ -9,7 +9,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { debounceTime, distinctUntilChanged, Subject, Subscription } from 'rxjs';
 import { mensagemDeErro } from '../../../core/api';
 import { formatarCnpj } from '../../../core/validadores';
@@ -48,7 +48,8 @@ export class AdminEmpresaList implements OnInit {
   protected readonly tamanho = signal(20);
   protected readonly carregando = signal(false);
 
-  private busca = '';
+  // Busca vinda do painel (?busca=).
+  protected busca = inject(ActivatedRoute).snapshot.queryParamMap.get('busca') ?? '';
   protected ativo: '' | 'true' | 'false' = '';
   private readonly digitacao = new Subject<string>();
   private consulta?: Subscription;

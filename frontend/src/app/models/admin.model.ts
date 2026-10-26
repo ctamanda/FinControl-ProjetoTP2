@@ -22,6 +22,10 @@ export interface Estatisticas {
   totalEmpresas: number;
   empresasAtivas: number;
   totalUsuariosEmpresa: number;
+  totalAdminsEmpresa: number;
+  totalColaboradores: number;
+  totalMeis: number;
+  totalMicroempresas: number;
   totalTransacoes: number;
   totalCategorias: number;
   mediaTransacoesPorUsuario: number;
@@ -30,7 +34,8 @@ export interface Estatisticas {
   novosUsuarios30Dias: number;
   transacoes30Dias: number;
   categoriasMaisUtilizadas: CategoriaRanking[];
-  transacoesPorMes: { mes: string; quantidade: number }[]; // mes = 'yyyy-MM'
+  transacoesPorMes: { mes: string; quantidade: number; valor: number }[]; // mes = 'yyyy-MM'; valor = total movimentado
+  cadastrosPorMes: { mes: string; contasPessoais: number; empresas: number }[];
 }
 
 export interface ParametroFiscal {
@@ -95,6 +100,7 @@ export interface CategoriaPadrao {
   nome: string;
   tipo: TipoCategoria;
   cor: string | null;
+  icone: string | null;
   ativo: boolean;
   ultimaAlteracao: string | null;
 }

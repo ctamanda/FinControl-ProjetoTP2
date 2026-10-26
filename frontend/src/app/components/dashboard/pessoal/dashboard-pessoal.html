@@ -1,0 +1,183 @@
+@if (carregando()) {
+  <mat-progress-bar mode="indeterminate" class="carregando" />
+}
+
+<div class="conteudo-celular">
+  <div class="cabeca-celular so-celular">
+    <span class="chip-contexto"><span class="bola"><mat-icon>person_outline</mat-icon></span>Pessoal</span>
+  </div>
+
+  @if (erro()) {
+    <p class="cartao vazio erro">{{ erro() }}</p>
+  }
+
+  <div class="painel">
+    <div class="col-principal">
+      <div class="linha-topo">
+        <app-linha-saldo class="c-saldo" [inicio]="saldo().inicio" [atual]="saldo().atual" [previsto]="saldo().previsto" [fimDoMes]="fimDoMes()" />
+
+        <section class="cartao c-ranking">
+          <div class="cartao-cabeca">
+            <h2>Ranking de categorias</h2>
+            @if (verCategorias()) {
+              <a class="link" routerLink="/categorias">Ver todas</a>
+            }
+          </div>
+          @if (categorias().length) {
+            <ul class="barras">
+              @for (c of categorias(); track c.nome) {
+                <li>
+                  <span class="nome">{{ c.nome }}</span>
+                  <span class="trilha"><span class="barra" [style.--cor]="c.cor" [style.width.%]="c.largura"></span></span>
+                  <span class="pct">{{ c.percentual | number: '1.1-1' }}%</span>
+                </li>
+              }
+            </ul>
+            <p class="rodape-cartao">Total de despesas em {{ mes.nome().toLowerCase() }}: {{ despesas() | currency: 'BRL' }}</p>
+          } @else {
+            <p class="vazio">Nenhuma despesa em {{ mes.nome().toLowerCase() }}.</p>
+          }
+        </section>
+      </div>
+
+      <form class="busca-celular so-celular" (submit)="$event.preventDefault(); pesquisar(termo.value)">
+        <span class="mini-logo"><mat-icon>auto_graph</mat-icon></span>
+        <input #termo type="search" placeholder="Pesquisar no FinControl" aria-label="Pesquisar lançamentos" />
+        <button type="submit" aria-label="Pesquisar"><mat-icon>search</mat-icon></button>
+      </form>
+
+      <h2 class="titulo-secao so-computador">Visão geral</h2>
+      <div class="indicadores c-indicadores">
+        <app-indicador class="so-computador" icone="account_balance" cor="roxo" [valor]="moeda(totalContas().atual)" rotulo="Saldo nas contas" [variacao]="variacaoSaldo()" />
+        <app-indicador icone="add" cor="verde" [valor]="moeda(receitas())" [rotulo]="'Total recebido'" [variacao]="variacaoReceitas()" [detalhe]="receitas() ? '' : 'Nada recebido ainda'" />
+        <app-indicador icone="remove" cor="vermelho" [valor]="moeda(despesas())" rotulo="Total gasto" [variacao]="variacaoDespesas()" [subirEhRuim]="true" />
+        <app-indicador
+          class="so-computador"
+          icone="trending_up"
+          cor="amarelo"
+          [valor]="moeda(resultado())"
+          rotulo="Resultado do mês"
+          [detalhe]="margem() !== null ? 'Economia de ' + (margem()! | number: '1.0-1') + '% do que entrou' : 'Sem receitas no mês'"
+        />
+      </div>
+
+      <section class="cartao c-contas">
+        <div class="cartao-cabeca">
+          <h2>Contas</h2>
+          @if (podeEditarContas()) {
+            <a class="link" routerLink="/contas">+ Adicionar</a>
+          }
+        </div>
+        @if (contasAtivas().length) {
+          <div class="tabela-rolagem so-computador">
+            <table class="tabela">
+              <thead>
+                <tr>
+                  <th>Descrição</th>
+                  <th class="num">Receitas</th>
+                  <th class="num">Despesas</th>
+                  <th class="num">Saldo</th>
+                  <th class="num">Previsto</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (c of contasAtivas(); track c.id) {
+                  <tr>
+                    <td>
+                      <a class="pessoa link-conta" routerLink="/transacoes" [queryParams]="{ conta: c.id }">
+                        <span class="sigla" [style.background]="c.cor || '#3b1478'" style="color: #fff">{{ sigla(c.nome) }}</span>
+                        {{ c.nome }}
+                      </a>
+                    </td>
+                    <td class="num">{{ c.receitasMes | currency: 'BRL' }}</td>
+                    <td class="num">{{ c.despesasMes | currency: 'BRL' }}</td>
+                    <td class="num">{{ c.saldoAtual | currency: 'BRL' }}</td>
+                    <td class="num">{{ c.saldoPrevisto | currency: 'BRL' }}</td>
+                  </tr>
+                }
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td>Total</td>
+                  <td class="num valor-receita">{{ totalContas().receitas | currency: 'BRL' }}</td>
+                  <td class="num valor-despesa">{{ totalContas().despesas | currency: 'BRL' }}</td>
+                  <td class="num total-saldo">{{ totalContas().atual | currency: 'BRL' }}</td>
+                  <td class="num">{{ totalContas().previsto | currency: 'BRL' }}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <ul class="agenda so-celular">
+            @for (c of contasAtivas(); track c.id) {
+              <li>
+                <span class="sigla grande" [style.background]="c.cor || '#3b1478'" style="color: #fff">{{ sigla(c.nome) }}</span>
+                <div class="info"><strong>{{ c.nome }}</strong></div>
+                <span class="valor-conta">{{ c.saldoAtual | currency: 'BRL' }}</span>
+              </li>
+            }
+          </ul>
+          <div class="total-celular so-celular">
+            <span>Total</span>
+            <strong>{{ totalContas().atual | currency: 'BRL' }}</strong>
+          </div>
+        } @else {
+          <p class="vazio">Cadastre suas contas (banco, carteira, poupança) para ver o saldo de cada uma.</p>
+        }
+      </section>
+    </div>
+
+    <div class="col-lateral">
+      <section class="cartao c-orcamentos">
+        <div class="cartao-cabeca">
+          <h2>Orçamentos de despesas</h2>
+          <span class="selo">Em breve</span>
+        </div>
+        <div class="em-breve-corpo">
+          <mat-icon>savings</mat-icon>
+          <span>Defina um limite por categoria (Delivery, Mercado, Lazer…) e acompanhe quanto já foi gasto no mês.</span>
+        </div>
+      </section>
+
+      <section class="cartao c-recorrencia">
+        <div class="cartao-cabeca">
+          <h2>Despesas por recorrência</h2>
+          <span class="selo">Em breve</span>
+        </div>
+        <div class="em-breve-corpo">
+          <mat-icon>event_repeat</mat-icon>
+          <span>Separe as despesas em fixas, variáveis e parceladas.</span>
+        </div>
+      </section>
+
+      <section class="cartao c-proximas">
+        <div class="cartao-cabeca">
+          <h2>Próximas contas</h2>
+          @if (verLancamentos()) {
+            <a class="link" routerLink="/a-pagar">Ver todas</a>
+          }
+        </div>
+        @if (proximas().length) {
+          <ul class="agenda">
+            @for (t of proximas(); track t.id) {
+              <li>
+                <span class="dia" [class.urgente]="t.dias <= 1">{{ t.dia }}</span>
+                <div class="info">
+                  <strong>{{ t.descricao }}</strong>
+                  <span [class.atrasada]="t.dias < 0">{{ t.quando }} · {{ t.valor | currency: 'BRL' }}</span>
+                </div>
+                @if (tiposEditaveis().includes('DESPESA')) {
+                  <button class="btn-pagar" type="button" (click)="pagar(t)">Pagar</button>
+                } @else {
+                  <span class="valor-despesa">{{ t.valor | currency: 'BRL' }}</span>
+                }
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="vazio">Nada a pagar. Lance uma despesa como "A pagar" com o vencimento para ela aparecer aqui.</p>
+        }
+      </section>
+    </div>
+  </div>
+</div>

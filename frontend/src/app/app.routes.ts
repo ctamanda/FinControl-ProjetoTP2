@@ -54,28 +54,46 @@ export const routes: Routes = [
                 loadComponent: () => import('./components/dashboard/dashboard').then((m) => m.Dashboard),
                 title: 'Visão geral · FinControl',
                 canActivate: [moduloGuard('DASHBOARD')],
+                data: { mes: true }, // mostra o seletor de mês na barra superior
             },
 
             {
                 path: 'transacoes',
                 loadComponent: () =>
                     import('./components/transacoes/transacao-list/transacao-list').then((m) => m.TransacaoList),
-                title: 'Transações · FinControl',
+                title: 'Lançamentos · FinControl',
                 canActivate: [moduloGuard(...MODULOS_TRANSACOES)],
             },
             {
                 path: 'transacoes/nova',
                 loadComponent: () =>
                     import('./components/transacoes/transacao-form/transacao-form').then((m) => m.TransacaoForm),
-                title: 'Nova transação · FinControl',
+                title: 'Novo lançamento · FinControl',
                 canActivate: [moduloGuard(...MODULOS_TRANSACOES)],
             },
             {
                 path: 'transacoes/:id',
                 loadComponent: () =>
                     import('./components/transacoes/transacao-form/transacao-form').then((m) => m.TransacaoForm),
-                title: 'Editar transação · FinControl',
+                title: 'Editar lançamento · FinControl',
                 canActivate: [moduloGuard(...MODULOS_TRANSACOES)],
+            },
+
+            {
+                // Contas a pagar e a receber (lançamentos pendentes), agrupadas pelo vencimento.
+                path: 'a-pagar',
+                loadComponent: () => import('./components/a-pagar/a-pagar').then((m) => m.APagar),
+                title: 'Contas a pagar · FinControl',
+                canActivate: [moduloGuard(...MODULOS_TRANSACOES)],
+            },
+
+            {
+                // Contas financeiras (bancos, carteira...) com os saldos do mês escolhido no topo.
+                path: 'contas',
+                loadComponent: () => import('./components/contas/conta-list/conta-list').then((m) => m.ContaList),
+                title: 'Contas · FinControl',
+                canActivate: [moduloGuard('CONTAS')],
+                data: { mes: true },
             },
 
             {
@@ -168,6 +186,7 @@ export const routes: Routes = [
                         loadComponent: () =>
                             import('./components/admin/admin-painel/admin-painel').then((m) => m.AdminPainel),
                         title: 'Visão geral do sistema · FinControl',
+                        data: { mes: true },
                     },
                     {
                         path: 'usuarios',

@@ -53,7 +53,8 @@ export class AdminUsuarioList implements OnInit {
   // Filtro vindo da tela da empresa (?empresa=ID).
   protected readonly idEmpresa = Number(inject(ActivatedRoute).snapshot.queryParamMap.get('empresa')) || null;
 
-  private busca = '';
+  // Busca vinda do painel (?busca=).
+  protected busca = inject(ActivatedRoute).snapshot.queryParamMap.get('busca') ?? '';
   protected role: Role | '' = '';
   protected ativo: '' | 'true' | 'false' = '';
   private readonly digitacao = new Subject<string>();

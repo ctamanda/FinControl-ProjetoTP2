@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_URL } from '../core/api';
+import { ParametroFiscal } from '../models/admin.model';
 import { Empresa, EmpresaRequest, UsuarioEmpresaRequest, UsuarioEmpresaUpdate } from '../models/empresa.model';
 import { Usuario } from '../models/usuario.model';
 
@@ -21,6 +22,11 @@ export class EmpresaService {
 
   alterar(dados: EmpresaRequest): Observable<Empresa> {
     return this.http.put<Empresa>(this.apiUrl, dados);
+  }
+
+  // Parâmetros fiscais vigentes para o tipo da empresa (ex.: LIMITE_FATURAMENTO_MEI).
+  parametros(): Observable<ParametroFiscal[]> {
+    return this.http.get<ParametroFiscal[]>(`${this.apiUrl}/parametros`);
   }
 
   listarUsuarios(): Observable<Usuario[]> {

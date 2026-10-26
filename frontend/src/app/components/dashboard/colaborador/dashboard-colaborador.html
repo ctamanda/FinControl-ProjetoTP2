@@ -1,0 +1,180 @@
+@if (carregando()) {
+  <mat-progress-bar mode="indeterminate" class="carregando" />
+}
+
+<div class="conteudo-celular">
+  <div class="cabeca-celular so-celular">
+    <h1>Olá{{ primeiroNome() ? ', ' + primeiroNome() : '' }}</h1>
+    <p>{{ empresa() }} · Colaborador</p>
+  </div>
+
+  @if (erro()) {
+    <p class="cartao vazio erro">{{ erro() }}</p>
+  }
+
+  <!-- Atalhos (celular): botões redondos -->
+  <div class="cartao atalhos-celular so-celular">
+    @if (podeReceita()) {
+      <a class="atalho" routerLink="/transacoes/nova" [queryParams]="{ tipo: 'RECEITA' }">
+        <span class="bola verde"><mat-icon>add</mat-icon></span>Receita
+      </a>
+    }
+    @if (podeDespesa()) {
+      <a class="atalho" routerLink="/transacoes/nova" [queryParams]="{ tipo: 'DESPESA' }">
+        <span class="bola vermelho"><mat-icon>remove</mat-icon></span>Despesa
+      </a>
+    }
+    <span class="atalho inativo" matTooltip="Em breve">
+      <span class="bola amarelo"><mat-icon>attach_file</mat-icon></span>Comprovante
+    </span>
+    <span class="atalho inativo" matTooltip="Em breve">
+      <span class="bola roxo"><mat-icon>bar_chart</mat-icon></span>Relatório
+    </span>
+  </div>
+
+  <!-- Meus registros (celular): card roxo -->
+  <section class="registros-celular so-celular">
+    <div class="registros-cabeca">
+      <h2>Meus registros em {{ mes.nome().toLowerCase() }}</h2>
+      <span>{{ meusNoMes().length }} {{ meusNoMes().length === 1 ? 'lançamento' : 'lançamentos' }}</span>
+    </div>
+    <div class="registros-valores">
+      <div><strong>{{ minhasReceitas() | currency: 'BRL' }}</strong><span>Receitas registradas</span></div>
+      <div><strong>{{ minhasDespesas() | currency: 'BRL' }}</strong><span>Despesas registradas</span></div>
+    </div>
+  </section>
+
+  <div class="painel">
+    <div class="col-principal">
+      <section class="ola so-computador">
+        <h1>Olá{{ primeiroNome() ? ', ' + primeiroNome() : '' }}</h1>
+        <p>O que você vai registrar hoje?</p>
+        <div class="ola-acoes">
+          @if (podeReceita()) {
+            <a class="ola-botao" routerLink="/transacoes/nova" [queryParams]="{ tipo: 'RECEITA' }">
+              <span class="bola verde"><mat-icon>add</mat-icon></span>Registrar receita
+            </a>
+          }
+          @if (podeDespesa()) {
+            <a class="ola-botao" routerLink="/transacoes/nova" [queryParams]="{ tipo: 'DESPESA' }">
+              <span class="bola vermelho"><mat-icon>remove</mat-icon></span>Registrar despesa
+            </a>
+          }
+          <span class="ola-botao inativo" matTooltip="Em breve">
+            <span class="bola amarelo"><mat-icon>attach_file</mat-icon></span>Anexar comprovante
+          </span>
+        </div>
+      </section>
+
+      <h2 class="titulo-secao so-computador">Meus registros em {{ mes.nome().toLowerCase() }}</h2>
+      <div class="indicadores so-computador">
+        <app-indicador icone="swap_vert" cor="roxo" [valor]="'' + meusNoMes().length" rotulo="Lançamentos feitos" />
+        <app-indicador icone="add" cor="verde" [valor]="moeda(minhasReceitas())" rotulo="Receitas registradas" />
+        <app-indicador icone="remove" cor="vermelho" [valor]="moeda(minhasDespesas())" rotulo="Despesas registradas" />
+        <app-indicador icone="attach_file" cor="amarelo" valor="—" rotulo="Sem comprovante" detalhe="Comprovantes em breve" />
+      </div>
+
+      <section class="cartao c-lancamentos">
+        <div class="cartao-cabeca">
+          <h2><span class="so-computador">Meus lançamentos recentes</span><span class="so-celular">Meus lançamentos</span></h2>
+          <div class="abas so-computador" role="tablist">
+            <button type="button" [class.ativa]="!filtro()" (click)="filtro.set(null)">Todos</button>
+            <button type="button" [class.ativa]="filtro() === 'RECEITA'" (click)="filtro.set('RECEITA')">Receitas</button>
+            <button type="button" [class.ativa]="filtro() === 'DESPESA'" (click)="filtro.set('DESPESA')">Despesas</button>
+          </div>
+          @if (verLancamentos()) {
+            <a class="link so-celular" routerLink="/transacoes">Ver todos</a>
+          }
+        </div>
+
+        @if (recentes().length) {
+          <div class="tabela-rolagem so-computador">
+            <table class="tabela">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Descrição</th>
+                  <th>Categoria</th>
+                  <th class="num">Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (t of recentes(); track t.id) {
+                  <tr>
+                    <td>{{ t.data | date: 'dd/MM' }}</td>
+                    <td>{{ t.descricao }}</td>
+                    <td class="cinza">{{ t.categoria?.nome }}</td>
+                    <td class="num" [class]="t.tipo === 'RECEITA' ? 'valor-receita' : 'valor-despesa'">
+                      {{ t.tipo === 'RECEITA' ? '+' : '−' }} {{ t.valor | currency: 'BRL' }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <ul class="agenda so-celular">
+            @for (t of recentes(); track t.id) {
+              <li>
+                <div class="info">
+                  <strong>{{ t.descricao }}</strong>
+                  <span>{{ t.data | date: 'dd/MM' }} · {{ t.categoria?.nome }}</span>
+                </div>
+                <span [class]="t.tipo === 'RECEITA' ? 'valor-receita' : 'valor-despesa'">
+                  {{ t.tipo === 'RECEITA' ? '+' : '−' }} {{ t.valor | currency: 'BRL' }}
+                </span>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="vazio">Você ainda não registrou {{ filtro() === 'RECEITA' ? 'receitas' : filtro() === 'DESPESA' ? 'despesas' : 'lançamentos' }}.</p>
+        }
+      </section>
+    </div>
+
+    <div class="col-lateral">
+      <section class="cartao c-semana">
+        <div class="cartao-cabeca">
+          <h2>Contas desta semana</h2>
+          @if (semana().length) {
+            <span class="discreto">{{ totalSemana() | currency: 'BRL' }}</span>
+          }
+        </div>
+        @if (semana().length) {
+          <ul class="agenda">
+            @for (t of semana(); track t.id) {
+              <li>
+                <span class="dia" [class.urgente]="t.dias <= 1">{{ t.dia }}</span>
+                <div class="info">
+                  <strong>{{ t.descricao }}</strong>
+                  <span>{{ t.valor | currency: 'BRL' }} · {{ t.quando.toLowerCase() }}</span>
+                </div>
+                @if (podeDespesa()) {
+                  <button class="btn-pagar" type="button" (click)="pagar(t)">Pagar</button>
+                }
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="vazio">Nenhuma conta a pagar vence nos próximos 7 dias.</p>
+        }
+      </section>
+
+      <section class="cartao c-acessos">
+        <div class="cartao-cabeca">
+          <h2>Meus acessos</h2>
+        </div>
+        <ul class="acessos">
+          @for (a of acessos(); track a.rotulo) {
+            <li [class.liberado]="a.liberado">
+              <mat-icon>{{ a.liberado ? 'check' : 'lock_outline' }}</mat-icon>
+              <span>{{ a.rotulo }}</span>
+              <em>{{ a.liberado ? 'Liberado' : 'Sem acesso' }}</em>
+            </li>
+          }
+        </ul>
+        <p class="nota">Os acessos são liberados pela administração da empresa.</p>
+      </section>
+    </div>
+  </div>
+</div>
