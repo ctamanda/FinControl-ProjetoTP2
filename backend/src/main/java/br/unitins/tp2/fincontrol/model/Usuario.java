@@ -1,5 +1,6 @@
 package br.unitins.tp2.fincontrol.model;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -53,6 +54,19 @@ public class Usuario extends DefaultEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "modulo", length = 20, nullable = false)
     private Set<Modulo> modulos = new HashSet<>();
+
+    // Senhas erradas seguidas (login ou confirmação de senha); zera ao acertar.
+    @Column(name = "tentativas_login", nullable = false)
+    private int tentativasLogin;
+
+    // Bloqueio temporário depois de muitas tentativas erradas.
+    @Column(name = "bloqueado_ate")
+    private LocalDateTime bloqueadoAte;
+
+    // Vai no token (claim "sv"). Sobe ao trocar senha/e-mail ou em "sair de todos os dispositivos":
+    // tokens com a versão antiga deixam de valer.
+    @Column(name = "versao_sessao", nullable = false)
+    private int versaoSessao;
 
     public String getEmail() {
         return email;
@@ -124,5 +138,29 @@ public class Usuario extends DefaultEntity {
 
     public void setModulos(Set<Modulo> modulos) {
         this.modulos = modulos;
+    }
+
+    public int getTentativasLogin() {
+        return tentativasLogin;
+    }
+
+    public void setTentativasLogin(int tentativasLogin) {
+        this.tentativasLogin = tentativasLogin;
+    }
+
+    public LocalDateTime getBloqueadoAte() {
+        return bloqueadoAte;
+    }
+
+    public void setBloqueadoAte(LocalDateTime bloqueadoAte) {
+        this.bloqueadoAte = bloqueadoAte;
+    }
+
+    public int getVersaoSessao() {
+        return versaoSessao;
+    }
+
+    public void setVersaoSessao(int versaoSessao) {
+        this.versaoSessao = versaoSessao;
     }
 }

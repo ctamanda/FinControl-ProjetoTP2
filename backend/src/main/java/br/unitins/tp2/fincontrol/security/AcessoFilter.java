@@ -2,11 +2,14 @@ package br.unitins.tp2.fincontrol.security;
 
 import java.lang.reflect.Method;
 
+import org.eclipse.microprofile.jwt.JsonWebToken;
+
 import br.unitins.tp2.fincontrol.model.Usuario;
 import br.unitins.tp2.fincontrol.repository.UsuarioRepository;
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.annotation.Priority;
 import jakarta.inject.Inject;
+import jakarta.json.JsonNumber;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.Priorities;
@@ -18,7 +21,8 @@ import jakarta.ws.rs.ext.Provider;
 
 // Roda em toda requisição autenticada, antes do endpoint:
 //  1. o usuário do token ainda existe e está ativo, assim como a empresa dele
-//     (desativar corta o acesso na hora), e o perfil do token ainda é o atual;
+//     (desativar corta o acesso na hora), o perfil do token ainda é o atual e a versão
+//     da sessão do token ainda é a atual (troca de senha/e-mail encerra as sessões);
 //  2. ADMIN_EMPRESA sem empresa só usa o que tem @PermiteEmpresaPendente;
 //  3. se o endpoint tem @RequerModulo, o usuário precisa de pelo menos um daqueles módulos.
 // O perfil (SUPER_ADMIN, PESSOAL...) continua sendo checado pelo @RolesAllowed.
@@ -34,6 +38,16 @@ public class AcessoFilter implements ContainerRequestFilter {
 
     @Context
     ResourceInfo resourceInfo;
+
+    // Token sem a claim (emitido antes deste controle) vale como versão 0.
+    private boolean sessaoEncerrada(Usuario usuario) {
+        if (!(identity.getPrincipal() instanceof JsonWebToken token)) {
+            return false;
+        }
+        Object claim = token.getClaim(Tokens.CLAIM_VERSAO_SESSAO);
+        int versao = claim instanceof JsonNumber n ? n.intValue() : claim instanceof Number n ? n.intValue() : 0;
+        return versao != usuario.getVersaoSessao();
+    }
 
     @Override
     public void filter(ContainerRequestContext requestContext) {
@@ -52,6 +66,10 @@ public class AcessoFilter implements ContainerRequestFilter {
         // O perfil vai no token: se mudou depois do login (ex.: admin rebaixado), o token antigo deixa de valer.
         if (!identity.hasRole(usuario.getRole().name())) {
             throw new NotAuthorizedException("Seu perfil de acesso mudou. Entre novamente.", "Bearer");
+        }
+        // Senha/e-mail trocados ou "sair de todos os dispositivos": tokens da versão anterior não valem.
+        if (sessaoEncerrada(usuario)) {
+            throw new NotAuthorizedException("Sua sessão foi encerrada. Entre novamente.", "Bearer");
         }
 
         Method metodo = resourceInfo.getResourceMethod();
