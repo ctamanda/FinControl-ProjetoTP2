@@ -450,8 +450,8 @@ class ApiTest {
     void contaPessoalPersonalizaOsModulos() {
         String token = registrarELogar();
         given().auth().oauth2(token).contentType(ContentType.JSON)
-                .body(perfil(List.of("DASHBOARD", "LANCAMENTOS")))
-                .when().put("/usuarios/me")
+                .body(Map.of("modulos", List.of("DASHBOARD", "LANCAMENTOS")))
+                .when().put("/usuarios/me/modulos")
                 .then().statusCode(200)
                 .body("modulos", contains("DASHBOARD", "LANCAMENTOS"));
 
@@ -461,21 +461,295 @@ class ApiTest {
                 .then().statusCode(403);
 
         given().auth().oauth2(token).contentType(ContentType.JSON)
-                .body(perfil(List.of("CLIENTES")))
-                .when().put("/usuarios/me")
+                .body(Map.of("modulos", List.of("CLIENTES")))
+                .when().put("/usuarios/me/modulos")
                 .then().statusCode(400)
                 .body("errors[0].field", equalTo("modulos"));
+
+        given().auth().oauth2(registrarEmpresaCompleta()).contentType(ContentType.JSON)
+                .body(Map.of("modulos", List.of("DASHBOARD")))
+                .when().put("/usuarios/me/modulos")
+                .then().statusCode(403);
     }
 
     @Test
     void atualizaPerfilComTelefoneSoComDigitos() {
         String token = registrarELogar();
         given().auth().oauth2(token).contentType(ContentType.JSON)
-                .body(perfil(null))
+                .body(perfil(SENHA))
                 .when().put("/usuarios/me")
                 .then().statusCode(200)
                 .body("nome", equalTo("Novo Nome"))
                 .body("telefone", equalTo("6332150000"));
+    }
+
+    // ------------------------------------------------------------------ segurança da conta
+
+    @Test
+    void alterarDadosPessoaisExigeASenhaAtual() {
+        String token = registrarELogar();
+        var semSenha = perfil(null);
+        semSenha.remove("senhaAtual");
+        given().auth().oauth2(token).contentType(ContentType.JSON).body(semSenha)
+                .when().put("/usuarios/me")
+                .then().statusCode(400).body("errors.field", hasItem("senhaAtual"));
+        given().auth().oauth2(token).contentType(ContentType.JSON).body(perfil("Errada@123"))
+                .when().put("/usuarios/me")
+                .then().statusCode(400).body("errors[0].field", equalTo("senhaAtual"));
+        given().auth().oauth2(token).when().get("/usuarios/me")
+                .then().body("nome", equalTo("Pessoa Teste"));
+    }
+
+    @Test
+    void trocarSenhaEncerraAsOutrasSessoes() {
+        String email = novoEmail();
+        registrar(email);
+        String tokenAntigo = logar(email);
+
+        given().auth().oauth2(tokenAntigo).contentType(ContentType.JSON)
+                .body(Map.of("senhaAtual", SENHA, "novaSenha", SENHA, "confirmacaoSenha", SENHA))
+                .when().put("/usuarios/me/senha")
+                .then().statusCode(400).body("errors[0].field", equalTo("novaSenha"));
+
+        String novaSenha = "Outra#456";
+        String tokenNovo = given().auth().oauth2(tokenAntigo).contentType(ContentType.JSON)
+                .body(Map.of("senhaAtual", SENHA, "novaSenha", novaSenha, "confirmacaoSenha", novaSenha))
+                .when().put("/usuarios/me/senha")
+                .then().statusCode(200)
+                .extract().path("token");
+
+        given().auth().oauth2(tokenAntigo).when().get("/usuarios/me").then().statusCode(401);
+        given().auth().oauth2(tokenNovo).when().get("/usuarios/me").then().statusCode(200);
+        given().contentType(ContentType.JSON).body(Map.of("email", email, "password", SENHA))
+                .when().post("/auth/login").then().statusCode(401);
+        given().contentType(ContentType.JSON).body(Map.of("email", email, "password", novaSenha))
+                .when().post("/auth/login").then().statusCode(200);
+    }
+
+    @Test
+    void trocarEmailExigeSenhaENaoAceitaEmailDeOutraConta() {
+        String email = novoEmail();
+        registrar(email);
+        String token = logar(email);
+        String outro = novoEmail();
+        registrar(outro);
+
+        given().auth().oauth2(token).contentType(ContentType.JSON)
+                .body(Map.of("novoEmail", outro, "senhaAtual", SENHA))
+                .when().put("/usuarios/me/email")
+                .then().statusCode(400).body("errors[0].field", equalTo("novoEmail"));
+
+        String novo = novoEmail().toUpperCase();
+        String tokenNovo = given().auth().oauth2(token).contentType(ContentType.JSON)
+                .body(Map.of("novoEmail", novo, "senhaAtual", SENHA))
+                .when().put("/usuarios/me/email")
+                .then().statusCode(200)
+                .extract().path("token");
+
+        given().auth().oauth2(token).when().get("/usuarios/me").then().statusCode(401);
+        given().auth().oauth2(tokenNovo).when().get("/usuarios/me")
+                .then().statusCode(200).body("email", equalTo(novo.toLowerCase()));
+        logar(novo.toLowerCase());
+    }
+
+    @Test
+    void encerrarSessoesDerrubaOsTokensAntigos() {
+        String email = novoEmail();
+        registrar(email);
+        String outroDispositivo = logar(email);
+        String esteDispositivo = logar(email);
+
+        String novo = given().auth().oauth2(esteDispositivo).contentType(ContentType.JSON)
+                .body(Map.of("senhaAtual", SENHA))
+                .when().post("/usuarios/me/encerrar-sessoes")
+                .then().statusCode(200)
+                .extract().path("token");
+
+        given().auth().oauth2(outroDispositivo).when().get("/usuarios/me").then().statusCode(401);
+        given().auth().oauth2(esteDispositivo).when().get("/usuarios/me").then().statusCode(401);
+        given().auth().oauth2(novo).when().get("/usuarios/me").then().statusCode(200);
+    }
+
+    @Test
+    void bloqueiaOLoginDepoisDeCincoSenhasErradas() {
+        String email = novoEmail();
+        registrar(email);
+        for (int i = 0; i < 5; i++) {
+            given().contentType(ContentType.JSON).body(Map.of("email", email, "password", "Errada@123"))
+                    .when().post("/auth/login").then().statusCode(401);
+        }
+        // Bloqueada: nem a senha certa entra até passar o tempo.
+        given().contentType(ContentType.JSON).body(Map.of("email", email, "password", SENHA))
+                .when().post("/auth/login")
+                .then().statusCode(429).body("detail", containsString("Tente novamente"));
+    }
+
+    @Test
+    void senhaCertaZeraAsTentativas() {
+        String email = novoEmail();
+        registrar(email);
+        for (int rodada = 0; rodada < 2; rodada++) {
+            for (int i = 0; i < 4; i++) {
+                given().contentType(ContentType.JSON).body(Map.of("email", email, "password", "Errada@123"))
+                        .when().post("/auth/login").then().statusCode(401);
+            }
+            logar(email);
+        }
+    }
+
+    // ------------------------------------------------------------------ contas e pagamentos
+
+    @Test
+    void contaNovaJaTemCarteiraESaldosSaemDosLancamentosPagos() {
+        String token = registrarELogar();
+        given().auth().oauth2(token).when().get("/contas")
+                .then().statusCode(200)
+                .body("size()", equalTo(1))
+                .body("[0].nome", equalTo("Carteira"))
+                .body("[0].saldoAtual", equalTo(0.0f));
+
+        long idCarteira = idConta(token, "Carteira");
+        long idBanco = criarConta(token, "Nubank", 1000);
+
+        lancar(token, Map.of("descricao", "Freela", "valor", 500, "data", HOJE, "tipo", "RECEITA",
+                "idCategoria", categoria(token, "RECEITA"), "idConta", idBanco));
+        lancar(token, Map.of("descricao", "Luz", "valor", 200, "data", HOJE, "tipo", "DESPESA",
+                "idCategoria", categoria(token, "DESPESA"), "idConta", idBanco, "pago", false));
+        criarTransacao(token, "DESPESA"); // 10,50 na conta padrão (Carteira), paga
+
+        given().auth().oauth2(token).when().get("/contas/" + idBanco)
+                .then().statusCode(200)
+                .body("saldoAtual", equalTo(1500.0f))
+                .body("receitasMes", equalTo(500.0f))
+                .body("despesasMes", equalTo(200.0f))
+                .body("saldoPrevisto", equalTo(1300.0f))
+                .body("totalLancamentos", equalTo(2));
+        given().auth().oauth2(token).when().get("/contas/" + idCarteira)
+                .then().body("saldoAtual", equalTo(-10.5f));
+    }
+
+    @Test
+    void contaAPagarViraPagaEPodeSerReaberta() {
+        String token = registrarELogar();
+        long id = lancar(token, Map.of("descricao", "Internet", "valor", 99.9, "data", HOJE, "tipo", "DESPESA",
+                "idCategoria", categoria(token, "DESPESA"), "pago", false));
+
+        given().auth().oauth2(token).when().get("/transacoes?status=PENDENTE")
+                .then().statusCode(200)
+                .body("items.id", hasItem((int) id))
+                .body("items[0].status", equalTo("PENDENTE"))
+                .body("items[0].conta.nome", equalTo("Carteira"));
+
+        given().auth().oauth2(token).contentType(ContentType.JSON).body(Map.of())
+                .when().patch("/transacoes/" + id + "/pagar")
+                .then().statusCode(200)
+                .body("status", equalTo("PAGO"))
+                .body("dataPagamento", equalTo(HOJE));
+        given().auth().oauth2(token).contentType(ContentType.JSON).body(Map.of())
+                .when().patch("/transacoes/" + id + "/pagar")
+                .then().statusCode(400);
+        given().auth().oauth2(token).when().get("/contas")
+                .then().body("[0].saldoAtual", equalTo(-99.9f));
+
+        given().auth().oauth2(token).when().patch("/transacoes/" + id + "/reabrir")
+                .then().statusCode(200).body("status", equalTo("PENDENTE")).body("dataPagamento", equalTo(null));
+    }
+
+    @Test
+    void pendenteVencidoApareceComoAtrasadoEDataFuturaNaoPodeEstarPaga() {
+        String token = registrarELogar();
+        String ontem = java.time.LocalDate.now().minusDays(1).toString();
+        String amanha = java.time.LocalDate.now().plusDays(1).toString();
+        long idDespesa = categoria(token, "DESPESA");
+
+        long atrasada = lancar(token, Map.of("descricao", "Boleto", "valor", 50, "data", ontem, "tipo", "DESPESA",
+                "idCategoria", idDespesa, "pago", false));
+        // Sem "pago": data futura vira pendente (agendado).
+        long agendada = lancar(token, Map.of("descricao", "Aluguel", "valor", 900, "data", amanha, "tipo", "DESPESA",
+                "idCategoria", idDespesa));
+
+        given().auth().oauth2(token).when().get("/transacoes?status=ATRASADO")
+                .then().statusCode(200).body("items.id", contains((int) atrasada));
+        given().auth().oauth2(token).when().get("/transacoes/" + agendada)
+                .then().body("status", equalTo("PENDENTE")).body("pago", equalTo(false));
+
+        given().auth().oauth2(token).contentType(ContentType.JSON)
+                .body(Map.of("descricao", "Aluguel", "valor", 900, "data", amanha, "tipo", "DESPESA",
+                        "idCategoria", idDespesa, "pago", true, "dataPagamento", amanha))
+                .when().post("/transacoes")
+                .then().statusCode(400).body("errors[0].field", equalTo("dataPagamento"));
+    }
+
+    @Test
+    void regrasDeContaArquivadaEExclusao() {
+        String token = registrarELogar();
+        long idCarteira = idConta(token, "Carteira");
+
+        // Precisa sobrar uma conta ativa.
+        given().auth().oauth2(token).when().patch("/contas/" + idCarteira + "/arquivar")
+                .then().statusCode(400);
+
+        long idBanco = criarConta(token, "Inter", 0);
+        given().auth().oauth2(token).contentType(ContentType.JSON)
+                .body(Map.of("nome", "inter", "tipo", "POUPANCA", "saldoInicial", 0))
+                .when().post("/contas").then().statusCode(400).body("errors[0].field", equalTo("nome"));
+
+        lancar(token, Map.of("descricao", "Pix", "valor", 10, "data", HOJE, "tipo", "RECEITA",
+                "idCategoria", categoria(token, "RECEITA"), "idConta", idBanco));
+        given().auth().oauth2(token).when().delete("/contas/" + idBanco).then().statusCode(400);
+
+        given().auth().oauth2(token).when().patch("/contas/" + idBanco + "/arquivar")
+                .then().statusCode(200).body("ativa", equalTo(false));
+        given().auth().oauth2(token).contentType(ContentType.JSON)
+                .body(Map.of("descricao", "Pix", "valor", 10, "data", HOJE, "tipo", "RECEITA",
+                        "idCategoria", categoria(token, "RECEITA"), "idConta", idBanco))
+                .when().post("/transacoes")
+                .then().statusCode(400).body("errors[0].field", equalTo("idConta"));
+        given().auth().oauth2(token).when().get("/contas").then().body("size()", equalTo(1));
+        given().auth().oauth2(token).when().get("/contas?inativas=true").then().body("size()", equalTo(2));
+
+        long vazia = criarConta(token, "Vazia", 0);
+        given().auth().oauth2(token).when().delete("/contas/" + vazia).then().statusCode(204);
+    }
+
+    @Test
+    void contaDeOutroDonoNaoServe() {
+        String tokenA = registrarELogar();
+        String tokenB = registrarELogar();
+        long contaDeB = idConta(tokenB, "Carteira");
+
+        given().auth().oauth2(tokenA).when().get("/contas/" + contaDeB).then().statusCode(404);
+        given().auth().oauth2(tokenA).contentType(ContentType.JSON)
+                .body(Map.of("descricao", "Teste", "valor", 10, "data", HOJE, "tipo", "DESPESA",
+                        "idCategoria", categoria(tokenA, "DESPESA"), "idConta", contaDeB))
+                .when().post("/transacoes")
+                .then().statusCode(400).body("errors[0].field", equalTo("idConta"));
+    }
+
+    @Test
+    void empresaComecaComCaixaEColaboradorSemModuloContasSoConsulta() {
+        String admin = registrarEmpresaCompleta();
+        given().auth().oauth2(admin).when().get("/contas")
+                .then().statusCode(200).body("nome", contains("Caixa"));
+
+        String colaborador = logar(criarUsuarioEmpresa(admin, "USUARIO_EMPRESA", List.of("LANCAMENTOS")));
+        given().auth().oauth2(colaborador).when().get("/contas").then().statusCode(200).body("size()", equalTo(1));
+        given().auth().oauth2(colaborador).contentType(ContentType.JSON)
+                .body(Map.of("nome", "Banco", "tipo", "CONTA_CORRENTE", "saldoInicial", 0))
+                .when().post("/contas").then().statusCode(403);
+    }
+
+    @Test
+    void categoriaGuardaOIcone() {
+        String token = registrarELogar();
+        given().auth().oauth2(token).contentType(ContentType.JSON)
+                .body(Map.of("nome", "Pet", "tipo", "DESPESA", "icone", "pets"))
+                .when().post("/categorias")
+                .then().statusCode(201).body("icone", equalTo("pets"));
+        given().auth().oauth2(token).contentType(ContentType.JSON)
+                .body(Map.of("nome", "Outra", "tipo", "DESPESA", "icone", "Ícone!"))
+                .when().post("/categorias")
+                .then().statusCode(400).body("errors[0].field", equalTo("icone"));
     }
 
     // ------------------------------------------------------------------ transações
@@ -614,7 +888,40 @@ class ApiTest {
                 .body("totalEmpresas", notNullValue())
                 .body("totalRegistros", greaterThan(0))
                 .body("categoriasMaisUtilizadas.size()", greaterThan(0))
-                .body("transacoesPorMes.size()", equalTo(6));
+                .body("transacoesPorMes.size()", equalTo(6))
+                .body("transacoesPorMes[5].valor", greaterThan(0f))
+                .body("cadastrosPorMes.size()", equalTo(6))
+                .body("cadastrosPorMes[5].contasPessoais", greaterThanOrEqualTo(1))
+                .body("totalColaboradores", greaterThanOrEqualTo(0));
+    }
+
+    @Test
+    void empresaConsultaParametrosVigentesDoSeuTipo() {
+        String admin = logar(ADMIN_EMAIL);
+        String sufixo = UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+        String hoje = java.time.LocalDate.now().toString();
+        for (String tipo : List.of("MEI", "MICROEMPRESA")) {
+            given().auth().oauth2(admin).contentType(ContentType.JSON)
+                    .body(Map.of("chave", "TESTE_" + tipo + "_" + sufixo, "valor", 10, "vigenciaInicio", hoje,
+                            "vigenciaFim", hoje, "tipoEmpresa", tipo))
+                    .when().post("/admin/parametros").then().statusCode(201);
+        }
+
+        String mei = registrarEmpresaCompleta();
+        given().auth().oauth2(mei).when().get("/empresa/parametros")
+                .then().statusCode(200)
+                .body("chave", hasItem("TESTE_MEI_" + sufixo))
+                .body("chave", not(hasItem("TESTE_MICROEMPRESA_" + sufixo)));
+        given().auth().oauth2(registrarELogar()).when().get("/empresa/parametros").then().statusCode(403);
+    }
+
+    @Test
+    void transacaoInformaQuemLancou() {
+        String token = registrarELogar();
+        long id = criarTransacao(token, "RECEITA");
+        given().auth().oauth2(token).when().get("/transacoes/" + id)
+                .then().statusCode(200)
+                .body("usuario.id", equalTo((int) idDoUsuario(token)));
     }
 
     @Test
@@ -918,12 +1225,12 @@ class ApiTest {
         return corpo;
     }
 
-    private static Map<String, Object> perfil(List<String> modulos) {
+    private static Map<String, Object> perfil(String senhaAtual) {
         var corpo = new HashMap<String, Object>();
         corpo.put("nome", "  Novo Nome  ");
         corpo.put("telefone", "(63) 3215-0000");
         corpo.put("profissao", "Professora");
-        corpo.put("modulos", modulos);
+        corpo.put("senhaAtual", senhaAtual);
         return corpo;
     }
 
@@ -1033,6 +1340,37 @@ class ApiTest {
                 .then().statusCode(201)
                 .extract().path("id");
         return id.longValue();
+    }
+
+    private static final String HOJE = java.time.LocalDate.now().toString();
+
+    private static long lancar(String token, Map<String, Object> corpo) {
+        Number id = given().auth().oauth2(token).contentType(ContentType.JSON).body(corpo)
+                .when().post("/transacoes")
+                .then().statusCode(201)
+                .extract().path("id");
+        return id.longValue();
+    }
+
+    private static long criarConta(String token, String nome, double saldoInicial) {
+        Number id = given().auth().oauth2(token).contentType(ContentType.JSON)
+                .body(Map.of("nome", nome, "tipo", "CONTA_CORRENTE", "saldoInicial", saldoInicial))
+                .when().post("/contas")
+                .then().statusCode(201)
+                .extract().path("id");
+        return id.longValue();
+    }
+
+    private static long idConta(String token, String nome) {
+        List<Map<String, Object>> contas = given().auth().oauth2(token)
+                .when().get("/contas?inativas=true")
+                .then().statusCode(200)
+                .extract().jsonPath().getList("$");
+        return contas.stream()
+                .filter(c -> nome.equals(c.get("nome")))
+                .map(c -> ((Number) c.get("id")).longValue())
+                .findFirst()
+                .orElseThrow();
     }
 
     private static Map<String, Object> parametro(String chave, String inicio, String fim) {
