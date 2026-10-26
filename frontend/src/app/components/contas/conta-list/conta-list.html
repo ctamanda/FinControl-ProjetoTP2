@@ -1,0 +1,96 @@
+<div class="page-header">
+  <div>
+    <h1>Contas</h1>
+    <p>Bancos, carteira e poupança: quanto há em cada uma e quanto deve haver no fim de {{ mes.nome().toLowerCase() }}.</p>
+  </div>
+  @if (podeEditar()) {
+    <button mat-flat-button class="btn-primario" type="button" (click)="nova()"><mat-icon>add</mat-icon> Nova conta</button>
+  }
+</div>
+
+@if (carregando()) {
+  <mat-progress-bar mode="indeterminate" class="carregando" />
+}
+
+<!-- Resumo -->
+<section class="resumo">
+  <div>
+    <span class="rotulo">Saldo nas contas</span>
+    <strong class="grande">{{ total().atual | currency: 'BRL' }}</strong>
+  </div>
+  <div>
+    <span class="rotulo">Previsto para o fim do mês</span>
+    <strong>{{ total().previsto | currency: 'BRL' }}</strong>
+  </div>
+  <div>
+    <span class="rotulo">Entradas em {{ mes.nome().toLowerCase() }}</span>
+    <strong class="verde">{{ total().receitas | currency: 'BRL' }}</strong>
+  </div>
+  <div>
+    <span class="rotulo">Saídas em {{ mes.nome().toLowerCase() }}</span>
+    <strong class="vermelho">{{ total().despesas | currency: 'BRL' }}</strong>
+  </div>
+</section>
+
+<div class="grade">
+  @for (c of ativas(); track c.id) {
+    <article class="conta" [style.--cor]="c.cor || '#3B1478'">
+      <header>
+        <span class="sigla">{{ sigla(c.nome) }}</span>
+        <div class="nome">
+          <strong>{{ c.nome }}</strong>
+          <span>{{ tipos[c.tipo].rotulo }}</span>
+        </div>
+        @if (podeEditar()) {
+          <button class="mais" type="button" [matMenuTriggerFor]="menu" [attr.aria-label]="'Opções de ' + c.nome">
+            <mat-icon>more_horiz</mat-icon>
+          </button>
+          <mat-menu #menu="matMenu" class="menu-fc">
+            <button mat-menu-item type="button" (click)="editar(c)"><mat-icon>edit</mat-icon>Editar</button>
+            <button mat-menu-item type="button" (click)="alterarAtiva(c)"><mat-icon>inventory_2</mat-icon>Arquivar</button>
+            <button mat-menu-item type="button" class="menu-sair" (click)="excluir(c)"><mat-icon>delete_outline</mat-icon>Excluir</button>
+          </mat-menu>
+        }
+      </header>
+
+      <span class="rotulo">Saldo atual</span>
+      <strong class="saldo" [class.negativo]="c.saldoAtual < 0">{{ c.saldoAtual | currency: 'BRL' }}</strong>
+
+      <dl>
+        <div><dt>Entradas</dt><dd class="verde">{{ c.receitasMes | currency: 'BRL' }}</dd></div>
+        <div><dt>Saídas</dt><dd class="vermelho">{{ c.despesasMes | currency: 'BRL' }}</dd></div>
+        <div><dt>Previsto</dt><dd>{{ c.saldoPrevisto | currency: 'BRL' }}</dd></div>
+      </dl>
+
+      <a class="ver" routerLink="/transacoes" [queryParams]="{ conta: c.id }">Ver lançamentos <mat-icon>chevron_right</mat-icon></a>
+    </article>
+  }
+
+  @if (podeEditar()) {
+    <button class="conta nova" type="button" (click)="nova()">
+      <mat-icon>add_circle_outline</mat-icon>
+      Adicionar conta
+    </button>
+  }
+</div>
+
+@if (arquivadas().length) {
+  <button class="link-acao alternar" type="button" (click)="mostrarArquivadas.set(!mostrarArquivadas())">
+    <mat-icon>{{ mostrarArquivadas() ? 'expand_less' : 'expand_more' }}</mat-icon>
+    {{ mostrarArquivadas() ? 'Esconder' : 'Mostrar' }} contas arquivadas ({{ arquivadas().length }})
+  </button>
+  @if (mostrarArquivadas()) {
+    <ul class="arquivadas">
+      @for (c of arquivadas(); track c.id) {
+        <li>
+          <span class="sigla pequena" [style.--cor]="c.cor || '#8e8e93'">{{ sigla(c.nome) }}</span>
+          <span class="nome-arq">{{ c.nome }}</span>
+          <span class="saldo-arq">{{ c.saldoAtual | currency: 'BRL' }}</span>
+          @if (podeEditar()) {
+            <button mat-button type="button" (click)="alterarAtiva(c)">Reativar</button>
+          }
+        </li>
+      }
+    </ul>
+  }
+}

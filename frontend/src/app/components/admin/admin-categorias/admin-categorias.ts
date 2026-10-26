@@ -8,13 +8,15 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { mensagemDeErro } from '../../../core/api';
+import { IconeCategoria } from '../../shared/icone-categoria/icone-categoria';
+import { SeletorIcone } from '../../shared/seletor-icone/seletor-icone';
 import { CategoriaPadrao, CategoriaRanking } from '../../../models/admin.model';
 import { TipoCategoria } from '../../../models/categoria.model';
 import { AdminService } from '../../../services/admin.service';
 
 // Categorias padrão (o que toda conta nova recebe) + ranking de uso no sistema todo.
 @Component({
-  imports: [ReactiveFormsModule, DecimalPipe, MatButtonModule, MatIconModule, MatProgressBarModule, MatTooltipModule],
+  imports: [ReactiveFormsModule, DecimalPipe, MatButtonModule, MatIconModule, MatProgressBarModule, MatTooltipModule, IconeCategoria, SeletorIcone],
   selector: 'app-admin-categorias',
   styleUrl: './admin-categorias.css',
   templateUrl: './admin-categorias.html',
@@ -35,6 +37,7 @@ export class AdminCategorias implements OnInit {
     nome: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(60)]],
     tipo: ['DESPESA' as TipoCategoria, Validators.required],
     cor: ['#4C1D95'],
+    icone: [null as string | null],
   });
 
   protected readonly rankingFiltrado = computed(() => {
@@ -65,12 +68,12 @@ export class AdminCategorias implements OnInit {
 
   editar(c: CategoriaPadrao): void {
     this.editando.set(c);
-    this.form.setValue({ nome: c.nome, tipo: c.tipo, cor: c.cor ?? '#4C1D95' });
+    this.form.setValue({ nome: c.nome, tipo: c.tipo, cor: c.cor ?? '#4C1D95', icone: c.icone ?? null });
   }
 
   cancelar(): void {
     this.editando.set(null);
-    this.form.reset({ nome: '', tipo: 'DESPESA', cor: '#4C1D95' });
+    this.form.reset({ nome: '', tipo: 'DESPESA', cor: '#4C1D95', icone: null });
   }
 
   salvar(): void {

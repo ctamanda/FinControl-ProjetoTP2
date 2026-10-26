@@ -1,0 +1,267 @@
+.carregando {
+  margin-bottom: 12px;
+}
+
+.rotulo {
+  font-size: 13px;
+  color: var(--fc-muted);
+}
+
+.verde {
+  color: #15803d;
+}
+
+.vermelho {
+  color: #d0343f;
+}
+
+/* ---------- Resumo ---------- */
+.resumo {
+  display: grid;
+  grid-template-columns: 1.3fr repeat(3, 1fr);
+  gap: 20px;
+  padding: 24px 28px;
+  margin-bottom: 24px;
+  border-radius: var(--fc-radius);
+  background: var(--fc-roxo);
+  color: #fff;
+  box-shadow: 0 16px 32px -20px rgba(59, 20, 120, 0.8);
+}
+
+.resumo > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.resumo .rotulo {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.resumo strong {
+  font-size: 20px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.resumo strong.grande {
+  font-size: 30px;
+  color: var(--fc-amarelo);
+}
+
+.resumo .verde {
+  color: #86efac;
+}
+
+.resumo .vermelho {
+  color: #fca5a5;
+}
+
+/* ---------- Cartões das contas ---------- */
+.grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 20px;
+}
+
+.conta {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 22px;
+  border-radius: var(--fc-radius);
+  background: var(--fc-surface);
+  box-shadow: var(--fc-shadow);
+  overflow: hidden;
+}
+
+/* faixa da cor da conta no topo */
+.conta::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 5px;
+  background: var(--cor);
+}
+
+.conta header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.sigla {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: var(--cor);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.sigla.pequena {
+  width: 32px;
+  height: 32px;
+  font-size: 12px;
+}
+
+.nome {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.nome strong {
+  font-size: 16px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nome span {
+  font-size: 13px;
+  color: var(--fc-muted);
+}
+
+.mais {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: var(--fc-campo);
+  color: var(--fc-muted);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.saldo {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.saldo.negativo {
+  color: #d0343f;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 16px 0 14px;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--fc-campo);
+}
+
+dt {
+  font-size: 12px;
+  color: var(--fc-muted);
+}
+
+dd {
+  margin: 2px 0 0;
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ver {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: auto;
+  color: var(--fc-roxo);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.ver mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.conta.nova {
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 220px;
+  border: 2px dashed #d9d3e8;
+  background: transparent;
+  box-shadow: none;
+  color: var(--fc-roxo);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.conta.nova::before {
+  display: none;
+}
+
+.conta.nova mat-icon {
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+}
+
+/* ---------- Arquivadas ---------- */
+.alternar {
+  margin-top: 24px;
+}
+
+.arquivadas {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 8px 20px;
+  border-radius: var(--fc-radius);
+  background: var(--fc-surface);
+  box-shadow: var(--fc-shadow);
+}
+
+.arquivadas li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--fc-border);
+}
+
+.arquivadas li:last-child {
+  border-bottom: none;
+}
+
+.nome-arq {
+  flex: 1;
+  color: var(--fc-muted);
+}
+
+.saldo-arq {
+  font-variant-numeric: tabular-nums;
+  color: var(--fc-muted);
+}
+
+@media (max-width: 900px) {
+  .resumo {
+    grid-template-columns: 1fr 1fr;
+    padding: 20px;
+  }
+
+  .resumo > div:first-child {
+    grid-column: 1 / -1;
+  }
+}

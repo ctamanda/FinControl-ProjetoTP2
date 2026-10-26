@@ -1,37 +1,93 @@
-.tipos {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  max-width: 340px;
-  border: 1px solid var(--fc-border);
-  border-radius: 6px;
-  overflow: hidden;
-  margin-bottom: 24px;
-}
-
 .tipo {
+  max-width: 360px;
+  margin-bottom: 22px;
+}
+
+.tipo mat-icon.despesa {
+  color: #d0343f;
+}
+
+.tipo mat-icon.receita {
+  color: #15803d;
+}
+
+/* ---------- Valor em destaque ---------- */
+.valor-grande {
+  max-width: 360px;
+}
+
+.caixa-valor {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 14px 10px;
-  background: #fff;
+  gap: 8px;
+  padding: 0 16px;
+  border-radius: 16px;
+  background: var(--fc-campo);
+  color: #d0343f;
+}
+
+.caixa-valor.receita {
+  color: #15803d;
+}
+
+.caixa-valor span {
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.campo .caixa-valor input {
+  height: 64px;
+  padding: 0;
+  background: transparent;
   border: none;
-  font: inherit;
-  font-size: 12px;
-  color: var(--fc-text);
-  cursor: pointer;
+  box-shadow: none;
+  color: inherit;
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
-.tipo + .tipo {
-  border-left: 1px solid var(--fc-border);
+.caixa-valor:focus-within {
+  background: #fff;
+  box-shadow: 0 0 0 2px var(--fc-primary), 0 0 0 6px rgba(76, 29, 149, 0.12);
 }
 
-.tipo.selecionado {
-  background: var(--fc-roxo-claro);
-  box-shadow: inset 0 -3px 0 var(--fc-primary);
+/* ---------- Categoria com o ícone ao lado ---------- */
+.com-icone {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.com-icone select {
+  flex: 1;
 }
 
 .link-mini {
   font-size: 12px;
   text-decoration: none;
+}
+
+.dica {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 26px 0 18px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--fc-muted);
+}
+
+.dica mat-icon {
+  flex-shrink: 0;
+  color: #a16207;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+@media (max-width: 640px) {
+  .dica {
+    margin-top: 0;
+  }
 }

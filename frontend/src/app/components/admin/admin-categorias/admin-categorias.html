@@ -23,7 +23,7 @@
     <ul class="padrao">
       @for (c of padrao(); track c.id) {
         <li [class.inativa]="!c.ativo">
-          <span class="color-dot" [style.background]="c.cor || '#9aa5b5'"></span>
+          <app-icone-categoria [categoria]="c" [tamanho]="32" />
           <span class="nome">{{ c.nome }}</span>
           <span class="chip" [class.red]="c.tipo === 'DESPESA'" [class.green]="c.tipo === 'RECEITA'">
             {{ c.tipo === 'DESPESA' ? 'Despesa' : 'Receita' }}
@@ -55,6 +55,8 @@
           <input id="cor" type="color" formControlName="cor" />
         </div>
       </div>
+      <span class="rotulo">Ícone</span>
+      <app-seletor-icone [icone]="form.controls.icone.value" (iconeChange)="form.controls.icone.setValue($event)" [cor]="form.controls.cor.value" />
       <div class="form-actions">
         <button mat-flat-button class="btn-primario" type="submit" [disabled]="salvando()">
           <mat-icon>{{ editando() ? 'check' : 'add' }}</mat-icon> {{ editando() ? 'Salvar' : 'Adicionar' }}

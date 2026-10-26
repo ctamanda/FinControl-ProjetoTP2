@@ -1,0 +1,108 @@
+<div class="page-header">
+  <div>
+    <h1>{{ receita() ? 'Contas a receber' : 'Contas a pagar' }}</h1>
+    <p>
+      {{ receita() ? 'Receitas registradas que ainda não entraram.' : 'Despesas registradas que ainda não foram pagas.' }}
+      Elas só mexem no saldo quando você marca como {{ receita() ? 'recebidas' : 'pagas' }}.
+    </p>
+  </div>
+  @if (tiposPermitidos().includes(tipo())) {
+    <a mat-flat-button class="btn-primario" routerLink="/transacoes/nova" [queryParams]="{ tipo: tipo(), pendente: 1 }">
+      <mat-icon>add</mat-icon> {{ receita() ? 'Nova conta a receber' : 'Nova conta a pagar' }}
+    </a>
+  }
+</div>
+
+@if (tiposPermitidos().length > 1) {
+  <div class="segmentado abas" role="tablist">
+    <button type="button" role="tab" [class.ativo]="!receita()" [attr.aria-selected]="!receita()" (click)="tipo.set('DESPESA')">
+      <mat-icon>arrow_upward</mat-icon> A pagar
+    </button>
+    <button type="button" role="tab" [class.ativo]="receita()" [attr.aria-selected]="receita()" (click)="tipo.set('RECEITA')">
+      <mat-icon>arrow_downward</mat-icon> A receber
+    </button>
+  </div>
+}
+
+@if (carregando()) {
+  <mat-progress-bar mode="indeterminate" class="carregando" />
+}
+
+<!-- Totais -->
+<section class="totais">
+  <div class="total principal">
+    <span>Total {{ receita() ? 'a receber' : 'a pagar' }}</span>
+    <strong>{{ totalPendente() | currency: 'BRL' }}</strong>
+  </div>
+  @for (g of grupos(); track g.classe) {
+    <div class="total" [class]="g.classe">
+      <span>{{ g.titulo }}</span>
+      <strong>{{ g.total | currency: 'BRL' }}</strong>
+      <em>{{ g.itens.length }} {{ g.itens.length === 1 ? 'conta' : 'contas' }}</em>
+    </div>
+  }
+</section>
+
+@for (g of grupos(); track g.classe) {
+  @if (g.itens.length) {
+    <section class="grupo {{ g.classe }}">
+      <h2>{{ g.titulo }}</h2>
+      <ul>
+        @for (t of g.itens; track t.id) {
+          <li>
+            <span class="data">
+              <strong>{{ dia(t.data) }}</strong>
+              <span>{{ mesCurto(t.data) }}</span>
+            </span>
+            <app-icone-categoria [categoria]="t.categoria" [tamanho]="40" />
+            <a class="info" [routerLink]="['/transacoes', t.id]">
+              <strong>{{ t.descricao }}</strong>
+              <span>{{ t.categoria?.nome }} · {{ t.conta?.nome }} · <em [class.atrasada]="t.status === 'ATRASADO'">{{ quando(t.data) }}</em></span>
+            </a>
+            <span class="valor" [class.receita]="receita()">{{ t.valor | currency: 'BRL' }}</span>
+            @if (tiposPermitidos().includes(t.tipo)) {
+              <button class="btn-pagar" type="button" (click)="pagar(t)">
+                <mat-icon>check</mat-icon><span class="rotulo-pagar">{{ receita() ? 'Receber' : 'Pagar' }}</span>
+              </button>
+            }
+          </li>
+        }
+      </ul>
+    </section>
+  }
+}
+
+@if (!carregando() && !pendentes().length) {
+  <div class="fc-card vazio" role="status">
+    <mat-icon>task_alt</mat-icon>
+    <p>
+      Nada {{ receita() ? 'a receber' : 'a pagar' }} por aqui.
+      Ao lançar uma {{ receita() ? 'receita' : 'despesa' }}, escolha "{{ receita() ? 'A receber' : 'A pagar' }}" e informe o vencimento.
+    </p>
+  </div>
+}
+
+@if (pagosNoMes().length) {
+  <section class="grupo pagos">
+    <h2>{{ receita() ? 'Recebidos' : 'Pagos' }} este mês</h2>
+    <ul>
+      @for (t of pagosNoMes(); track t.id) {
+        <li>
+          <span class="data">
+            <strong>{{ dia(t.dataPagamento || t.data) }}</strong>
+            <span>{{ mesCurto(t.dataPagamento || t.data) }}</span>
+          </span>
+          <app-icone-categoria [categoria]="t.categoria" [tamanho]="40" />
+          <div class="info">
+            <strong>{{ t.descricao }}</strong>
+            <span>{{ t.conta?.nome }} · {{ receita() ? 'recebido' : 'pago' }} em {{ t.dataPagamento | date: 'dd/MM' }}</span>
+          </div>
+          <span class="valor" [class.receita]="receita()">{{ t.valor | currency: 'BRL' }}</span>
+          @if (tiposPermitidos().includes(t.tipo)) {
+            <button mat-button type="button" (click)="desfazer(t)" matTooltip="Volta a ficar pendente">Desfazer</button>
+          }
+        </li>
+      }
+    </ul>
+  </section>
+}

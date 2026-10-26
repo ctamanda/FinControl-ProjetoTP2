@@ -13,8 +13,9 @@ import { Categoria } from '../../../models/categoria.model';
 import { CategoriaService } from '../../../services/categoria.service';
 import { confirmar } from '../../shared/confirm-dialog/confirm-dialog';
 
+import { IconeCategoria } from '../../shared/icone-categoria/icone-categoria';
 @Component({
-  imports: [RouterLink, MatButtonModule, MatIconModule, MatTooltipModule, MatProgressBarModule],
+  imports: [IconeCategoria, RouterLink, MatButtonModule, MatIconModule, MatTooltipModule, MatProgressBarModule],
   selector: 'app-categoria-list',
   styleUrl: './categoria-list.css',
   templateUrl: './categoria-list.html',

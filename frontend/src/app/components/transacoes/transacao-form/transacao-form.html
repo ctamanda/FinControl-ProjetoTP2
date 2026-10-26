@@ -1,7 +1,7 @@
 <div class="page-header">
   <div>
-    <h1>{{ id() ? 'Editar transação' : 'Nova transação' }}</h1>
-    <p>Registre uma entrada ou saída de dinheiro.</p>
+    <h1>{{ id() ? 'Editar lançamento' : receita() ? 'Nova receita' : 'Nova despesa' }}</h1>
+    <p>{{ receita() ? 'Dinheiro que entra (ou vai entrar).' : 'Dinheiro que sai (ou vai sair): compras, contas e boletos.' }}</p>
   </div>
 </div>
 
@@ -11,57 +11,35 @@
   }
 
   <form [formGroup]="form" (ngSubmit)="salvar()" novalidate>
-    <div class="tipos" role="radiogroup" aria-label="Tipo da transação">
-      @if (tipos.includes('DESPESA')) {
-        <button
-          type="button"
-          role="radio"
-          class="tipo"
-          [class.selecionado]="tipo() === 'DESPESA'"
-          [attr.aria-checked]="tipo() === 'DESPESA'"
-          (click)="form.controls.tipo.setValue('DESPESA')"
-        >
-          <span class="icone-tipo"><mat-icon>arrow_upward</mat-icon></span>
-          Despesa
+    @if (tipos.length > 1) {
+      <div class="segmentado largo tipo" role="radiogroup" aria-label="Tipo do lançamento">
+        <button type="button" role="radio" [class.ativo]="!receita()" [attr.aria-checked]="!receita()" (click)="form.controls.tipo.setValue('DESPESA')">
+          <mat-icon class="despesa">arrow_upward</mat-icon> Despesa
         </button>
-      }
-      @if (tipos.includes('RECEITA')) {
-        <button
-          type="button"
-          role="radio"
-          class="tipo"
-          [class.selecionado]="tipo() === 'RECEITA'"
-          [attr.aria-checked]="tipo() === 'RECEITA'"
-          (click)="form.controls.tipo.setValue('RECEITA')"
-        >
-          <span class="icone-tipo receita"><mat-icon>arrow_downward</mat-icon></span>
-          Receita
+        <button type="button" role="radio" [class.ativo]="receita()" [attr.aria-checked]="receita()" (click)="form.controls.tipo.setValue('RECEITA')">
+          <mat-icon class="receita">arrow_downward</mat-icon> Receita
         </button>
+      </div>
+    }
+
+    <!-- Valor em destaque, como nos apps de banco -->
+    <div class="campo valor-grande" [class.invalido]="invalido('valor')">
+      <label for="valor">Valor</label>
+      <div class="caixa-valor" [class.receita]="receita()">
+        <span>R$</span>
+        <input id="valor" type="number" step="0.01" min="0.01" inputmode="decimal" formControlName="valor" placeholder="0,00" />
+      </div>
+      @if (invalido('valor')) {
+        <span class="erro">Informe um valor maior que zero.</span>
       }
     </div>
 
     <div class="form-grid">
       <div class="campo full" [class.invalido]="invalido('descricao')">
         <label for="descricao">Descrição</label>
-        <input id="descricao" formControlName="descricao" placeholder="Ex.: Compra no mercado" />
+        <input id="descricao" formControlName="descricao" [placeholder]="receita() ? 'Ex.: Salário, venda, freela' : 'Ex.: Conta de luz, mercado'" />
         @if (invalido('descricao')) {
           <span class="erro">Informe uma descrição entre 2 e 150 caracteres.</span>
-        }
-      </div>
-
-      <div class="campo" [class.invalido]="invalido('valor')">
-        <label for="valor">Valor (R$)</label>
-        <input id="valor" type="number" step="0.01" min="0.01" formControlName="valor" placeholder="0,00" />
-        @if (invalido('valor')) {
-          <span class="erro">Informe um valor maior que zero.</span>
-        }
-      </div>
-
-      <div class="campo" [class.invalido]="invalido('data')">
-        <label for="data">Data</label>
-        <input id="data" type="date" formControlName="data" />
-        @if (invalido('data')) {
-          <span class="erro">Informe a data.</span>
         }
       </div>
 
@@ -72,17 +50,66 @@
             <a routerLink="/categorias/nova" class="link-mini">+ nova</a>
           }
         </label>
-        <select id="categoria" formControlName="idCategoria">
-          <option [ngValue]="null" disabled>Selecione</option>
-          @for (c of categoriasDoTipo(); track c.id) {
-            <option [ngValue]="c.id">{{ c.nome }}</option>
-          }
-        </select>
+        <div class="com-icone">
+          <app-icone-categoria [categoria]="categoriaEscolhida() ?? { id: 0, nome: '', tipo: tipo() }" [tamanho]="34" />
+          <select id="categoria" formControlName="idCategoria">
+            <option [ngValue]="null" disabled>Selecione</option>
+            @for (c of categoriasDoTipo(); track c.id) {
+              <option [ngValue]="c.id">{{ c.nome }}</option>
+            }
+          </select>
+        </div>
         @if (invalido('idCategoria')) {
           <span class="erro">Selecione uma categoria.</span>
         }
       </div>
 
+      <div class="campo" [class.invalido]="invalido('idConta')">
+        <label for="conta">{{ receita() ? 'Entra na conta' : 'Sai da conta' }}</label>
+        <select id="conta" formControlName="idConta">
+          <option [ngValue]="null" disabled>Selecione</option>
+          @for (c of contas(); track c.id) {
+            <option [ngValue]="c.id">{{ c.nome }}{{ c.ativa === false ? ' (arquivada)' : '' }}</option>
+          }
+        </select>
+        @if (invalido('idConta')) {
+          <span class="erro">Escolha a conta.</span>
+        }
+      </div>
+
+      <!-- Situação: já pago ou ainda a pagar -->
+      <div class="campo full">
+        <span class="rotulo">Situação</span>
+        <div class="segmentado largo" role="radiogroup" aria-label="Situação do pagamento">
+          <button type="button" role="radio" [class.ativo]="pago()" [attr.aria-checked]="pago()" (click)="form.controls.pago.setValue(true)">
+            <mat-icon>check_circle</mat-icon> {{ receita() ? 'Recebido' : 'Pago' }}
+          </button>
+          <button type="button" role="radio" [class.ativo]="!pago()" [attr.aria-checked]="!pago()" (click)="form.controls.pago.setValue(false)">
+            <mat-icon>schedule</mat-icon> {{ receita() ? 'A receber' : 'A pagar' }}
+          </button>
+        </div>
+      </div>
+
+      <div class="campo" [class.invalido]="invalido('data')">
+        <label for="data">{{ pago() ? 'Data' : 'Vencimento' }}</label>
+        <input id="data" type="date" formControlName="data" />
+        @if (invalido('data')) {
+          <span class="erro">Informe a data.</span>
+        }
+      </div>
+
+      @if (pago()) {
+        <div class="campo">
+          <label for="dataPagamento">{{ receita() ? 'Recebido em' : 'Pago em' }}</label>
+          <input id="dataPagamento" type="date" [max]="hoje" formControlName="dataPagamento" />
+        </div>
+      } @else {
+        <p class="dica">
+          <mat-icon>notifications_active</mat-icon>
+          Fica em <strong>Contas a {{ receita() ? 'receber' : 'pagar' }}</strong> até você marcar como {{ receita() ? 'recebido' : 'pago' }};
+          só então entra no saldo da conta.
+        </p>
+      }
     </div>
 
     <div class="form-actions">

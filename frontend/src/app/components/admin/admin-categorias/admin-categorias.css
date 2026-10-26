@@ -139,3 +139,8 @@
 .barra.receita {
   background: var(--fc-success);
 }
+
+app-seletor-icone {
+  display: block;
+  margin: 6px 0 16px;
+}

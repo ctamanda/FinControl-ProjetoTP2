@@ -1,7 +1,7 @@
 <div class="page-header">
   <div>
     <h1>{{ id() ? 'Editar categoria' : 'Nova categoria' }}</h1>
-    <p>Defina o nome, o tipo e uma cor para identificar a categoria nos gráficos.</p>
+    <p>Defina o nome, o tipo, um ícone e uma cor para reconhecer a categoria nas listas e gráficos.</p>
   </div>
 </div>
 
@@ -12,7 +12,7 @@
 
   <form [formGroup]="form" (ngSubmit)="salvar()" novalidate>
     <div class="previa">
-      <span class="bolinha" [style.background]="cor()">{{ (nome() || '?').charAt(0) }}</span>
+      <app-icone-categoria [categoria]="{ id: 0, nome: nome(), tipo: tipo(), cor: cor(), icone: icone() }" [tamanho]="44" />
       <span>{{ nome() || 'Nome da categoria' }}</span>
     </div>
 
@@ -50,7 +50,10 @@
       </button>
     </div>
 
-    <span class="rotulo">Cor</span>
+    <span class="rotulo">Ícone</span>
+    <app-seletor-icone [icone]="icone()" (iconeChange)="form.controls.icone.setValue($event)" [cor]="cor() || '#3b1478'" />
+
+    <span class="rotulo espaco">Cor</span>
     <div class="paleta" role="radiogroup" aria-label="Cor da categoria">
       @for (c of paleta; track c) {
         <button

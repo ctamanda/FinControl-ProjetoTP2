@@ -5,4 +5,5 @@ export class Categoria {
     nome!: string;
     tipo?: TipoCategoria;
     cor?: string | null;
+    icone?: string | null; // Material Icons; vazio = ícone padrão do tipo
 }

@@ -1,0 +1,233 @@
+.abas {
+  margin-bottom: 20px;
+}
+
+.carregando {
+  margin-bottom: 12px;
+}
+
+/* ---------- Totais ---------- */
+.totais {
+  display: grid;
+  grid-template-columns: 1.3fr repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.total {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 18px 20px;
+  border-radius: var(--fc-radius);
+  background: var(--fc-surface);
+  box-shadow: var(--fc-shadow);
+}
+
+.total span {
+  font-size: 13px;
+  color: var(--fc-muted);
+}
+
+.total strong {
+  font-size: 20px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.total em {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--fc-muted);
+}
+
+.total.principal {
+  justify-content: center;
+  background: var(--fc-roxo);
+  color: #fff;
+}
+
+.total.principal span {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.total.principal strong {
+  font-size: 28px;
+  color: var(--fc-amarelo);
+}
+
+.total.atrasadas strong {
+  color: #d0343f;
+}
+
+.total.semana strong {
+  color: #a16207;
+}
+
+/* ---------- Grupos ---------- */
+.grupo {
+  margin-bottom: 24px;
+}
+
+.grupo h2 {
+  margin: 0 0 10px 6px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fc-muted);
+}
+
+.grupo.atrasadas h2 {
+  color: #d0343f;
+}
+
+/* Lista agrupada do iOS: um cartão com linhas separadas por fio */
+.grupo ul {
+  list-style: none;
+  margin: 0;
+  padding: 0 18px;
+  border-radius: var(--fc-radius);
+  background: var(--fc-surface);
+  box-shadow: var(--fc-shadow);
+}
+
+.grupo li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--fc-border);
+}
+
+.grupo li:last-child {
+  border-bottom: none;
+}
+
+.data {
+  width: 46px;
+  height: 50px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: var(--fc-campo);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.1;
+}
+
+.data strong {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.data span {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--fc-muted);
+}
+
+.atrasadas .data {
+  background: var(--fc-danger-soft);
+  color: #b3222f;
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.info strong {
+  font-weight: 500;
+  font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.info span {
+  font-size: 13px;
+  color: var(--fc-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.info em {
+  font-style: normal;
+}
+
+.info em.atrasada {
+  color: #d0343f;
+  font-weight: 500;
+}
+
+.valor {
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: #d0343f;
+  font-variant-numeric: tabular-nums;
+}
+
+.valor.receita {
+  color: #15803d;
+}
+
+.pagos .valor {
+  color: var(--fc-muted);
+  font-weight: 500;
+}
+
+.vazio {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: var(--fc-muted);
+}
+
+.vazio mat-icon {
+  font-size: 36px;
+  width: 36px;
+  height: 36px;
+  color: #15803d;
+}
+
+@media (max-width: 900px) {
+  .totais {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .total.principal {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .grupo ul {
+    padding: 0 14px;
+  }
+
+  .grupo li {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .info {
+    flex-basis: calc(100% - 120px);
+  }
+
+  .valor {
+    margin-left: 56px;
+  }
+
+  .btn-pagar {
+    margin-left: auto;
+  }
+}

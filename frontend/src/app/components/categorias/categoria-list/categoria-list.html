@@ -36,9 +36,7 @@
         <ul class="lista">
           @for (c of g.itens; track c.id) {
             <li>
-              <span class="bolinha" [style.background]="c.cor || '#9aa5b5'">
-                {{ c.nome.charAt(0) }}
-              </span>
+              <app-icone-categoria [categoria]="c" [tamanho]="38" />
               <span class="nome">{{ c.nome }}</span>
               <a mat-icon-button [routerLink]="['/categorias', c.id]" matTooltip="Editar">
                 <mat-icon>edit</mat-icon>

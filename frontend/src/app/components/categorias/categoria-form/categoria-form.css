@@ -84,3 +84,13 @@
   opacity: 0;
   cursor: pointer;
 }
+
+.rotulo.espaco {
+  display: block;
+  margin-top: 20px;
+}
+
+app-seletor-icone {
+  display: block;
+  margin: 6px 0 4px;
+}

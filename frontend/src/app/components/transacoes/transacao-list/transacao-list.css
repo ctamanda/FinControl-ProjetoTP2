@@ -6,24 +6,45 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  font-weight: 500;
 }
 
-.descricao .icone-tipo {
-  width: 30px;
-  height: 30px;
+.cinza {
+  color: var(--fc-muted);
 }
 
-.descricao .icone-tipo mat-icon {
-  font-size: 16px;
-  width: 16px;
-  height: 16px;
-}
-
-.categoria {
+.conta {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   white-space: nowrap;
+}
+
+.filtro-conta {
+  padding: 4px 6px 4px 12px;
+  font-size: 13px;
+}
+
+.filtro-conta button {
+  display: grid;
+  place-items: center;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.btn-pagar {
+  width: 34px;
+  padding: 0;
+  justify-content: center;
+  vertical-align: middle;
+}
+
+tr.atrasada td:first-child {
+  color: #d0343f;
+  font-weight: 500;
 }
 
 .mat-column-data {
@@ -34,4 +55,15 @@
 .mat-column-valor {
   white-space: nowrap;
   font-size: 15px;
+}
+
+.col-acoes {
+  width: 100px;
+}
+
+@media (max-width: 900px) {
+  .mat-column-categoria,
+  .mat-column-conta {
+    display: none;
+  }
 }

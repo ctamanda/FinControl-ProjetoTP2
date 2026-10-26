@@ -8,11 +8,15 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { mensagemDeErro } from '../../../core/api';
+import { IconeCategoria } from '../../shared/icone-categoria/icone-categoria';
+import { SeletorIcone } from '../../shared/seletor-icone/seletor-icone';
 import { TipoCategoria } from '../../../models/categoria.model';
 import { CategoriaService } from '../../../services/categoria.service';
 
 @Component({
   imports: [
+    IconeCategoria,
+    SeletorIcone,
     ReactiveFormsModule,
     RouterLink,
     MatButtonModule,
@@ -39,6 +43,7 @@ export class CategoriaForm implements OnInit {
     nome: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(60)]],
     tipo: ['DESPESA' as TipoCategoria, Validators.required],
     cor: ['#1E88E5', Validators.pattern(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)],
+    icone: [null as string | null],
   });
 
   protected readonly cor = toSignal(this.form.controls.cor.valueChanges, {
@@ -48,6 +53,9 @@ export class CategoriaForm implements OnInit {
     initialValue: this.form.controls.nome.value,
   });
 
+  protected readonly icone = toSignal(this.form.controls.icone.valueChanges, {
+    initialValue: this.form.controls.icone.value,
+  });
   protected readonly tipo = toSignal(this.form.controls.tipo.valueChanges, {
     initialValue: this.form.controls.tipo.value,
   });
@@ -66,7 +74,7 @@ export class CategoriaForm implements OnInit {
     this.carregando.set(true);
     this.categoriaService.findById(id).subscribe({
       next: (c) => {
-        this.form.patchValue({ nome: c.nome, tipo: c.tipo, cor: c.cor || '#1E88E5' });
+        this.form.patchValue({ nome: c.nome, tipo: c.tipo, cor: c.cor || '#1E88E5', icone: c.icone ?? null });
         this.carregando.set(false);
       },
       error: (error: HttpErrorResponse) => {
