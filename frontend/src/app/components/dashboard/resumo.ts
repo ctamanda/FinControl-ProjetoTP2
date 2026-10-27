@@ -3,7 +3,7 @@ import { hojeIso } from '../../models/admin.model';
 import { TipoTransacao, Transacao } from '../../models/transacao.model';
 
 // Cálculos dos dashboards, feitos no front sobre as transações da conta
-// (o back devolve só as do usuário ou da empresa dele).
+// (o back devolve só as do usuário).
 
 const MESES_CURTOS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 

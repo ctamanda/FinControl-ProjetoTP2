@@ -1,24 +1,50 @@
 <div class="page-header">
   <div>
     <h1>Auditoria</h1>
-    <p>Quem fez cada alteração administrativa importante, em quê e quando.</p>
+    <p>Quem fez cada alteração importante, em quê e quando: ações do administrador e eventos de segurança das contas.</p>
   </div>
 </div>
 
+<div class="aviso aviso-leitura">
+  <mat-icon>lock</mat-icon>
+  Somente leitura: nenhum registro da auditoria pode ser alterado ou apagado, nem pelo administrador.
+</div>
+
 <section class="fc-card">
-  <div class="filtros">
-    <label class="busca">
-      <mat-icon>search</mat-icon>
-      <input (input)="buscar($event)" placeholder="Buscar por autor, alvo ou detalhe" aria-label="Buscar na auditoria" />
-    </label>
+  <form class="grade-filtros" (ngSubmit)="filtrar()">
     <div class="campo">
-      <select [(ngModel)]="acao" (change)="filtrar()" aria-label="Ação">
+      <label for="autor">Autor</label>
+      <input id="autor" name="autor" [(ngModel)]="filtro.autor" placeholder="E-mail de quem fez" />
+    </div>
+    <div class="campo">
+      <label for="acao">Ação</label>
+      <select id="acao" name="acao" [(ngModel)]="filtro.acao" (change)="filtrar()">
         <option value="">Todas as ações</option>
         @for (a of acoes; track a[0]) {
           <option [value]="a[0]">{{ a[1] }}</option>
         }
       </select>
     </div>
+    <div class="campo">
+      <label for="inicio">De</label>
+      <input id="inicio" type="date" name="inicio" [(ngModel)]="filtro.inicio" />
+    </div>
+    <div class="campo">
+      <label for="fim">Até</label>
+      <input id="fim" type="date" name="fim" [(ngModel)]="filtro.fim" />
+    </div>
+    <div class="campo">
+      <label for="busca">Em quê</label>
+      <input id="busca" name="busca" [value]="filtro.busca" (input)="buscar($event)" placeholder="Alvo ou detalhe" />
+    </div>
+    <div class="acoes-filtro">
+      <button mat-flat-button class="btn-primario" type="submit"><mat-icon>search</mat-icon> Filtrar</button>
+      <button mat-button type="button" (click)="limpar()">Limpar</button>
+    </div>
+  </form>
+
+  <div class="resumo">
+    <strong>{{ total() }}</strong> {{ total() === 1 ? 'registro' : 'registros' }}
   </div>
 
   <div class="barra-espaco">

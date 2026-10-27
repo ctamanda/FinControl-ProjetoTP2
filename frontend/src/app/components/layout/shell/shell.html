@@ -27,13 +27,6 @@
     <button class="btn-redondo translucido so-computador" type="button" [matMenuTriggerFor]="menuAvisos" aria-label="Notificações">
       <mat-icon>notifications_none</mat-icon>
     </button>
-    @if (contexto().rotulo) {
-      <button class="contexto so-computador" type="button" [matMenuTriggerFor]="menuContexto">
-        <span class="contexto-icone"><mat-icon>{{ contexto().icone }}</mat-icon></span>
-        <span class="contexto-rotulo">{{ contexto().rotulo }}</span>
-        <mat-icon>expand_more</mat-icon>
-      </button>
-    }
     <button class="avatar" type="button" [class.admin]="perfil()?.role === 'SUPER_ADMIN'" [matMenuTriggerFor]="menuConta" aria-label="Minha conta">
       {{ iniciais() }}
     </button>
@@ -75,20 +68,16 @@
         } @else {
           <span class="secao">Indisponíveis</span>
         }
-        <!-- Recolhido: só os cadeados aparecem; os "em breve" viram um único ícone ⋯ -->
-        @for (m of inativos(); track m.rotulo) {
-          @if (m.cadeado || menuAberto()) {
-            <span class="item inativo" [matTooltip]="m.rotulo + ' · ' + m.motivo" matTooltipPosition="right" [matTooltipDisabled]="menuAberto()">
+        <!-- Recolhido: os "em breve" viram um único ícone ⋯ -->
+        @if (menuAberto()) {
+          @for (m of inativos(); track m.rotulo) {
+            <span class="item inativo">
               <mat-icon>{{ m.icone }}</mat-icon>
-              @if (m.cadeado) {
-                <mat-icon class="cadeado">lock</mat-icon>
-              }
               <span class="rotulo">{{ m.rotulo }}<em>{{ m.motivo }}</em></span>
             </span>
           }
-        }
-        @if (!menuAberto() && qtdEmBreve()) {
-          <span class="item inativo" [matTooltip]="qtdEmBreve() + ' funcionalidades em breve · clique para ver'" matTooltipPosition="right">
+        } @else {
+          <span class="item inativo" [matTooltip]="inativos().length + ' funcionalidades em breve · clique para ver'" matTooltipPosition="right">
             <mat-icon>more_horiz</mat-icon>
           </span>
         }
@@ -143,28 +132,12 @@
   </div>
 </mat-menu>
 
-<mat-menu #menuContexto="matMenu" class="menu-fc">
-  @if (perfil(); as u) {
-    <span class="menu-titulo">Conta ativa</span>
-    <div class="menu-info">
-      <strong>{{ contexto().rotulo }}</strong>
-      <span>{{ rotulosRole[u.role] }}</span>
-    </div>
-    @if (u.empresa) {
-      <a mat-menu-item routerLink="/empresa"><mat-icon>business</mat-icon>Dados da empresa</a>
-    }
-    @if (u.role === 'PESSOAL') {
-      <a mat-menu-item routerLink="/configuracoes"><mat-icon>tune</mat-icon>Funcionalidades</a>
-    }
-  }
-</mat-menu>
-
 <mat-menu #menuConta="matMenu" class="menu-fc">
   <div class="menu-info">
     <strong>{{ nome() }}</strong>
     <span>{{ auth.email() }}</span>
-    @if (contexto().rotulo) {
-      <span class="so-celular">{{ contexto().rotulo }}</span>
+    @if (perfil(); as u) {
+      <span>{{ rotulosRole[u.role] }}</span>
     }
   </div>
   <a mat-menu-item routerLink="/perfil"><mat-icon>person_outline</mat-icon>Meu perfil</a>

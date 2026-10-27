@@ -11,26 +11,16 @@ import { Observable } from 'rxjs';
 import { mensagemDeErro } from '../../../core/api';
 import { UsuarioService } from '../../../core/usuario/usuario.service';
 import { formatarTelefone, senhaForte, telefone } from '../../../core/validadores';
-import { AdminEmpresa } from '../../../models/admin.model';
 import { MODULOS, Modulo, ROTULOS_ROLE, Role, Usuario } from '../../../models/usuario.model';
 import { AdminService } from '../../../services/admin.service';
 import { Mascara } from '../../shared/mascara/mascara';
 import { RequisitosSenha } from '../../shared/requisitos-senha/requisitos-senha';
 import { SeletorModulos } from '../../shared/seletor-modulos/seletor-modulos';
 
-type Campo = 'nome' | 'email' | 'telefone' | 'profissao' | 'idEmpresa' | 'password' | 'confirmacao';
+type Campo = 'nome' | 'email' | 'telefone' | 'profissao' | 'password' | 'confirmacao';
 
 const TODOS = Object.keys(MODULOS) as Modulo[];
-const MODULOS_PESSOAIS = TODOS.filter((m) => MODULOS[m].pessoal);
-const MODULOS_EMPRESA = TODOS.filter((m) => MODULOS[m].empresa);
-
-// "Usuário" e "Administrador" de cada tipo de conta (regra do back: o perfil só troca dentro do par).
-const PAR: Record<Role, Role[]> = {
-  PESSOAL: ['PESSOAL', 'SUPER_ADMIN'],
-  SUPER_ADMIN: ['PESSOAL', 'SUPER_ADMIN'],
-  USUARIO_EMPRESA: ['USUARIO_EMPRESA', 'ADMIN_EMPRESA'],
-  ADMIN_EMPRESA: ['USUARIO_EMPRESA', 'ADMIN_EMPRESA'],
-};
+const PERFIS: Role[] = ['PESSOAL', 'SUPER_ADMIN'];
 
 @Component({
   imports: [
@@ -59,8 +49,6 @@ export class AdminUsuarioForm implements OnInit {
   protected readonly descricoes: Record<Role, string> = {
     PESSOAL: 'Cuida das próprias finanças',
     SUPER_ADMIN: 'Administra o FinControl inteiro',
-    USUARIO_EMPRESA: 'Funcionário: só o que for liberado',
-    ADMIN_EMPRESA: 'Gerencia a empresa e a equipe',
   };
 
   protected readonly form = this.fb.nonNullable.group({
@@ -69,14 +57,12 @@ export class AdminUsuarioForm implements OnInit {
     telefone: ['', [Validators.required, telefone]],
     profissao: ['', [Validators.maxLength(100)]],
     role: ['PESSOAL' as Role, Validators.required],
-    idEmpresa: [null as number | null],
     password: ['', [Validators.required, Validators.maxLength(100), senhaForte]],
     confirmacao: ['', Validators.required],
   });
 
   protected readonly editando = signal<Usuario | null>(null);
-  protected readonly empresas = signal<AdminEmpresa[]>([]);
-  protected readonly modulos = signal<Modulo[]>(MODULOS_PESSOAIS);
+  protected readonly modulos = signal<Modulo[]>(TODOS);
   protected readonly carregando = signal(false);
   protected readonly salvando = signal(false);
   protected readonly mostrarSenha = signal(false);
@@ -87,36 +73,25 @@ export class AdminUsuarioForm implements OnInit {
   protected readonly senha = computed(() => this.valores().password ?? '');
   protected readonly confirmacao = computed(() => this.valores().confirmacao ?? '');
 
-  // Na criação, qualquer perfil; na edição, só o par do tipo de conta (e nunca o próprio perfil).
-  protected readonly perfisPossiveis = computed<Role[]>(() => {
-    const u = this.editando();
-    return u ? PAR[u.role] : ['PESSOAL', 'USUARIO_EMPRESA', 'ADMIN_EMPRESA', 'SUPER_ADMIN'];
-  });
-  protected readonly perfilTravado = computed(() => {
-    const u = this.editando();
-    return !!u && (u.id === this.eu()?.id || !!u.empresa?.responsavel);
-  });
-  protected readonly opcoesModulos = computed(() =>
-    this.role() === 'PESSOAL' ? MODULOS_PESSOAIS : this.role() === 'USUARIO_EMPRESA' ? MODULOS_EMPRESA : [],
-  );
-  protected readonly ehEmpresa = computed(() => this.role() === 'USUARIO_EMPRESA' || this.role() === 'ADMIN_EMPRESA');
+  // Conta pessoal ou administrador do FinControl; ninguém altera o próprio perfil.
+  protected readonly perfisPossiveis = PERFIS;
+  protected readonly perfilTravado = computed(() => this.editando()?.id === this.eu()?.id);
+  protected readonly opcoesModulos = computed(() => (this.role() === 'PESSOAL' ? TODOS : []));
 
   ngOnInit(): void {
     this.form.controls.role.valueChanges.subscribe((role) => this.ajustarCampos(role));
 
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
-      this.adminService.listarEmpresas({ ativo: null }, 0, 100).subscribe({ next: (r) => this.empresas.set(r.items) });
-      const empresa = Number(this.route.snapshot.queryParamMap.get('empresa'));
-      if (empresa) {
-        this.form.patchValue({ role: 'USUARIO_EMPRESA', idEmpresa: empresa });
+      // Atalho "novo administrador" do painel (?perfil=SUPER_ADMIN).
+      if (this.route.snapshot.queryParamMap.get('perfil') === 'SUPER_ADMIN') {
+        this.form.patchValue({ role: 'SUPER_ADMIN' });
       }
       this.ajustarCampos(this.form.controls.role.value);
       return;
     }
 
     this.form.controls.email.disable();
-    this.form.controls.idEmpresa.disable();
     this.form.controls.password.disable();
     this.form.controls.confirmacao.disable();
     this.carregando.set(true);
@@ -129,9 +104,8 @@ export class AdminUsuarioForm implements OnInit {
           telefone: formatarTelefone(u.telefone),
           profissao: u.profissao ?? '',
           role: u.role,
-          idEmpresa: u.empresa?.id ?? null,
         });
-        this.modulos.set(u.role === 'PESSOAL' || u.role === 'USUARIO_EMPRESA' ? u.modulos : []);
+        this.modulos.set(u.role === 'PESSOAL' ? u.modulos : TODOS);
         this.carregando.set(false);
       },
       error: (error: HttpErrorResponse) => {
@@ -165,7 +139,7 @@ export class AdminUsuarioForm implements OnInit {
       telefone: v.telefone,
       profissao: role === 'PESSOAL' ? v.profissao : null,
       role,
-      modulos: role === 'PESSOAL' || role === 'USUARIO_EMPRESA' ? this.modulos() : [],
+      modulos: role === 'PESSOAL' ? this.modulos() : [],
     };
     const atual = this.editando();
     const requisicao: Observable<Usuario> = atual
@@ -173,7 +147,6 @@ export class AdminUsuarioForm implements OnInit {
       : this.adminService.criarUsuario({
           ...comum,
           email: v.email,
-          idEmpresa: this.ehEmpresa() ? v.idEmpresa : null,
           password: v.password,
           confirmPassword: v.confirmacao,
         });
@@ -190,16 +163,11 @@ export class AdminUsuarioForm implements OnInit {
     });
   }
 
-  // Profissão só na conta pessoal; empresa obrigatória para usuário comum de empresa.
+  // Profissão só na conta pessoal (o back exige nesse caso).
   private ajustarCampos(role: Role): void {
-    const { profissao, idEmpresa } = this.form.controls;
+    const { profissao } = this.form.controls;
     profissao.setValidators(role === 'PESSOAL' ? [Validators.required, Validators.maxLength(100)] : [Validators.maxLength(100)]);
     profissao.updateValueAndValidity({ emitEvent: false });
-    if (!this.editando()) {
-      idEmpresa.setValidators(role === 'USUARIO_EMPRESA' ? Validators.required : null);
-      idEmpresa.updateValueAndValidity({ emitEvent: false });
-      this.modulos.set(role === 'PESSOAL' ? MODULOS_PESSOAIS : role === 'USUARIO_EMPRESA' ? ['DASHBOARD', 'LANCAMENTOS'] : []);
-    }
   }
 
   private avisar(mensagem: string): void {

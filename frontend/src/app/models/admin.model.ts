@@ -1,6 +1,6 @@
 import { Categoria, TipoCategoria } from './categoria.model';
-import { Escopo, TipoTransacao } from './transacao.model';
-import { EmpresaResumo, Modulo, Role, TipoEmpresa } from './usuario.model';
+import { TipoTransacao } from './transacao.model';
+import { Modulo, Role } from './usuario.model';
 
 // Modelos do painel do administrador do FinControl (SUPER_ADMIN).
 
@@ -8,47 +8,43 @@ export interface CategoriaRanking {
   nome: string;
   tipo: TipoCategoria;
   totalTransacoes: number;
-  totalContas: number; // em quantas contas/empresas a categoria aparece
+  totalContas: number; // em quantas contas a categoria aparece
 }
 
-// totalAdmins = administradores do FinControl (SUPER_ADMIN); totalUsers = todos os demais.
-export interface Estatisticas {
-  totalUsuarios: number;
-  usuariosAtivos: number;
-  usuariosInativos: number;
-  totalAdmins: number;
-  totalUsers: number;
-  totalContasPessoais: number;
-  totalEmpresas: number;
-  empresasAtivas: number;
-  totalUsuariosEmpresa: number;
-  totalAdminsEmpresa: number;
-  totalColaboradores: number;
-  totalMeis: number;
-  totalMicroempresas: number;
-  totalTransacoes: number;
-  totalCategorias: number;
-  mediaTransacoesPorUsuario: number;
-  volumeDadosBytes: number | null; // tamanho do banco (nulo se o banco não informar)
-  totalRegistros: number;
-  novosUsuarios30Dias: number;
-  transacoes30Dias: number;
-  categoriasMaisUtilizadas: CategoriaRanking[];
-  transacoesPorMes: { mes: string; quantidade: number; valor: number }[]; // mes = 'yyyy-MM'; valor = total movimentado
-  cadastrosPorMes: { mes: string; contasPessoais: number; empresas: number }[];
+// Indicador do mês escolhido, com o mês anterior para calcular a variação.
+export interface Indicador<T = number> {
+  atual: T;
+  anterior: T;
 }
 
-export interface ParametroFiscal {
-  id?: number;
-  chave: string;
-  valor: number;
-  vigenciaInicio: string; // 'yyyy-MM-dd'
-  vigenciaFim: string; // 'yyyy-MM-dd'
-  descricao?: string | null;
-  tipoEmpresa?: TipoEmpresa | null; // nulo = MEI e Microempresa
-  ativo?: boolean;
-  ultimaAlteracao?: string | null;
-  alteradoPor?: string | null;
+// GET /admin/painel?mes=aaaa-mm: tudo sai do que está gravado no banco.
+export interface PainelAdmin {
+  mes: string;
+  usuariosAtivos: Indicador; // contas pessoais com lançamento no mês
+  novosCadastros: Indicador;
+  lancamentos: Indicador;
+  volume: Indicador; // soma de receitas + despesas do mês
+  totais: { usuarios: number; ativos: number; inativos: number; administradores: number; contasPessoaisAtivas: number };
+  cadastrosPorMes: { mes: string; contasPessoais: number }[]; // 6 meses até o escolhido
+  modulos: { modulo: Modulo; ligados: number; comDados: number | null }[];
+  categoriasPadrao: UsoCategoriaPadrao[];
+  seguranca: {
+    contasBloqueadasHoje: number;
+    senhasTrocadasSemana: number;
+    sessoesEncerradasSemana: number;
+    emailsTrocadosSemana: number;
+  };
+}
+
+export interface UsoCategoriaPadrao {
+  id: number;
+  nome: string;
+  tipo: TipoCategoria;
+  cor: string | null;
+  icone: string | null;
+  ativo: boolean;
+  lancamentos: number;
+  usuarios: number;
 }
 
 export interface Pessoa {
@@ -57,41 +53,22 @@ export interface Pessoa {
   email: string;
 }
 
-export interface AdminEmpresa {
-  id: number;
-  razaoSocial: string;
-  nomeFantasia: string | null;
-  cnpj: string;
-  tipo: TipoEmpresa;
-  telefone: string;
-  email: string;
-  ativo: boolean;
-  responsavel: Pessoa;
-  totalUsuarios: number;
-  totalTransacoes: number;
-  dataCadastro: string;
-}
-
 export interface AdminTransacao {
   id: number;
   data: string;
   descricao: string;
   valor: number;
   tipo: TipoTransacao;
-  escopo: Escopo;
   categoria: Categoria;
-  empresa: EmpresaResumo | null;
   usuario: Pessoa;
 }
 
 export interface FiltroTransacoes {
   inicio?: string;
   fim?: string;
-  idEmpresa?: number | null;
   idUsuario?: number | null;
   categoria?: string;
   tipo?: TipoTransacao | '';
-  escopo?: Escopo | '';
   descricao?: string;
 }
 
@@ -115,13 +92,20 @@ export interface RegistroAuditoria {
   detalhe: string | null;
 }
 
+export interface FiltroAuditoria {
+  busca?: string;
+  autor?: string;
+  acao?: string;
+  inicio?: string; // aaaa-mm-dd
+  fim?: string;
+}
+
 export interface AdminUsuarioRequest {
   nome: string;
   email: string;
   telefone: string;
   profissao: string | null;
   role: Role;
-  idEmpresa: number | null;
   modulos: Modulo[];
   password: string;
   confirmPassword: string;
@@ -135,31 +119,10 @@ export interface AdminUsuarioUpdate {
   modulos: Modulo[] | null;
 }
 
-export type SituacaoVigencia = 'VIGENTE' | 'FUTURO' | 'ENCERRADO';
-
-export function situacaoVigencia(p: ParametroFiscal, hoje = hojeIso()): SituacaoVigencia {
-  if (hoje < p.vigenciaInicio) return 'FUTURO';
-  if (hoje > p.vigenciaFim) return 'ENCERRADO';
-  return 'VIGENTE';
-}
-
 // Data local no formato do back (LocalDate); toISOString() usaria UTC e erraria o dia à noite.
 export function hojeIso(): string {
   const d = new Date();
   const mes = String(d.getMonth() + 1).padStart(2, '0');
   const dia = String(d.getDate()).padStart(2, '0');
   return `${d.getFullYear()}-${mes}-${dia}`;
-}
-
-// 15 800 000 -> "15,1 MB"
-export function formatarBytes(bytes: number | null | undefined): string {
-  if (bytes == null) return '—';
-  const unidades = ['B', 'KB', 'MB', 'GB', 'TB'];
-  let valor = bytes;
-  let i = 0;
-  while (valor >= 1024 && i < unidades.length - 1) {
-    valor /= 1024;
-    i++;
-  }
-  return `${valor.toLocaleString('pt-BR', { maximumFractionDigits: i ? 1 : 0 })} ${unidades[i]}`;
 }

@@ -26,10 +26,8 @@ export const MODULOS_LER_CATEGORIAS: Modulo[] = ['CATEGORIAS', 'DASHBOARD', ...M
 export function rotaInicial(usuario: Usuario | null): string {
   if (!usuario) return '/login';
   if (usuario.role === 'SUPER_ADMIN') return '/admin/painel';
-  if (usuario.empresaPendente) return '/empresa/cadastro';
   if (temModulo(usuario, 'DASHBOARD')) return '/dashboard';
   if (temModulo(usuario, ...MODULOS_TRANSACOES)) return '/transacoes';
   if (temModulo(usuario, 'CATEGORIAS')) return '/categorias';
-  if (temModulo(usuario, 'USUARIOS')) return '/empresa/usuarios';
   return '/perfil';
 }

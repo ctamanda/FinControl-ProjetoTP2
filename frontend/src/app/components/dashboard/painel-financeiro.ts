@@ -12,7 +12,7 @@ import { TransacaoService } from '../../services/transacao.service';
 import { abrirPagamento } from '../shared/pagar-dialog/pagar-dialog';
 import { doMes, fimDoMes, rankingCategorias, saldoDoMes, somar, variacao } from './resumo';
 
-// Base dos dashboards pessoal, da empresa e do colaborador:
+// Base do dashboard da conta pessoal:
 // carrega as transações da conta e calcula os números do mês escolhido no topo.
 @Directive()
 export abstract class PainelFinanceiro implements OnInit {

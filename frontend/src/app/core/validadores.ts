@@ -1,6 +1,6 @@
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 
-// Mesmas regras do back (validation/SenhaForte, Telefone e Cnpj).
+// Mesmas regras do back (validation/SenhaForte e Telefone).
 // Aqui servem para guiar quem digita; o back valida de novo em toda requisição.
 
 export const REGRAS_SENHA: { rotulo: string; atende: (senha: string) => boolean }[] = [
@@ -26,25 +26,6 @@ export const telefone: ValidatorFn = (c: AbstractControl): ValidationErrors | nu
   return ok ? null : { telefone: true };
 };
 
-export const cnpj: ValidatorFn = (c: AbstractControl): ValidationErrors | null => {
-  const d = soDigitos(c.value);
-  if (!d) return null;
-  return cnpjValido(d) ? null : { cnpj: true };
-};
-
-function cnpjValido(d: string): boolean {
-  if (d.length !== 14 || new Set(d).size === 1) return false;
-  const digito = (pesos: number[]) => {
-    const soma = pesos.reduce((s, p, i) => s + Number(d[i]) * p, 0);
-    const resto = soma % 11;
-    return resto < 2 ? 0 : 11 - resto;
-  };
-  return (
-    digito([5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]) === Number(d[12]) &&
-    digito([6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]) === Number(d[13])
-  );
-}
-
 // (63) 99999-0000 / (63) 3215-0000
 export function formatarTelefone(valor: string | null | undefined): string {
   const d = soDigitos(valor).slice(0, 11);
@@ -52,16 +33,4 @@ export function formatarTelefone(valor: string | null | undefined): string {
   const meio = d.length === 11 ? 7 : 6;
   if (d.length <= meio) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
   return `(${d.slice(0, 2)}) ${d.slice(2, meio)}-${d.slice(meio)}`;
-}
-
-// 12.345.678/0001-95
-export function formatarCnpj(valor: string | null | undefined): string {
-  const d = soDigitos(valor).slice(0, 14);
-  const partes = [d.slice(0, 2), d.slice(2, 5), d.slice(5, 8), d.slice(8, 12), d.slice(12)];
-  let texto = partes[0];
-  if (partes[1]) texto += '.' + partes[1];
-  if (partes[2]) texto += '.' + partes[2];
-  if (partes[3]) texto += '/' + partes[3];
-  if (partes[4]) texto += '-' + partes[4];
-  return texto;
 }

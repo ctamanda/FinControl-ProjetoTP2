@@ -74,7 +74,7 @@ export class AuthService {
     this.router.navigate(['/login'], { queryParams: motivo ? { motivo } : {} });
   }
 
-  // Depende do perfil carregado (módulos, empresa pendente); ver core/acesso.ts.
+  // Depende do perfil carregado (perfil e módulos); ver core/acesso.ts.
   rotaInicial(): string {
     return rotaInicial(this.usuarios.perfil());
   }

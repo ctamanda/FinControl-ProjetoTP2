@@ -18,7 +18,7 @@
         <span class="chip green">{{ totais().receitas }} receitas</span>
       </span>
     </h2>
-    <p class="ajuda">Só as ativas são copiadas para as contas e empresas novas. Mudar aqui não altera as categorias que as contas já têm.</p>
+    <p class="ajuda">Só as ativas são copiadas para as contas novas. Mudar aqui não altera as categorias que as contas já têm.</p>
 
     <ul class="padrao">
       @for (c of padrao(); track c.id) {
@@ -77,7 +77,7 @@
         <option value="RECEITA">Receitas</option>
       </select>
     </h2>
-    <p class="ajuda">Soma as categorias de mesmo nome de todas as contas e empresas.</p>
+    <p class="ajuda">Soma as categorias de mesmo nome de todas as contas.</p>
 
     @if (rankingFiltrado().length) {
       <table class="ranking">

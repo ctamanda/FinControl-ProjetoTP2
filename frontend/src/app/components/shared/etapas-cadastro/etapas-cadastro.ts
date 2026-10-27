@@ -1,16 +1,13 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { TipoConta } from '../../../models/usuario.model';
 
-// Trilha do cadastro, igual em todas as telas da entrada:
-// Pessoal: Tipo · Cadastro · Perfil · Configuração
-// MEI/Microempresa: Tipo · Cadastro · Perfil · Empresa · Configuração
+// Trilha do cadastro, igual em todas as telas da entrada: Cadastro · Perfil · Configuração.
 @Component({
   imports: [MatIconModule],
   selector: 'app-etapas-cadastro',
   template: `
     <ol class="etapas" aria-label="Etapas do cadastro">
-      @for (e of etapas(); track e; let i = $index) {
+      @for (e of etapas; track e; let i = $index) {
         <li [class.feita]="i < atual()" [class.atual]="i === atual()" [attr.aria-current]="i === atual() ? 'step' : null">
           <span class="bolinha">
             @if (i < atual()) {
@@ -91,12 +88,7 @@ import { TipoConta } from '../../../models/usuario.model';
   `,
 })
 export class EtapasCadastro {
-  readonly tipo = input<TipoConta>('PESSOAL');
   readonly atual = input(0);
 
-  protected readonly etapas = computed(() =>
-    this.tipo() === 'EMPRESA'
-      ? ['Tipo', 'Cadastro', 'Perfil', 'Empresa', 'Configuração']
-      : ['Tipo', 'Cadastro', 'Perfil', 'Configuração'],
-  );
+  protected readonly etapas = ['Cadastro', 'Perfil', 'Configuração'];
 }

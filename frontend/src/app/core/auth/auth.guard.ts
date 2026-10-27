@@ -7,7 +7,7 @@ import { Modulo, Role, Usuario } from '../../models/usuario.model';
 import { AuthService } from './auth.service';
 
 // Os guards só evitam mostrar telas que o back recusaria: o back confere
-// login, usuário ativo, empresa cadastrada e módulo em toda requisição.
+// login, usuário ativo, perfil e módulo em toda requisição.
 
 // Carrega o perfil e decide; sem perfil (token inválido, usuário desativado) volta ao login.
 function comPerfil(decidir: (u: Usuario, router: Router) => boolean | UrlTree): Observable<boolean | UrlTree> {
@@ -20,8 +20,7 @@ function comPerfil(decidir: (u: Usuario, router: Router) => boolean | UrlTree): 
     );
 }
 
-// Exige usuário logado e com o cadastro completo: admin de empresa sem empresa
-// cadastrada só consegue abrir o cadastro da empresa.
+// Exige usuário logado (e com o perfil ainda válido no back).
 export const authGuard: CanActivateFn = (_route, state) => {
   const auth = inject(AuthService);
   const router = inject(Router);
@@ -29,15 +28,7 @@ export const authGuard: CanActivateFn = (_route, state) => {
   if (!auth.isLoggedIn()) {
     return router.createUrlTree(['/login'], { queryParams: { voltar: state.url } });
   }
-  return comPerfil((u, r) => (u.empresaPendente ? r.createUrlTree(['/empresa/cadastro']) : true));
-};
-
-// Tela do cadastro da empresa: só para quem ainda está com ela pendente.
-export const empresaPendenteGuard: CanActivateFn = () => {
-  if (!inject(AuthService).isLoggedIn()) {
-    return inject(Router).createUrlTree(['/login']);
-  }
-  return comPerfil((u, r) => (u.empresaPendente ? true : r.createUrlTree([rotaInicial(u)])));
+  return comPerfil(() => true);
 };
 
 // Exige pelo menos um dos módulos; sem acesso, vai para a primeira tela permitida.

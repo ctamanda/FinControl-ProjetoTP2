@@ -1,9 +1,9 @@
 <div class="page-header">
   <div>
     <h1>Usuários</h1>
-    <p>Todas as contas do sistema: pessoais, de empresas e administradores.</p>
+    <p>Todas as contas do sistema: contas pessoais e administradores do FinControl.</p>
   </div>
-  <a mat-flat-button class="btn-primario" routerLink="/admin/usuarios/novo" [queryParams]="idEmpresa ? { empresa: idEmpresa } : {}">
+  <a mat-flat-button class="btn-primario" routerLink="/admin/usuarios/novo">
     <mat-icon>person_add</mat-icon> Novo usuário
   </a>
 </div>
@@ -14,26 +14,13 @@
       <mat-icon>search</mat-icon>
       <input [value]="busca" (input)="buscar($event)" placeholder="Buscar por nome ou e-mail" aria-label="Buscar por nome ou e-mail" />
     </label>
-    <div class="campo">
-      <select [(ngModel)]="role" (change)="filtrar()" aria-label="Perfil">
-        <option value="">Todos os perfis</option>
-        @for (p of perfis; track p[0]) {
-          <option [value]="p[0]">{{ p[1] }}</option>
-        }
-      </select>
+    <div class="segmentado" role="tablist" aria-label="Filtrar usuários">
+      @for (f of filtros; track f.valor) {
+        <button type="button" role="tab" [class.ativo]="filtro() === f.valor" [attr.aria-selected]="filtro() === f.valor" (click)="filtrar(f.valor)">
+          {{ f.rotulo }}
+        </button>
+      }
     </div>
-    <div class="campo">
-      <select [(ngModel)]="ativo" (change)="filtrar()" aria-label="Situação">
-        <option value="">Ativos e inativos</option>
-        <option value="true">Só ativos</option>
-        <option value="false">Só inativos</option>
-      </select>
-    </div>
-    @if (idEmpresa) {
-      <a class="chip orange filtro-fixo" routerLink="/admin/usuarios">
-        Empresa #{{ idEmpresa }} <mat-icon>close</mat-icon>
-      </a>
-    }
   </div>
 
   <div class="barra-espaco">
@@ -64,26 +51,18 @@
         </td>
       </ng-container>
 
-      <ng-container matColumnDef="empresa">
-        <th mat-header-cell *matHeaderCellDef>Empresa</th>
-        <td mat-cell *matCellDef="let u">
-          @if (u.empresa; as e) {
-            <a class="link" [routerLink]="['/admin/empresas', e.id]">{{ e.nome }}</a>
-            @if (e.responsavel) {
-              <span class="meta"> · principal</span>
-            }
-          } @else if (u.empresaPendente) {
-            <span class="meta">Cadastro pendente</span>
-          } @else {
-            <span class="meta">—</span>
-          }
-        </td>
-      </ng-container>
 
       <ng-container matColumnDef="situacao">
         <th mat-header-cell *matHeaderCellDef>Situação</th>
         <td mat-cell *matCellDef="let u">
           <span class="chip" [class.green]="u.ativo" [class.red]="!u.ativo">{{ u.ativo ? 'Ativo' : 'Inativo' }}</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="acesso">
+        <th mat-header-cell *matHeaderCellDef>Último acesso</th>
+        <td mat-cell *matCellDef="let u" class="meta">
+          {{ u.ultimoAcesso ? (u.ultimoAcesso | date: 'dd/MM/yyyy HH:mm') : 'Ainda não entrou' }}
         </td>
       </ng-container>
 

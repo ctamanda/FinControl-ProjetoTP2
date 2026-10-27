@@ -4,7 +4,7 @@
   <a class="logo-link" routerLink="/" aria-label="Página inicial"><app-logo /></a>
 
   <div class="card">
-    <app-etapas-cadastro [tipo]="tipoConta()" [atual]="etapa()" />
+    <app-etapas-cadastro [atual]="etapa()" />
 
     <form [formGroup]="form" (ngSubmit)="enviar()" novalidate>
       @if (erro()) {
@@ -15,48 +15,7 @@
         @case (0) {
           <div class="cabecalho">
             <h1>Criar conta</h1>
-            <p class="subtitulo">Para quem você vai organizar as finanças?</p>
-          </div>
-
-          <div class="opcoes tipos" role="radiogroup" aria-label="Tipo de conta">
-            <button
-              type="button"
-              role="radio"
-              class="opcao"
-              [class.selecionada]="tipoConta() === 'PESSOAL'"
-              [attr.aria-checked]="tipoConta() === 'PESSOAL'"
-              (click)="escolherTipo('PESSOAL')"
-            >
-              <mat-icon>person_outline</mat-icon>
-              <span class="opcao-titulo">Pessoal</span>
-              <span class="opcao-sub">Controle das minhas finanças</span>
-            </button>
-            <button
-              type="button"
-              role="radio"
-              class="opcao"
-              [class.selecionada]="tipoConta() === 'EMPRESA'"
-              [attr.aria-checked]="tipoConta() === 'EMPRESA'"
-              (click)="escolherTipo('EMPRESA')"
-            >
-              <mat-icon>storefront</mat-icon>
-              <span class="opcao-titulo">MEI / Microempresa</span>
-              <span class="opcao-sub">Finanças da empresa e da equipe</span>
-            </button>
-          </div>
-
-          <button mat-flat-button class="btn-principal" type="submit">
-            <span class="conteudo-btn">Continuar <mat-icon>arrow_forward</mat-icon></span>
-          </button>
-          <p class="troca">Já tem conta? <a routerLink="/login">Entrar</a></p>
-        }
-
-        @case (1) {
-          <div class="cabecalho">
-            <h1>{{ tipoConta() === 'EMPRESA' ? 'Dados do responsável' : 'Seus dados de acesso' }}</h1>
-            <p class="subtitulo">
-              {{ tipoConta() === 'EMPRESA' ? 'Quem cria a conta vira o administrador da empresa.' : 'É com o e-mail e a senha que você vai entrar.' }}
-            </p>
+            <p class="subtitulo">Organize suas finanças pessoais. É com o e-mail e a senha que você vai entrar.</p>
           </div>
 
           <div class="campo" [class.invalido]="invalido('nome')">
@@ -112,12 +71,10 @@
           <button mat-flat-button class="btn-principal" type="submit">
             <span class="conteudo-btn">Continuar <mat-icon>arrow_forward</mat-icon></span>
           </button>
-          <div class="acoes-secundarias">
-            <button type="button" class="link-acao" (click)="voltar()"><mat-icon>arrow_back</mat-icon> Voltar</button>
-          </div>
+          <p class="troca">Já tem conta? <a routerLink="/login">Entrar</a></p>
         }
 
-        @case (2) {
+        @case (1) {
           <div class="cabecalho">
             <h1>{{ primeiroNome() ? 'Quase lá, ' + primeiroNome() + '!' : 'Quase lá!' }}</h1>
             <p class="subtitulo">Complete seu perfil para criarmos a conta.</p>
@@ -131,19 +88,13 @@
             }
           </div>
 
-          @if (tipoConta() === 'PESSOAL') {
-            <div class="campo" [class.invalido]="invalido('profissao')">
-              <label for="profissao">Profissão</label>
-              <input id="profissao" formControlName="profissao" autocomplete="organization-title" placeholder="Ex.: Professora" />
-              @if (invalido('profissao')) {
-                <span class="erro">Informe sua profissão.</span>
-              }
-            </div>
-          } @else {
-            <p class="ajuda-etapa">
-              <mat-icon>info</mat-icon> Em seguida você cadastra a empresa (nome, CNPJ e tipo).
-            </p>
-          }
+          <div class="campo" [class.invalido]="invalido('profissao')">
+            <label for="profissao">Profissão</label>
+            <input id="profissao" formControlName="profissao" autocomplete="organization-title" placeholder="Ex.: Professora" />
+            @if (invalido('profissao')) {
+              <span class="erro">Informe sua profissão.</span>
+            }
+          </div>
 
           <button mat-flat-button class="btn-principal" type="submit" [disabled]="carregando()">
             @if (carregando()) {

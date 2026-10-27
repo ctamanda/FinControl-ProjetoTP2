@@ -1,7 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
@@ -15,12 +14,13 @@ import { debounceTime, distinctUntilChanged, Subject, Subscription } from 'rxjs'
 import { mensagemDeErro } from '../../../core/api';
 import { UsuarioService } from '../../../core/usuario/usuario.service';
 import { ROTULOS_ROLE, Role, Usuario } from '../../../models/usuario.model';
+
+type Filtro = 'TODOS' | 'ATIVOS' | 'INATIVOS' | 'ADMINS';
 import { AdminService } from '../../../services/admin.service';
 import { confirmar } from '../../shared/confirm-dialog/confirm-dialog';
 
 @Component({
   imports: [
-    FormsModule,
     RouterLink,
     DatePipe,
     MatTableModule,
@@ -40,9 +40,14 @@ export class AdminUsuarioList implements OnInit {
   private readonly snack = inject(MatSnackBar);
   protected readonly eu = inject(UsuarioService).perfil;
 
-  protected readonly colunas = ['usuario', 'perfil', 'empresa', 'situacao', 'cadastro', 'acoes'];
+  protected readonly colunas = ['usuario', 'perfil', 'situacao', 'acesso', 'cadastro', 'acoes'];
   protected readonly rotulosRole: Record<string, string> = ROTULOS_ROLE;
-  protected readonly perfis = Object.entries(ROTULOS_ROLE) as [Role, string][];
+  protected readonly filtros: { valor: Filtro; rotulo: string }[] = [
+    { valor: 'TODOS', rotulo: 'Todos' },
+    { valor: 'ATIVOS', rotulo: 'Ativos' },
+    { valor: 'INATIVOS', rotulo: 'Inativos' },
+    { valor: 'ADMINS', rotulo: 'Administradores' },
+  ];
 
   protected readonly usuarios = signal<Usuario[]>([]);
   protected readonly total = signal(0);
@@ -50,13 +55,10 @@ export class AdminUsuarioList implements OnInit {
   protected readonly tamanho = signal(20);
   protected readonly carregando = signal(false);
 
-  // Filtro vindo da tela da empresa (?empresa=ID).
-  protected readonly idEmpresa = Number(inject(ActivatedRoute).snapshot.queryParamMap.get('empresa')) || null;
-
-  // Busca vinda do painel (?busca=).
-  protected busca = inject(ActivatedRoute).snapshot.queryParamMap.get('busca') ?? '';
-  protected role: Role | '' = '';
-  protected ativo: '' | 'true' | 'false' = '';
+  // Busca e aba podem vir do painel (?busca=, ?filtro=ATIVOS).
+  private readonly params = inject(ActivatedRoute).snapshot.queryParamMap;
+  protected busca = this.params.get('busca') ?? '';
+  protected readonly filtro = signal<Filtro>((this.params.get('filtro') as Filtro) || 'TODOS');
   private readonly digitacao = new Subject<string>();
   private consulta?: Subscription;
 
@@ -74,7 +76,11 @@ export class AdminUsuarioList implements OnInit {
     this.carregando.set(true);
     this.consulta = this.adminService
       .listarUsuarios(
-        { busca: this.busca, role: this.role, ativo: this.ativo === '' ? null : this.ativo === 'true', idEmpresa: this.idEmpresa },
+        {
+          busca: this.busca,
+          role: this.filtro() === 'ADMINS' ? 'SUPER_ADMIN' : '',
+          ativo: this.filtro() === 'ATIVOS' ? true : this.filtro() === 'INATIVOS' ? false : null,
+        },
         this.pagina(),
         this.tamanho(),
       )
@@ -95,7 +101,8 @@ export class AdminUsuarioList implements OnInit {
     this.digitacao.next((event.target as HTMLInputElement).value.trim());
   }
 
-  filtrar(): void {
+  filtrar(filtro: Filtro): void {
+    this.filtro.set(filtro);
     this.pagina.set(0);
     this.carregar();
   }
@@ -107,7 +114,7 @@ export class AdminUsuarioList implements OnInit {
   }
 
   protected corPerfil(role: Role): string {
-    return { SUPER_ADMIN: 'purple', PESSOAL: 'green', ADMIN_EMPRESA: 'orange', USUARIO_EMPRESA: 'blue' }[role];
+    return role === 'SUPER_ADMIN' ? 'purple' : 'green';
   }
 
   alterarAtivo(u: Usuario): void {
@@ -116,7 +123,7 @@ export class AdminUsuarioList implements OnInit {
       titulo: ativar ? 'Reativar usuário' : 'Desativar usuário',
       mensagem: ativar
         ? `${u.nome} volta a entrar no FinControl.`
-        : `${u.nome} não conseguirá mais entrar (nem com uma sessão aberta). O cadastro e o histórico continuam guardados.`,
+        : `${u.nome} perde o acesso na hora, inclusive nas sessões já abertas. O cadastro e o histórico continuam guardados.`,
       confirmar: ativar ? 'Reativar' : 'Desativar',
     }).subscribe((ok) => {
       if (!ok) return;
@@ -133,7 +140,7 @@ export class AdminUsuarioList implements OnInit {
   excluir(u: Usuario): void {
     confirmar(this.dialog, {
       titulo: 'Excluir usuário',
-      mensagem: `Excluir ${u.nome}? Só é possível para quem ainda não registrou nada; caso contrário, desative.`,
+      mensagem: `Excluir ${u.nome}? Só é possível para quem não tem histórico (lançamentos ou ações na auditoria); nesse caso, desative.`,
     }).subscribe((ok) => {
       if (!ok) return;
       this.adminService.excluirUsuario(u.id).subscribe({

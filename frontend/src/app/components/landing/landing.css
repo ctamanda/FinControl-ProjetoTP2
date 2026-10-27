@@ -603,7 +603,7 @@
   color: var(--fc-muted);
 }
 
-/* Para você / Para sua empresa */
+/* Para você / Planeje o mês */
 .publicos {
   display: grid;
   grid-template-columns: 1fr 1fr;

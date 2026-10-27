@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { Shell } from './components/layout/shell/shell';
 import { MODULOS_TRANSACOES } from './core/acesso';
-import { authGuard, empresaPendenteGuard, moduloGuard, perfilGuard, visitanteGuard } from './core/auth/auth.guard';
+import { authGuard, moduloGuard, perfilGuard, visitanteGuard } from './core/auth/auth.guard';
 
 // Cada tela é carregada sob demanda (loadComponent) para manter o bundle inicial pequeno.
 // Telas de Estados/Municípios saíram do menu: o back atual não tem esses endpoints.
@@ -13,7 +13,7 @@ export const routes: Routes = [
         path: '',
         pathMatch: 'full',
         loadComponent: () => import('./components/landing/landing').then((m) => m.Landing),
-        title: 'FinControl · Controle financeiro para você e sua empresa',
+        title: 'FinControl · Controle das suas finanças pessoais',
     },
     {
         path: 'login',
@@ -28,15 +28,7 @@ export const routes: Routes = [
         canActivate: [visitanteGuard],
     },
     {
-        // Última etapa do cadastro de MEI/Microempresa: obrigatória antes de usar o sistema.
-        path: 'empresa/cadastro',
-        loadComponent: () => import('./components/empresa/empresa-form/empresa-form').then((m) => m.EmpresaForm),
-        title: 'Cadastro da empresa · FinControl',
-        canActivate: [empresaPendenteGuard],
-        data: { modo: 'cadastro' },
-    },
-    {
-        // Configuração inicial, logo depois do cadastro (e da empresa, na conta de MEI/ME).
+        // Configuração inicial, logo depois do cadastro.
         path: 'bem-vindo',
         loadComponent: () =>
             import('./components/configuracao-inicial/configuracao-inicial').then((m) => m.ConfiguracaoInicial),
@@ -131,51 +123,6 @@ export const routes: Routes = [
             },
 
             {
-                path: 'empresa',
-                canActivate: [perfilGuard('ADMIN_EMPRESA', 'USUARIO_EMPRESA')],
-                children: [
-                    {
-                        path: '',
-                        pathMatch: 'full',
-                        loadComponent: () =>
-                            import('./components/empresa/empresa-form/empresa-form').then((m) => m.EmpresaForm),
-                        title: 'Minha empresa · FinControl',
-                        data: { modo: 'dados' },
-                    },
-                    {
-                        path: 'usuarios',
-                        canActivate: [perfilGuard('ADMIN_EMPRESA')],
-                        children: [
-                            {
-                                path: '',
-                                loadComponent: () =>
-                                    import('./components/empresa/usuario-empresa-list/usuario-empresa-list').then(
-                                        (m) => m.UsuarioEmpresaList,
-                                    ),
-                                title: 'Usuários da empresa · FinControl',
-                            },
-                            {
-                                path: 'novo',
-                                loadComponent: () =>
-                                    import('./components/empresa/usuario-empresa-form/usuario-empresa-form').then(
-                                        (m) => m.UsuarioEmpresaForm,
-                                    ),
-                                title: 'Novo usuário · FinControl',
-                            },
-                            {
-                                path: ':id',
-                                loadComponent: () =>
-                                    import('./components/empresa/usuario-empresa-form/usuario-empresa-form').then(
-                                        (m) => m.UsuarioEmpresaForm,
-                                    ),
-                                title: 'Editar usuário · FinControl',
-                            },
-                        ],
-                    },
-                ],
-            },
-
-            {
                 // Painel administrativo do FinControl (as seções ficam na barra lateral do Shell).
                 path: 'admin',
                 canActivate: [perfilGuard('SUPER_ADMIN')],
@@ -207,20 +154,6 @@ export const routes: Routes = [
                         title: 'Editar usuário · FinControl',
                     },
                     {
-                        path: 'empresas',
-                        loadComponent: () =>
-                            import('./components/admin/admin-empresa-list/admin-empresa-list').then((m) => m.AdminEmpresaList),
-                        title: 'Empresas · FinControl',
-                    },
-                    {
-                        path: 'empresas/:id',
-                        loadComponent: () =>
-                            import('./components/admin/admin-empresa-detalhe/admin-empresa-detalhe').then(
-                                (m) => m.AdminEmpresaDetalhe,
-                            ),
-                        title: 'Empresa · FinControl',
-                    },
-                    {
                         path: 'transacoes',
                         loadComponent: () =>
                             import('./components/admin/admin-transacoes/admin-transacoes').then((m) => m.AdminTransacoes),
@@ -237,24 +170,6 @@ export const routes: Routes = [
                         loadComponent: () =>
                             import('./components/admin/admin-auditoria/admin-auditoria').then((m) => m.AdminAuditoria),
                         title: 'Auditoria · FinControl',
-                    },
-                    {
-                        path: 'parametros',
-                        loadComponent: () =>
-                            import('./components/admin/parametro-list/parametro-list').then((m) => m.ParametroList),
-                        title: 'Parâmetros fiscais · FinControl',
-                    },
-                    {
-                        path: 'parametros/novo',
-                        loadComponent: () =>
-                            import('./components/admin/parametro-form/parametro-form').then((m) => m.ParametroForm),
-                        title: 'Novo parâmetro · FinControl',
-                    },
-                    {
-                        path: 'parametros/:id',
-                        loadComponent: () =>
-                            import('./components/admin/parametro-form/parametro-form').then((m) => m.ParametroForm),
-                        title: 'Editar parâmetro · FinControl',
                     },
                 ],
             },

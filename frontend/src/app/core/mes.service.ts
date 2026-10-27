@@ -17,7 +17,7 @@ export function chaveMes(d: Date, delta = 0): string {
 export class MesService {
   private readonly inicio = signal(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
 
-  // Quantos meses para trás a tela aceita (o painel admin só tem os últimos 6); null = sem limite.
+  // Quantos meses para trás a tela aceita (o painel do admin para no mês atual); null = sem limite.
   readonly mesesAnteriores = signal<number | null>(null);
 
   readonly data = this.inicio.asReadonly();

@@ -1,7 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
@@ -9,7 +11,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { debounceTime, distinctUntilChanged, Subject, Subscription } from 'rxjs';
 import { mensagemDeErro } from '../../../core/api';
-import { RegistroAuditoria } from '../../../models/admin.model';
+import { FiltroAuditoria, RegistroAuditoria } from '../../../models/admin.model';
 import { AdminService } from '../../../services/admin.service';
 
 // Ações gravadas pelo back (AuditoriaService), com o rótulo da tela.
@@ -20,19 +22,10 @@ const ACOES: Record<string, string> = {
   USUARIO_ATIVADO: 'Usuário ativado',
   USUARIO_DESATIVADO: 'Usuário desativado',
   USUARIO_EXCLUIDO: 'Usuário excluído',
-  EMPRESA_CADASTRADA: 'Empresa cadastrada',
-  EMPRESA_ALTERADA: 'Empresa alterada',
-  EMPRESA_ATIVADA: 'Empresa ativada',
-  EMPRESA_DESATIVADA: 'Empresa desativada',
   CATEGORIA_PADRAO_CRIADA: 'Categoria padrão criada',
   CATEGORIA_PADRAO_ALTERADA: 'Categoria padrão alterada',
   CATEGORIA_PADRAO_ATIVADA: 'Categoria padrão ativada',
   CATEGORIA_PADRAO_DESATIVADA: 'Categoria padrão desativada',
-  PARAMETRO_CRIADO: 'Parâmetro criado',
-  PARAMETRO_ALTERADO: 'Parâmetro alterado',
-  PARAMETRO_ATIVADO: 'Parâmetro ativado',
-  PARAMETRO_DESATIVADO: 'Parâmetro desativado',
-  PARAMETRO_EXCLUIDO: 'Parâmetro excluído',
   CONSULTA_TRANSACOES: 'Consulta de transações',
   DADOS_PESSOAIS_ALTERADOS: 'Dados pessoais alterados',
   SENHA_ALTERADA: 'Senha alterada',
@@ -41,8 +34,22 @@ const ACOES: Record<string, string> = {
   CONTA_BLOQUEADA: 'Conta bloqueada (senhas erradas)',
 };
 
+// Ações de antes da saída de empresa e parâmetros fiscais: não são mais gravadas, mas o
+// histórico é imutável e continua aparecendo com o nome certo.
+const ACOES_ANTIGAS: Record<string, string> = {
+  EMPRESA_CADASTRADA: 'Empresa cadastrada (antigo)',
+  EMPRESA_ALTERADA: 'Empresa alterada (antigo)',
+  EMPRESA_ATIVADA: 'Empresa ativada (antigo)',
+  EMPRESA_DESATIVADA: 'Empresa desativada (antigo)',
+  PARAMETRO_CRIADO: 'Parâmetro criado (antigo)',
+  PARAMETRO_ALTERADO: 'Parâmetro alterado (antigo)',
+  PARAMETRO_ATIVADO: 'Parâmetro ativado (antigo)',
+  PARAMETRO_DESATIVADO: 'Parâmetro desativado (antigo)',
+  PARAMETRO_EXCLUIDO: 'Parâmetro excluído (antigo)',
+};
+
 @Component({
-  imports: [FormsModule, DatePipe, MatTableModule, MatPaginatorModule, MatIconModule, MatProgressBarModule],
+  imports: [FormsModule, DatePipe, MatButtonModule, MatTableModule, MatPaginatorModule, MatIconModule, MatProgressBarModule],
   selector: 'app-admin-auditoria',
   styleUrl: '../admin-lista.css',
   templateUrl: './admin-auditoria.html',
@@ -59,21 +66,27 @@ export class AdminAuditoria implements OnInit {
   protected readonly tamanho = signal(20);
   protected readonly carregando = signal(false);
 
-  private busca = '';
-  protected acao = '';
+  // Autor, ação e período; a ação pode vir do painel (?acao=SENHA_ALTERADA).
+  protected filtro: FiltroAuditoria = {
+    busca: '',
+    autor: '',
+    acao: inject(ActivatedRoute).snapshot.queryParamMap.get('acao') ?? '',
+    inicio: '',
+    fim: '',
+  };
   private readonly digitacao = new Subject<string>();
   private consulta?: Subscription;
 
   ngOnInit(): void {
     this.digitacao.pipe(debounceTime(300), distinctUntilChanged()).subscribe((valor) => {
-      this.busca = valor;
+      this.filtro.busca = valor;
       this.filtrar();
     });
     this.carregar();
   }
 
   rotulo(acao: string): string {
-    return ACOES[acao] ?? acao;
+    return ACOES[acao] ?? ACOES_ANTIGAS[acao] ?? acao;
   }
 
   cor(acao: string): string {
@@ -88,8 +101,17 @@ export class AdminAuditoria implements OnInit {
   }
 
   filtrar(): void {
+    if (this.filtro.inicio && this.filtro.fim && this.filtro.fim < this.filtro.inicio) {
+      this.snack.open('A data final deve ser igual ou depois da inicial.', 'Ok', { duration: 4000, verticalPosition: 'top' });
+      return;
+    }
     this.pagina.set(0);
     this.carregar();
+  }
+
+  limpar(): void {
+    this.filtro = { busca: '', autor: '', acao: '', inicio: '', fim: '' };
+    this.filtrar();
   }
 
   mudarPagina(event: PageEvent): void {
@@ -102,7 +124,7 @@ export class AdminAuditoria implements OnInit {
     this.consulta?.unsubscribe();
     this.carregando.set(true);
     this.consulta = this.adminService
-      .listarAuditoria({ busca: this.busca, acao: this.acao }, this.pagina(), this.tamanho())
+      .listarAuditoria(this.filtro, this.pagina(), this.tamanho())
       .subscribe({
         next: (res) => {
           this.registros.set(res.items);

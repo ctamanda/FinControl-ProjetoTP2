@@ -15,12 +15,6 @@
       </span>
 
       <ul class="fatos">
-        @if (u.empresa; as e) {
-          <li>
-            <mat-icon>storefront</mat-icon>
-            <span>{{ e.nome }} <small>{{ rotulosTipoEmpresa[e.tipo] }}{{ e.responsavel ? ' · administrador principal' : '' }}</small></span>
-          </li>
-        }
         @if (u.profissao) {
           <li><mat-icon>work_outline</mat-icon><span>{{ u.profissao }}</span></li>
         }
@@ -163,7 +157,7 @@
       <section class="fc-card">
         <h2 class="fc-card-title"><mat-icon>verified_user</mat-icon> Seu acesso</h2>
         @if (u.role === 'SUPER_ADMIN') {
-          <p class="texto">Você administra o FinControl: usuários, empresas, transações, categorias padrão, parâmetros fiscais e auditoria.</p>
+          <p class="texto">Você administra o FinControl: usuários, transações (só consulta), categorias padrão e auditoria.</p>
           <a mat-stroked-button routerLink="/admin/painel"><mat-icon>space_dashboard</mat-icon> Ir para o painel</a>
         } @else {
           <div class="acessos">
@@ -173,13 +167,7 @@
               <p class="texto">Nenhuma funcionalidade liberada ainda.</p>
             }
           </div>
-          @if (pessoal()) {
-            <a mat-stroked-button routerLink="/configuracoes"><mat-icon>tune</mat-icon> Escolher funcionalidades</a>
-          } @else if (u.role === 'USUARIO_EMPRESA') {
-            <p class="texto">As funcionalidades são liberadas pelo administrador da empresa.</p>
-          } @else {
-            <a mat-stroked-button routerLink="/empresa/usuarios"><mat-icon>manage_accounts</mat-icon> Gerenciar usuários e acessos</a>
-          }
+          <a mat-stroked-button routerLink="/configuracoes"><mat-icon>tune</mat-icon> Escolher funcionalidades</a>
         }
       </section>
     </div>

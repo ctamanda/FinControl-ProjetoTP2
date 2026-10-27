@@ -11,7 +11,7 @@ import { MatTableModule } from '@angular/material/table';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { mensagemDeErro } from '../../../core/api';
-import { AdminEmpresa, AdminTransacao, FiltroTransacoes } from '../../../models/admin.model';
+import { AdminTransacao, FiltroTransacoes } from '../../../models/admin.model';
 import { Usuario } from '../../../models/usuario.model';
 import { AdminService } from '../../../services/admin.service';
 import { Valor } from '../../shared/valor/valor';
@@ -38,9 +38,8 @@ export class AdminTransacoes implements OnInit {
   private readonly adminService = inject(AdminService);
   private readonly snack = inject(MatSnackBar);
 
-  protected readonly colunas = ['data', 'descricao', 'categoria', 'conta', 'usuario', 'valor'];
+  protected readonly colunas = ['data', 'descricao', 'categoria', 'usuario', 'valor'];
   protected readonly transacoes = signal<AdminTransacao[]>([]);
-  protected readonly empresas = signal<AdminEmpresa[]>([]);
   protected readonly usuarios = signal<Usuario[]>([]);
   protected readonly total = signal(0);
   protected readonly pagina = signal(0);
@@ -50,25 +49,17 @@ export class AdminTransacoes implements OnInit {
   protected filtro: FiltroTransacoes = {
     inicio: '',
     fim: '',
-    idEmpresa: Number(inject(ActivatedRoute).snapshot.queryParamMap.get('empresa')) || null,
-    idUsuario: null,
+    // Vindo da lista de usuários (?usuario=ID): já abre filtrado.
+    idUsuario: Number(inject(ActivatedRoute).snapshot.queryParamMap.get('usuario')) || null,
     categoria: '',
     tipo: '',
-    escopo: '',
     descricao: '',
   };
   private consulta?: Subscription;
 
   ngOnInit(): void {
-    this.adminService.listarEmpresas({}, 0, 100).subscribe({ next: (r) => this.empresas.set(r.items) });
     this.carregarUsuarios();
     this.pesquisar();
-  }
-
-  // Usuários da empresa escolhida (ou todos, até 100) para o filtro de usuário.
-  trocarEmpresa(): void {
-    this.filtro.idUsuario = null;
-    this.carregarUsuarios();
   }
 
   pesquisar(): void {
@@ -77,8 +68,7 @@ export class AdminTransacoes implements OnInit {
   }
 
   limpar(): void {
-    this.filtro = { inicio: '', fim: '', idEmpresa: null, idUsuario: null, categoria: '', tipo: '', escopo: '', descricao: '' };
-    this.carregarUsuarios();
+    this.filtro = { inicio: '', fim: '', idUsuario: null, categoria: '', tipo: '', descricao: '' };
     this.pesquisar();
   }
 
@@ -104,8 +94,9 @@ export class AdminTransacoes implements OnInit {
     });
   }
 
+  // Contas pessoais (até 100) para o filtro de usuário.
   private carregarUsuarios(): void {
-    this.adminService.listarUsuarios({ idEmpresa: this.filtro.idEmpresa }, 0, 100).subscribe({
+    this.adminService.listarUsuarios({ role: 'PESSOAL' }, 0, 100).subscribe({
       next: (r) => this.usuarios.set(r.items),
     });
   }

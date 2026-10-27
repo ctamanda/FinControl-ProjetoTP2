@@ -5,7 +5,6 @@
     <nav class="links" [class.aberto]="menuAberto()">
       <button type="button" (click)="rolar('recursos')">Recursos</button>
       <button type="button" (click)="rolar('para-voce')">Para você</button>
-      <button type="button" (click)="rolar('para-empresa')">Para empresa</button>
       <button type="button" (click)="rolar('seguranca')">Segurança</button>
       <button type="button" (click)="rolar('tecnologia')">A API</button>
     </nav>
@@ -28,11 +27,11 @@
   <!-- ========== Destaque ========== -->
   <section class="conteudo hero">
     <div class="hero-texto">
-      <span class="selo"><mat-icon>auto_awesome</mat-icon> Para pessoas e pequenos negócios</span>
+      <span class="selo"><mat-icon>auto_awesome</mat-icon> Finanças pessoais sem complicação</span>
       <h1>Seu dinheiro organizado, do jeito que deveria ser.</h1>
       <p>
-        O FinControl reúne receitas, despesas e categorias em um só lugar. Entenda para onde vai cada
-        real — na sua vida pessoal e no seu MEI ou microempresa.
+        O FinControl reúne receitas, despesas, contas e categorias em um só lugar. Entenda para onde
+        vai cada real e saiba o que vence nos próximos dias.
       </p>
       <div class="hero-botoes">
         <a mat-flat-button class="btn-amarelo grande" routerLink="/cadastro">
@@ -115,7 +114,7 @@
     </div>
   </section>
 
-  <!-- ========== Para você / Para sua empresa ========== -->
+  <!-- ========== Para você / Planeje o mês ========== -->
   <section class="secao cinza">
     <div class="conteudo publicos">
       <article id="para-voce" class="publico">
@@ -127,23 +126,21 @@
           <li><mat-icon>check</mat-icon> Saldo sempre atualizado</li>
           <li><mat-icon>check</mat-icon> Comparação mês a mês</li>
         </ul>
-        <a mat-flat-button class="btn-roxo" routerLink="/cadastro" [queryParams]="{ perfil: 'mim' }">
+        <a mat-flat-button class="btn-roxo" routerLink="/cadastro">
           Criar conta pessoal
         </a>
       </article>
 
-      <article id="para-empresa" class="publico destaque">
-        <span class="publico-icone"><mat-icon>storefront</mat-icon></span>
-        <h2>Para sua empresa</h2>
-        <p>Feito para MEI e microempresas que querem separar o pessoal do profissional.</p>
+      <article class="publico destaque">
+        <span class="publico-icone"><mat-icon>event_upcoming</mat-icon></span>
+        <h2>Planeje o mês</h2>
+        <p>Veja o que já foi pago, o que vence nos próximos dias e quanto vai sobrar.</p>
         <ul>
-          <li><mat-icon>check</mat-icon> Cadastro da empresa com CNPJ (MEI ou microempresa)</li>
-          <li><mat-icon>check</mat-icon> Equipe com acesso só ao que você liberar</li>
-          <li><mat-icon>check</mat-icon> Parâmetros fiscais como o teto do MEI</li>
+          <li><mat-icon>check</mat-icon> Contas a pagar e a receber com vencimento</li>
+          <li><mat-icon>check</mat-icon> Saldo de cada banco e da carteira</li>
+          <li><mat-icon>check</mat-icon> Saldo previsto para o fim do mês</li>
         </ul>
-        <a mat-flat-button class="btn-amarelo" routerLink="/cadastro" [queryParams]="{ perfil: 'empresa' }">
-          Criar conta empresarial
-        </a>
+        <a mat-flat-button class="btn-amarelo" routerLink="/cadastro">Começar agora</a>
       </article>
     </div>
   </section>
@@ -155,8 +152,8 @@
         <span class="sobretitulo">Segurança e privacidade</span>
         <h2>Seus dados são só seus</h2>
         <p class="texto-secao">
-          Cada usuário enxerga apenas os próprios lançamentos. Nem o administrador do sistema tem
-          acesso às suas transações — ele vê somente números agregados, como pede a LGPD.
+          Cada usuário enxerga apenas os próprios lançamentos. O administrador do sistema só consulta
+          lançamentos para suporte, sem poder alterá-los, e toda consulta fica registrada na auditoria.
         </p>
       </div>
       <ul class="itens-seguranca">

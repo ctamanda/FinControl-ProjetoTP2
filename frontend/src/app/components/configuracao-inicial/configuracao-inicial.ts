@@ -3,7 +3,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { rotaInicial } from '../../core/acesso';
 import { mensagemDeErro } from '../../core/api';
 import { UsuarioService } from '../../core/usuario/usuario.service';
@@ -14,11 +14,10 @@ import { FundoAuth } from '../shared/fundo-auth/fundo-auth';
 import { Logo } from '../shared/logo/logo';
 import { SeletorModulos } from '../shared/seletor-modulos/seletor-modulos';
 
-// Última etapa da entrada, logo depois do cadastro:
-//  - conta pessoal escolhe as funcionalidades que quer usar;
-//  - administrador da empresa vê os primeiros passos (equipe, categorias, lançamentos).
+// Última etapa da entrada, logo depois do cadastro: a conta pessoal escolhe as funcionalidades
+// que quer usar (o administrador do FinControl não passa por aqui: segue para o painel).
 @Component({
-  imports: [RouterLink, MatButtonModule, MatIconModule, MatProgressSpinnerModule, EtapasCadastro, FundoAuth, Logo, SeletorModulos],
+  imports: [MatButtonModule, MatIconModule, MatProgressSpinnerModule, EtapasCadastro, FundoAuth, Logo, SeletorModulos],
   selector: 'app-configuracao-inicial',
   styleUrls: ['../auth/auth.css', './configuracao-inicial.css'],
   templateUrl: './configuracao-inicial.html',
@@ -34,30 +33,6 @@ export class ConfiguracaoInicial {
   protected readonly modulos = signal<Modulo[]>(this.usuario()?.modulos ?? MODULOS_PESSOAIS);
   protected readonly salvando = signal(false);
   protected readonly erro = signal('');
-
-  protected readonly passos = [
-    {
-      icone: 'group_add',
-      titulo: 'Monte sua equipe',
-      texto: 'Cadastre quem ajuda na gestão e escolha o que cada um pode acessar.',
-      rota: '/empresa/usuarios/novo',
-      acao: 'Cadastrar usuário',
-    },
-    {
-      icone: 'sell',
-      titulo: 'Confira as categorias',
-      texto: 'A empresa já começa com categorias de receita e despesa. Ajuste se quiser.',
-      rota: '/categorias',
-      acao: 'Ver categorias',
-    },
-    {
-      icone: 'add_card',
-      titulo: 'Faça o primeiro lançamento',
-      texto: 'Registre uma venda ou uma despesa para o dashboard ganhar vida.',
-      rota: '/transacoes/nova',
-      acao: 'Novo lançamento',
-    },
-  ];
 
   entrar(): void {
     const u = this.usuario();

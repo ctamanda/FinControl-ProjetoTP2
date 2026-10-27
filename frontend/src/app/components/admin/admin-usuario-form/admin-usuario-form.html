@@ -13,7 +13,7 @@
   <form [formGroup]="form" (ngSubmit)="salvar()" novalidate>
     <h2 class="secao">Perfil de acesso</h2>
     <div class="opcoes" role="radiogroup" aria-label="Perfil de acesso">
-      @for (r of perfisPossiveis(); track r) {
+      @for (r of perfisPossiveis; track r) {
         <button
           type="button"
           role="radio"
@@ -29,29 +29,11 @@
       }
     </div>
     @if (perfilTravado()) {
-      <p class="ajuda">O seu próprio perfil e o do administrador principal de uma empresa não podem ser alterados.</p>
+      <p class="ajuda">Você não pode alterar o seu próprio perfil de acesso.</p>
     } @else if (editando()) {
-      <p class="ajuda">O perfil troca entre usuário e administrador do mesmo tipo de conta.</p>
+      <p class="ajuda">Ao virar conta pessoal, o administrador passa a ter categorias e a conta "Carteira" para lançar.</p>
     }
 
-    @if (ehEmpresa()) {
-      <div class="campo" [class.invalido]="invalido('idEmpresa')">
-        <label for="empresa">Empresa</label>
-        @if (editando(); as u) {
-          <input id="empresa" [value]="u.empresa?.nome ?? 'Cadastro da empresa pendente'" disabled />
-        } @else {
-          <select id="empresa" formControlName="idEmpresa">
-            <option [ngValue]="null">{{ role() === 'ADMIN_EMPRESA' ? 'Nenhuma (cadastra a própria no 1º acesso)' : 'Selecione' }}</option>
-            @for (e of empresas(); track e.id) {
-              <option [ngValue]="e.id">{{ e.nomeFantasia || e.razaoSocial }}{{ e.ativo ? '' : ' (desativada)' }}</option>
-            }
-          </select>
-        }
-        @if (invalido('idEmpresa')) {
-          <span class="erro">Escolha a empresa.</span>
-        }
-      </div>
-    }
 
     <h2 class="secao">Dados</h2>
     <div class="form-grid">
@@ -96,9 +78,7 @@
     } @else {
       <div class="aviso">
         <mat-icon>info</mat-icon>
-        {{ role() === 'SUPER_ADMIN'
-          ? 'Administradores do FinControl acessam toda a área administrativa.'
-          : 'Administradores da empresa acessam todas as funcionalidades e gerenciam a equipe.' }}
+        Administradores do FinControl acessam toda a área administrativa.
       </div>
     }
 

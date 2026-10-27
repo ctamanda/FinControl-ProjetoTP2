@@ -13,7 +13,7 @@ import { mensagemDeErro } from '../../core/api';
 import { AuthService } from '../../core/auth/auth.service';
 import { UsuarioService } from '../../core/usuario/usuario.service';
 import { formatarTelefone, senhaForte, telefone } from '../../core/validadores';
-import { MODULOS, ROTULOS_ROLE, ROTULOS_TIPO_EMPRESA } from '../../models/usuario.model';
+import { MODULOS, ROTULOS_ROLE } from '../../models/usuario.model';
 import { pedirSenha } from '../shared/confirmar-senha/confirmar-senha';
 import { Mascara } from '../shared/mascara/mascara';
 import { RequisitosSenha } from '../shared/requisitos-senha/requisitos-senha';
@@ -37,7 +37,6 @@ export class Perfil implements OnInit {
   protected readonly usuario = this.usuarioService.perfil;
   protected readonly pessoal = computed(() => this.usuario()?.role === 'PESSOAL');
   protected readonly rotulosRole = ROTULOS_ROLE;
-  protected readonly rotulosTipoEmpresa = ROTULOS_TIPO_EMPRESA;
   protected readonly formatarTelefone = formatarTelefone;
 
   protected readonly iniciais = computed(() =>

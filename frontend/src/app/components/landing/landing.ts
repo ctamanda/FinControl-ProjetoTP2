@@ -41,9 +41,9 @@ export class Landing {
       texto: 'Saldo, receitas, despesas e comparação com o mês anterior logo na primeira tela.',
     },
     {
-      icone: 'storefront',
-      titulo: 'Pessoal x empresa',
-      texto: 'Separe o que é da casa e o que é do negócio, sem misturar as contas.',
+      icone: 'event_upcoming',
+      titulo: 'Contas a pagar',
+      texto: 'Marque o que já foi pago e veja o que vence nos próximos dias, sem esquecer nenhuma conta.',
     },
   ];
 

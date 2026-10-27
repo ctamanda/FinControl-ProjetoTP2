@@ -3,7 +3,6 @@ import { Categoria } from './categoria.model';
 import { ContaResumo } from './conta.model';
 
 export type TipoTransacao = 'RECEITA' | 'DESPESA';
-export type Escopo = 'PESSOAL' | 'EMPRESA';
 // Calculado pelo back: pendente com o vencimento já passado = atrasado.
 export type StatusPagamento = 'PAGO' | 'PENDENTE' | 'ATRASADO';
 
@@ -13,9 +12,8 @@ export class Transacao {
     valor!: number;
     data!: string; // LocalDate 'yyyy-MM-dd': data do lançamento ou, se pendente, o vencimento
     tipo!: TipoTransacao;
-    escopo!: Escopo;
     categoria?: Categoria;
-    usuario?: Pessoa; // quem lançou (na empresa, pode ser outra pessoa da equipe)
+    usuario?: Pessoa; // dono do lançamento
     conta?: ContaResumo;
     pago!: boolean; // false = conta a pagar/receber
     dataPagamento?: string | null;

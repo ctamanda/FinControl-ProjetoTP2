@@ -1,4 +1,4 @@
-import { Role, TipoConta } from './usuario.model';
+import { Role } from './usuario.model';
 
 export interface LoginRequest {
   email: string;
@@ -11,11 +11,10 @@ export interface LoginResponse {
 }
 
 export interface RegisterRequest {
-  tipoConta: TipoConta;
   nome: string;
   email: string;
   telefone: string;
-  profissao: string | null; // obrigatória na conta pessoal
+  profissao: string;
   password: string;
   confirmPassword: string;
 }

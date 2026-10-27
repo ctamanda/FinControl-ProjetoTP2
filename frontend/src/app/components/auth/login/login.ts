@@ -63,14 +63,14 @@ export class Login {
     this.carregando.set(true);
     this.erro.set('');
 
-    // A tela inicial depende do perfil (módulos liberados, empresa pendente).
+    // A tela inicial depende do perfil (administrador ou conta pessoal e módulos).
     this.auth
       .login(this.form.getRawValue())
       .pipe(switchMap(() => this.usuarios.carregarPerfil()))
       .subscribe({
         next: (usuario) => {
           const voltar = this.params.get('voltar');
-          this.router.navigateByUrl(voltar && !usuario.empresaPendente ? voltar : rotaInicial(usuario));
+          this.router.navigateByUrl(voltar || rotaInicial(usuario));
         },
         error: (error: HttpErrorResponse) => {
           this.carregando.set(false);

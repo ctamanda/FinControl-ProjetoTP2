@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { API_URL } from '../core/api';
 import { ContaFinanceira, ContaRequest } from '../models/conta.model';
 
-// Contas financeiras da conta pessoal ou da empresa (o back filtra pelo dono do token).
+// Contas financeiras do usuário (o back filtra pelo dono do token).
 @Injectable({ providedIn: 'root' })
 export class ContaService {
   private readonly http = inject(HttpClient);

@@ -71,7 +71,6 @@ export class TransacaoList implements OnInit {
   // Receitas/Despesas: só lança e altera o tipo liberado (Lançamentos libera os dois).
   private readonly perfil = inject(UsuarioService).perfil();
   protected readonly tipos = tiposEditaveis(this.perfil);
-  protected readonly daEmpresa = !!this.perfil?.empresa;
 
   protected readonly abas: { id: Aba; rotulo: string }[] = [
     { id: 'TODOS', rotulo: 'Todos' },

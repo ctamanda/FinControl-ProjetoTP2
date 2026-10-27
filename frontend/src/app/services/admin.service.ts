@@ -3,18 +3,16 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_URL } from '../core/api';
 import {
-  AdminEmpresa,
   AdminTransacao,
   AdminUsuarioRequest,
   AdminUsuarioUpdate,
   CategoriaPadrao,
   CategoriaRanking,
-  Estatisticas,
+  FiltroAuditoria,
   FiltroTransacoes,
-  ParametroFiscal,
+  PainelAdmin,
   RegistroAuditoria,
 } from '../models/admin.model';
-import { EmpresaRequest } from '../models/empresa.model';
 import { PageResponse } from '../models/page-response.model';
 import { Role, Usuario } from '../models/usuario.model';
 import { TipoCategoria } from '../models/categoria.model';
@@ -25,14 +23,15 @@ export class AdminService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${API_URL}/admin`;
 
-  estatisticas(): Observable<Estatisticas> {
-    return this.http.get<Estatisticas>(`${this.apiUrl}/estatisticas`);
+  // Visão geral do mês (aaaa-mm), já com o mês anterior para a variação.
+  painel(mes: string): Observable<PainelAdmin> {
+    return this.http.get<PainelAdmin>(`${this.apiUrl}/painel`, { params: { mes } });
   }
 
   // ---------------------------------------------------------- usuários
 
   listarUsuarios(
-    filtro: { busca?: string; role?: Role | ''; ativo?: boolean | null; idEmpresa?: number | null },
+    filtro: { busca?: string; role?: Role | ''; ativo?: boolean | null },
     page = 0,
     pageSize = 20,
   ): Observable<PageResponse<Usuario>> {
@@ -59,26 +58,6 @@ export class AdminService {
 
   excluirUsuario(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/usuarios/${id}`);
-  }
-
-  // ---------------------------------------------------------- empresas
-
-  listarEmpresas(filtro: { busca?: string; ativo?: boolean | null }, page = 0, pageSize = 20): Observable<PageResponse<AdminEmpresa>> {
-    return this.http.get<PageResponse<AdminEmpresa>>(`${this.apiUrl}/empresas`, {
-      params: parametros({ ...filtro, page, pageSize }),
-    });
-  }
-
-  buscarEmpresa(id: number | string): Observable<AdminEmpresa> {
-    return this.http.get<AdminEmpresa>(`${this.apiUrl}/empresas/${id}`);
-  }
-
-  alterarEmpresa(id: number, dados: EmpresaRequest): Observable<AdminEmpresa> {
-    return this.http.put<AdminEmpresa>(`${this.apiUrl}/empresas/${id}`, dados);
-  }
-
-  alterarAtivoEmpresa(id: number, ativo: boolean): Observable<AdminEmpresa> {
-    return this.http.patch<AdminEmpresa>(`${this.apiUrl}/empresas/${id}/${ativo ? 'ativar' : 'desativar'}`, null);
   }
 
   // ---------------------------------------------------------- transações (só leitura)
@@ -112,35 +91,9 @@ export class AdminService {
     return this.http.patch<CategoriaPadrao>(`${this.apiUrl}/categorias-padrao/${id}/${ativo ? 'ativar' : 'desativar'}`, null);
   }
 
-  // ---------------------------------------------------------- parâmetros fiscais
+  // ---------------------------------------------------------- auditoria (só leitura)
 
-  listarParametros(): Observable<ParametroFiscal[]> {
-    return this.http.get<ParametroFiscal[]>(`${this.apiUrl}/parametros`);
-  }
-
-  buscarParametro(id: number | string): Observable<ParametroFiscal> {
-    return this.http.get<ParametroFiscal>(`${this.apiUrl}/parametros/${id}`);
-  }
-
-  criarParametro(parametro: ParametroFiscal): Observable<ParametroFiscal> {
-    return this.http.post<ParametroFiscal>(`${this.apiUrl}/parametros`, parametro);
-  }
-
-  atualizarParametro(id: number, parametro: ParametroFiscal): Observable<ParametroFiscal> {
-    return this.http.put<ParametroFiscal>(`${this.apiUrl}/parametros/${id}`, parametro);
-  }
-
-  alterarAtivoParametro(id: number, ativo: boolean): Observable<ParametroFiscal> {
-    return this.http.patch<ParametroFiscal>(`${this.apiUrl}/parametros/${id}/${ativo ? 'ativar' : 'desativar'}`, null);
-  }
-
-  excluirParametro(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/parametros/${id}`);
-  }
-
-  // ---------------------------------------------------------- auditoria
-
-  listarAuditoria(filtro: { busca?: string; acao?: string }, page = 0, pageSize = 20): Observable<PageResponse<RegistroAuditoria>> {
+  listarAuditoria(filtro: FiltroAuditoria, page = 0, pageSize = 20): Observable<PageResponse<RegistroAuditoria>> {
     return this.http.get<PageResponse<RegistroAuditoria>>(`${this.apiUrl}/auditoria`, {
       params: parametros({ ...filtro, page, pageSize }),
     });

@@ -9,7 +9,7 @@ export class UsuarioService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${API_URL}/usuarios/me`;
 
-  // Perfil do usuário logado (perfil, módulos, empresa), compartilhado com guards, menu e telas.
+  // Perfil do usuário logado (perfil e módulos), compartilhado com guards, menu e telas.
   readonly perfil = signal<Usuario | null>(null);
 
   carregarPerfil(): Observable<Usuario> {

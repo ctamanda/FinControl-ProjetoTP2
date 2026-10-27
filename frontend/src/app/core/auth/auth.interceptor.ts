@@ -20,7 +20,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   return next(requisicao).pipe(
     catchError((error: HttpErrorResponse) => {
       // No /auth/login o 401 significa "senha errada": a tela de login trata.
-      // Fora dele: token vencido ou usuário desativado pelo admin da empresa.
+      // Fora dele: token vencido, sessão encerrada ou usuário desativado pelo administrador.
       if (error.status === 401 && ehApi && !ehRotaPublica) {
         const detalhe: string = error.error?.detail ?? '';
         auth.logout(/desativad/i.test(detalhe) ? 'desativado' : /encerrada/i.test(detalhe) ? 'encerrada' : 'expirou');

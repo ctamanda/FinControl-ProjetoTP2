@@ -8,7 +8,7 @@ import { UsuarioService } from '../../core/usuario/usuario.service';
 import { MODULOS, Modulo } from '../../models/usuario.model';
 import { SeletorModulos } from '../shared/seletor-modulos/seletor-modulos';
 
-export const MODULOS_PESSOAIS = (Object.keys(MODULOS) as Modulo[]).filter((m) => MODULOS[m].pessoal);
+export const MODULOS_PESSOAIS = Object.keys(MODULOS) as Modulo[];
 
 // Conta pessoal: escolhe quais funcionalidades quer usar (o menu lateral mostra só essas).
 @Component({
