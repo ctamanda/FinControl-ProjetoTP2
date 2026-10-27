@@ -113,33 +113,267 @@ a.link-linha:hover {
   color: var(--fc-muted);
 }
 
-/* ---------- Usuários por perfil (celular: barra empilhada) ---------- */
-.barra-empilhada {
+/* ---------- Novos cadastros: valor em cima da coluna ---------- */
+.mes-col {
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.mes-col .col.larga {
+  width: 28px;
+}
+
+.valor-col {
+  font-size: 12px;
+  color: var(--fc-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.rotulos-x span.atual {
+  color: var(--fc-roxo);
+  font-weight: 600;
+}
+
+.discreto {
+  font-size: 13px;
+  color: var(--fc-muted);
+}
+
+.sub-cartao {
+  margin: -8px 0 16px;
+}
+
+.nota {
+  margin: 16px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--fc-muted);
+}
+
+/* ---------- Uso dos módulos ---------- */
+.legenda-modulos {
+  margin: -6px 0 14px;
+}
+
+.modulos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 28px;
+}
+
+.modulos li {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) 42px;
+  grid-template-rows: auto auto;
+  column-gap: 10px;
+  row-gap: 4px;
+  align-items: center;
+}
+
+.mod-icone {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #efeafb;
+  color: var(--fc-roxo);
+}
+
+.mod-icone mat-icon {
+  font-size: 17px;
+  width: 17px;
+  height: 17px;
+}
+
+.mod-nome {
+  grid-column: 2;
+  grid-row: 1;
+  font-size: 14px;
   display: flex;
-  gap: 3px;
-  height: 16px;
-  margin-bottom: 8px;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.barra-empilhada span {
-  min-width: 4px;
-  border-radius: 8px;
+.mod-pct {
+  grid-column: 3;
+  grid-row: 1 / 3;
+  text-align: right;
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
-.parametros li {
+.mod-trilha {
+  grid-column: 2;
+  grid-row: 2;
+  position: relative;
+  height: 8px;
+  border-radius: 4px;
+  background: #f1eef8;
+  overflow: hidden;
+}
+
+.mod-barra {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 4px;
+}
+
+.mod-barra.ligado {
+  background: var(--fc-roxo);
+}
+
+.mod-barra.dados {
+  top: 2px;
+  bottom: 2px;
+  background: var(--fc-amarelo);
+}
+
+.modulos li.em-breve .mod-icone {
+  background: #f4f4f6;
+  color: var(--fc-muted);
+}
+
+.modulos li.em-breve .mod-barra.ligado {
+  background: #b9a8e6;
+}
+
+/* ---------- Segurança ---------- */
+.seguranca {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.seg-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px;
+  border-radius: 14px;
+  background: #f7f5fc;
+  color: var(--fc-text);
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.seg-item:hover {
+  background: #efeafb;
+}
+
+.seg-item mat-icon {
+  color: var(--fc-roxo);
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  margin-bottom: 4px;
+}
+
+.seg-item strong {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.seg-item span {
+  font-size: 12px;
+  color: var(--fc-muted);
+  line-height: 1.3;
+}
+
+.seg-item.alerta {
+  background: #fdecee;
+}
+
+.seg-item.alerta mat-icon,
+.seg-item.alerta strong {
+  color: #d0343f;
+}
+
+/* ---------- Categorias padrão ---------- */
+.categorias-uso {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.categorias-uso li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cat-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cat-linha {
+  display: flex;
   justify-content: space-between;
+  gap: 8px;
+  font-size: 14px;
 }
 
+.cat-nome {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cat-trilha {
+  height: 6px;
+  border-radius: 3px;
+  background: #f1eef8;
+  overflow: hidden;
+}
+
+.cat-barra {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+}
+
+.cat-sub {
+  font-size: 12px;
+  color: var(--fc-muted);
+}
+
+@media (max-width: 1100px) {
+  .modulos {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Celular: a ordem dos blocos segue o desenho (indicadores, busca, segurança, usuários...) */
 @media (max-width: 760px) {
   .cabeca-celular { order: 0; }
   .c-indicadores { order: 1; }
   .c-busca { order: 2; }
-  .c-perfis { order: 3; }
+  .c-seguranca { order: 3; }
   .c-usuarios { order: 4; }
-  .c-auditoria { order: 5; }
-  .c-empresas { order: 6; }
-  .c-cadastros { order: 7; }
-  .c-parametros { order: 8; }
+  .c-cadastros { order: 5; }
+  .c-categorias { order: 6; }
+  .c-modulos { order: 7; }
+  .c-auditoria { order: 8; }
   .vazio.erro { order: 1; }
 
   .busca-admin {
@@ -147,15 +381,7 @@ a.link-linha:hover {
     padding: 0 20px;
   }
 
-  .c-perfis .legenda-lista {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    column-gap: 20px;
-  }
-
-  .c-perfis .legenda-lista li {
-    border-bottom: none;
-    padding: 8px 0;
-    font-size: 14px;
+  .mes-col .col.larga {
+    width: 20px;
   }
 }

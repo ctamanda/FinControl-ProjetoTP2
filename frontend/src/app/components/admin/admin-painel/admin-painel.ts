@@ -1,47 +1,41 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { DecimalPipe } from '@angular/common';
-import { Component, computed, effect, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, computed, effect, inject, OnDestroy, signal } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSlideToggle, MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router, RouterLink } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { mensagemDeErro } from '../../../core/api';
 import { chaveMes, MesService } from '../../../core/mes.service';
 import { UsuarioService } from '../../../core/usuario/usuario.service';
-import { formatarCnpj } from '../../../core/validadores';
-import {
-  AdminEmpresa,
-  Estatisticas,
-  hojeIso,
-  ParametroFiscal,
-  RegistroAuditoria,
-  situacaoVigencia,
-} from '../../../models/admin.model';
-import { Role, Usuario } from '../../../models/usuario.model';
+import { hojeIso, PainelAdmin, RegistroAuditoria } from '../../../models/admin.model';
+import { MODULOS, ROTULOS_ROLE, Role, Usuario } from '../../../models/usuario.model';
 import { AdminService } from '../../../services/admin.service';
 import { escalaDoGrafico, variacao } from '../../dashboard/resumo';
 import { iniciais } from '../../layout/shell/shell';
 import { confirmar } from '../../shared/confirm-dialog/confirm-dialog';
+import { IconeCategoria } from '../../shared/icone-categoria/icone-categoria';
 import { Indicador } from '../../shared/indicador/indicador';
 
 const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
-// O back guarda até 6 meses de série (transacoesPorMes / cadastrosPorMes).
-const MESES_COM_DADOS = 5;
+// Até quantos meses para trás o seletor do topo vai (o back calcula qualquer mês).
+const MESES_ANTERIORES = 23;
 
-type Aba = 'TODOS' | 'PESSOAL' | 'ADMIN_EMPRESA' | 'USUARIO_EMPRESA' | 'INATIVOS';
+type Aba = 'TODOS' | 'ATIVOS' | 'INATIVOS' | 'ADMINS';
 
 const ABAS: { id: Aba; rotulo: string }[] = [
   { id: 'TODOS', rotulo: 'Todos' },
-  { id: 'PESSOAL', rotulo: 'Pessoais' },
-  { id: 'ADMIN_EMPRESA', rotulo: 'Empresas' },
-  { id: 'USUARIO_EMPRESA', rotulo: 'Colaboradores' },
+  { id: 'ATIVOS', rotulo: 'Ativos' },
   { id: 'INATIVOS', rotulo: 'Inativos' },
+  { id: 'ADMINS', rotulo: 'Administradores' },
 ];
 
-// Frase de cada ação da auditoria ("Rafael desativou o usuário …").
+// Frase de cada ação da auditoria ("admin@… desativou o usuário …").
 const VERBOS: Record<string, string> = {
   USUARIO_CRIADO: 'criou',
   USUARIO_ALTERADO: 'alterou',
@@ -49,19 +43,10 @@ const VERBOS: Record<string, string> = {
   USUARIO_ATIVADO: 'reativou',
   USUARIO_DESATIVADO: 'desativou',
   USUARIO_EXCLUIDO: 'excluiu',
-  EMPRESA_CADASTRADA: 'cadastrou',
-  EMPRESA_ALTERADA: 'alterou os dados de',
-  EMPRESA_ATIVADA: 'reativou',
-  EMPRESA_DESATIVADA: 'desativou',
   CATEGORIA_PADRAO_CRIADA: 'criou a categoria padrão',
   CATEGORIA_PADRAO_ALTERADA: 'alterou a categoria padrão',
   CATEGORIA_PADRAO_ATIVADA: 'ativou a categoria padrão',
   CATEGORIA_PADRAO_DESATIVADA: 'desativou a categoria padrão',
-  PARAMETRO_CRIADO: 'criou o parâmetro',
-  PARAMETRO_ALTERADO: 'alterou o parâmetro',
-  PARAMETRO_ATIVADO: 'ativou o parâmetro',
-  PARAMETRO_DESATIVADO: 'desativou o parâmetro',
-  PARAMETRO_EXCLUIDO: 'excluiu o parâmetro',
   CONSULTA_TRANSACOES: 'consultou',
   DADOS_PESSOAIS_ALTERADOS: 'alterou os dados pessoais de',
   SENHA_ALTERADA: 'trocou a senha de',
@@ -70,15 +55,33 @@ const VERBOS: Record<string, string> = {
   CONTA_BLOQUEADA: 'errou a senha várias vezes; bloqueado temporariamente:',
 };
 
-// Visão geral do sistema (SUPER_ADMIN): indicadores, novos cadastros, usuários, empresas,
-// auditoria recente e parâmetros fiscais vigentes.
+// Quando a própria pessoa fez a ação na conta dela ("ana trocou a própria senha").
+const VERBOS_PROPRIOS: Record<string, string> = {
+  DADOS_PESSOAIS_ALTERADOS: 'alterou os próprios dados pessoais',
+  SENHA_ALTERADA: 'trocou a própria senha',
+  EMAIL_ALTERADO: 'trocou o e-mail de acesso',
+  SESSOES_ENCERRADAS: 'saiu de todos os dispositivos',
+  CONTA_BLOQUEADA: 'errou a senha 5 vezes e teve a conta bloqueada por 15 minutos',
+};
+
+// Visão geral do sistema (SUPER_ADMIN) no mês escolhido no topo. Todos os números vêm de
+// GET /admin/painel (cadastros, lançamentos e auditoria); nada é estimado na tela.
 @Component({
-  imports: [RouterLink, DecimalPipe, MatIconModule, MatProgressBarModule, MatSlideToggleModule, Indicador],
+  imports: [
+    RouterLink,
+    DecimalPipe,
+    MatIconModule,
+    MatProgressBarModule,
+    MatSlideToggleModule,
+    MatTooltipModule,
+    Indicador,
+    IconeCategoria,
+  ],
   selector: 'app-admin-painel',
   styleUrls: ['../../shared/painel.css', './admin-painel.css'],
   templateUrl: './admin-painel.html',
 })
-export class AdminPainel implements OnInit, OnDestroy {
+export class AdminPainel implements OnDestroy {
   private readonly adminService = inject(AdminService);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(MatSnackBar);
@@ -87,89 +90,106 @@ export class AdminPainel implements OnInit, OnDestroy {
   protected readonly eu = inject(UsuarioService).perfil;
 
   protected readonly iniciais = iniciais;
-  protected readonly formatarCnpj = formatarCnpj;
   protected readonly abas = ABAS;
+  protected readonly rotulosRole = ROTULOS_ROLE;
 
-  protected readonly estatisticas = signal<Estatisticas | null>(null);
-  protected readonly parametros = signal<ParametroFiscal[]>([]);
+  protected readonly painel = signal<PainelAdmin | null>(null);
   protected readonly auditoria = signal<RegistroAuditoria[]>([]);
-  protected readonly empresas = signal<AdminEmpresa[]>([]);
   protected readonly usuarios = signal<Usuario[]>([]);
+  protected readonly totalUsuarios = signal(0);
   protected readonly aba = signal<Aba>('TODOS');
   protected readonly carregando = signal(true);
   protected readonly erro = signal('');
+  private consulta?: Subscription;
 
   constructor() {
-    // O seletor de mês do topo só vai até onde o back tem série.
-    this.mes.mesesAnteriores.set(MESES_COM_DADOS);
-    if (this.mes.chave() < chaveMes(new Date(), -MESES_COM_DADOS) || this.mes.chave() > chaveMes(new Date())) {
+    // O painel olha para o passado: o seletor para no mês atual.
+    this.mes.mesesAnteriores.set(MESES_ANTERIORES);
+    if (this.mes.chave() < chaveMes(new Date(), -MESES_ANTERIORES) || this.mes.chave() > chaveMes(new Date())) {
       this.mes.irParaAtual();
     }
+    effect(() => this.carregarPainel(this.mes.chave()));
     effect(() => this.carregarUsuarios(this.aba()));
+    this.recarregarAuditoria();
   }
 
-  // Transações e volume do mês escolhido, comparados com o mês anterior.
-  protected readonly doMes = computed(() => {
-    const serie = this.estatisticas()?.transacoesPorMes ?? [];
-    const i = serie.findIndex((m) => m.mes === this.mes.chave());
-    const atual = serie[i];
-    const anterior = i > 0 ? serie[i - 1] : undefined;
+  ngOnDestroy(): void {
+    this.mes.mesesAnteriores.set(null);
+  }
+
+  // ---------------------------------------------------------- indicadores
+
+  protected readonly indicadores = computed(() => {
+    const p = this.painel();
+    if (!p) return null;
+    const mes = this.mes.nome().toLowerCase();
     return {
-      quantidade: atual?.quantidade ?? 0,
-      valor: Number(atual?.valor ?? 0),
-      variacaoQuantidade: anterior ? variacao(atual?.quantidade ?? 0, anterior.quantidade) : null,
-      variacaoValor: anterior ? variacao(Number(atual?.valor ?? 0), Number(anterior.valor)) : null,
+      ativos: { valor: p.usuariosAtivos.atual, variacao: variacao(p.usuariosAtivos.atual, p.usuariosAtivos.anterior) },
+      novos: { valor: p.novosCadastros.atual, variacao: variacao(p.novosCadastros.atual, p.novosCadastros.anterior) },
+      lancamentos: { valor: p.lancamentos.atual, variacao: variacao(p.lancamentos.atual, p.lancamentos.anterior) },
+      volume: {
+        valor: formatarVolume(Number(p.volume.atual)),
+        variacao: variacao(Number(p.volume.atual), Number(p.volume.anterior)),
+      },
+      mes,
     };
   });
 
-  protected readonly volume = computed(() => formatarVolume(this.doMes().valor));
-
+  // Gráfico de novos cadastros: 6 meses até o escolhido.
   protected readonly cadastros = computed(() => {
-    const serie = this.estatisticas()?.cadastrosPorMes ?? [];
-    const maior = escalaDoGrafico(Math.max(0, ...serie.flatMap((m) => [m.contasPessoais, m.empresas])));
+    const serie = this.painel()?.cadastrosPorMes ?? [];
+    const maior = escalaDoGrafico(Math.max(0, ...serie.map((m) => m.contasPessoais)));
     return {
       maior,
       meses: serie.map((m) => ({
         ...m,
         rotulo: MESES[Number(m.mes.slice(5, 7)) - 1],
-        altPessoais: (m.contasPessoais / maior) * 100,
-        altEmpresas: (m.empresas / maior) * 100,
+        altura: (m.contasPessoais / maior) * 100,
+        atual: m.mes === this.mes.chave(),
       })),
     };
   });
 
-  // Fatias da rosca "Usuários por perfil".
-  protected readonly perfis = computed(() => {
-    const e = this.estatisticas();
-    if (!e) return [];
-    const total = Math.max(1, e.totalUsuarios);
-    let acumulado = 0;
-    return [
-      { rotulo: 'Pessoal', valor: e.totalContasPessoais, cor: '#3b1478' },
-      { rotulo: 'Colaboradores de empresa', valor: e.totalColaboradores, cor: '#a78be8' },
-      { rotulo: 'Administradores de empresa', valor: e.totalAdminsEmpresa, cor: '#f5c518' },
-      { rotulo: 'Super admins', valor: e.totalAdmins, cor: '#1c0f33' },
-    ].map((p) => {
-      const inicio = acumulado;
-      acumulado += (p.valor / total) * 100;
-      return { ...p, inicio, fim: acumulado };
-    });
+  // Uso de cada módulo pelas contas pessoais ativas (em % da base).
+  protected readonly modulos = computed(() => {
+    const p = this.painel();
+    if (!p) return [];
+    const base = Math.max(1, p.totais.contasPessoaisAtivas);
+    return p.modulos.map((m) => ({
+      ...m,
+      info: MODULOS[m.modulo],
+      pctLigados: (m.ligados / base) * 100,
+      pctDados: m.comDados === null ? null : (m.comDados / base) * 100,
+    }));
   });
 
-  protected readonly rosca = computed(() =>
-    'conic-gradient(' + this.perfis().map((p) => `${p.cor} ${p.inicio}% ${p.fim}%`).join(', ') + ')',
-  );
+  // Categorias padrão por lançamentos no mês (barra relativa à mais usada).
+  protected readonly categorias = computed(() => {
+    const lista = (this.painel()?.categoriasPadrao ?? []).filter((c) => c.ativo || c.lancamentos > 0).slice(0, 6);
+    const maior = Math.max(1, ...lista.map((c) => c.lancamentos));
+    return lista.map((c) => ({ ...c, pct: (c.lancamentos / maior) * 100 }));
+  });
 
-  protected readonly vigentes = computed(() =>
-    this.parametros()
-      .filter((p) => p.ativo !== false && situacaoVigencia(p) === 'VIGENTE')
-      .slice(0, 5),
-  );
+  protected readonly seguranca = computed(() => {
+    const s = this.painel()?.seguranca;
+    if (!s) return [];
+    return [
+      { valor: s.contasBloqueadasHoje, rotulo: 'Contas bloqueadas hoje', icone: 'lock_clock', acao: 'CONTA_BLOQUEADA', alerta: true },
+      { valor: s.senhasTrocadasSemana, rotulo: 'Senhas trocadas (7 dias)', icone: 'password', acao: 'SENHA_ALTERADA', alerta: false },
+      { valor: s.sessoesEncerradasSemana, rotulo: 'Sessões encerradas (7 dias)', icone: 'devices_off', acao: 'SESSOES_ENCERRADAS', alerta: false },
+      { valor: s.emailsTrocadosSemana, rotulo: 'E-mails trocados (7 dias)', icone: 'alternate_email', acao: 'EMAIL_ALTERADO', alerta: false },
+    ];
+  });
 
-  ngOnInit(): void {
-    this.adminService.estatisticas().subscribe({
-      next: (e) => {
-        this.estatisticas.set(e);
+  // ---------------------------------------------------------- carga
+
+  private carregarPainel(mes: string): void {
+    this.consulta?.unsubscribe();
+    this.carregando.set(true);
+    this.consulta = this.adminService.painel(mes).subscribe({
+      next: (p) => {
+        this.painel.set(p);
+        this.erro.set('');
         this.carregando.set(false);
       },
       error: (error: HttpErrorResponse) => {
@@ -177,32 +197,31 @@ export class AdminPainel implements OnInit, OnDestroy {
         this.carregando.set(false);
       },
     });
-    this.adminService.listarParametros().subscribe({ next: (p) => this.parametros.set(p), error: () => {} });
-    this.adminService.listarAuditoria({}, 0, 5).subscribe({ next: (r) => this.auditoria.set(r.items), error: () => {} });
-    this.adminService.listarEmpresas({}, 0, 4).subscribe({ next: (r) => this.empresas.set(r.items), error: () => {} });
-  }
-
-  ngOnDestroy(): void {
-    this.mes.mesesAnteriores.set(null);
   }
 
   private carregarUsuarios(aba: Aba): void {
     const filtro: { role?: Role; ativo?: boolean } =
-      aba === 'TODOS' ? {} : aba === 'INATIVOS' ? { ativo: false } : { role: aba };
+      aba === 'ADMINS' ? { role: 'SUPER_ADMIN' } : aba === 'ATIVOS' ? { ativo: true } : aba === 'INATIVOS' ? { ativo: false } : {};
     this.adminService.listarUsuarios(filtro, 0, 5).subscribe({
-      next: (r) => this.usuarios.set(r.items),
+      next: (r) => {
+        this.usuarios.set(r.items);
+        this.totalUsuarios.set(r.totalItems);
+      },
       error: () => this.usuarios.set([]),
     });
   }
 
+  private recarregarAuditoria(): void {
+    this.adminService.listarAuditoria({}, 0, 5).subscribe({ next: (r) => this.auditoria.set(r.items), error: () => {} });
+  }
+
+  // ---------------------------------------------------------- ações
+
   buscar(termo: string): void {
     const t = termo.trim();
-    if (!t) return;
-    // Só números (ou com pontuação de CNPJ): procura empresa; senão, usuário.
-    const ehCnpj = /^[\d./-]{4,}$/.test(t);
-    this.router.navigate([ehCnpj ? '/admin/empresas' : '/admin/usuarios'], {
-      queryParams: { busca: ehCnpj ? t.replace(/\D/g, '') : t },
-    });
+    if (t) {
+      this.router.navigate(['/admin/usuarios'], { queryParams: { busca: t } });
+    }
   }
 
   alterarAtivo(u: Usuario, toggle: MatSlideToggle): void {
@@ -211,7 +230,7 @@ export class AdminPainel implements OnInit, OnDestroy {
       titulo: ativar ? 'Reativar usuário' : 'Desativar usuário',
       mensagem: ativar
         ? `${u.nome} volta a entrar no FinControl.`
-        : `${u.nome} não conseguirá mais entrar (nem com uma sessão aberta). O cadastro e o histórico continuam guardados.`,
+        : `${u.nome} perde o acesso na hora, inclusive nas sessões já abertas. O cadastro e o histórico continuam guardados.`,
       confirmar: ativar ? 'Reativar' : 'Desativar',
     }).subscribe((ok) => {
       if (!ok) {
@@ -219,9 +238,10 @@ export class AdminPainel implements OnInit, OnDestroy {
         return;
       }
       this.adminService.alterarAtivoUsuario(u.id, ativar).subscribe({
-        next: (atualizado) => {
-          this.usuarios.update((lista) => lista.map((x) => (x.id === atualizado.id ? atualizado : x)));
+        next: () => {
           this.avisar(ativar ? 'Usuário reativado.' : 'Usuário desativado.');
+          this.carregarUsuarios(this.aba());
+          this.carregarPainel(this.mes.chave());
           this.recarregarAuditoria();
         },
         error: (error: HttpErrorResponse) => {
@@ -235,13 +255,14 @@ export class AdminPainel implements OnInit, OnDestroy {
   excluir(u: Usuario): void {
     confirmar(this.dialog, {
       titulo: 'Excluir usuário',
-      mensagem: `Excluir ${u.nome}? Só é possível para quem ainda não registrou nada; caso contrário, desative.`,
+      mensagem: `Excluir ${u.nome}? Só é possível para quem não tem histórico (lançamentos ou ações na auditoria); nesse caso, desative.`,
     }).subscribe((ok) => {
       if (!ok) return;
       this.adminService.excluirUsuario(u.id).subscribe({
         next: () => {
           this.avisar('Usuário excluído.');
           this.carregarUsuarios(this.aba());
+          this.carregarPainel(this.mes.chave());
           this.recarregarAuditoria();
         },
         error: (error: HttpErrorResponse) => this.avisar(mensagemDeErro(error, 'Não foi possível excluir.')),
@@ -249,15 +270,20 @@ export class AdminPainel implements OnInit, OnDestroy {
     });
   }
 
+  // ---------------------------------------------------------- apresentação
+
   protected frase(r: RegistroAuditoria): string {
+    if (VERBOS_PROPRIOS[r.acao] && r.alvo?.includes(`(${r.autorEmail})`)) {
+      return VERBOS_PROPRIOS[r.acao];
+    }
     const alvo = r.alvo ? r.alvo.charAt(0).toLowerCase() + r.alvo.slice(1) : '';
     return `${VERBOS[r.acao] ?? r.acao.toLowerCase().replaceAll('_', ' ')} ${alvo}`.trim();
   }
 
   protected corAuditoria(acao: string): string {
     if (/DESATIV|EXCLU|BLOQUEADA/.test(acao)) return '#d0343f';
-    if (acao.startsWith('EMPRESA') || acao.startsWith('CONSULTA')) return '#2563c9';
-    if (acao.startsWith('PARAMETRO') || acao.startsWith('CATEGORIA')) return '#3b1478';
+    if (acao.startsWith('CONSULTA')) return '#2563c9';
+    if (acao.startsWith('CATEGORIA')) return '#3b1478';
     return '#f5c518';
   }
 
@@ -266,28 +292,15 @@ export class AdminPainel implements OnInit, OnDestroy {
     if (!iso) return '—';
     const dia = iso.slice(0, 10);
     const hora = iso.slice(11, 16);
-    const hoje = hojeIso();
     const ontem = new Date();
     ontem.setDate(ontem.getDate() - 1);
-    if (dia === hoje) return hora ? `Hoje, ${hora}` : 'Hoje';
+    if (dia === hojeIso()) return hora ? `Hoje, ${hora}` : 'Hoje';
     if (dia === `${chaveMes(ontem)}-${String(ontem.getDate()).padStart(2, '0')}`) return hora ? `Ontem, ${hora}` : 'Ontem';
     return `${dia.slice(8, 10)}/${dia.slice(5, 7)}/${dia.slice(0, 4)}`;
   }
 
-  // O parâmetro é só um número: o nome da chave diz se é dia, percentual ou valor em R$.
-  protected valorParametro(p: ParametroFiscal): string {
-    const valor = Number(p.valor);
-    if (/DIA|VENCIMENTO/.test(p.chave)) return `Dia ${valor}`;
-    if (/PERCENT|ALERTA|ALIQUOTA/.test(p.chave)) return `${valor.toLocaleString('pt-BR')}%`;
-    return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  }
-
   protected corPerfil(role: Role): string {
-    return { SUPER_ADMIN: '#1c0f33', PESSOAL: '#3b1478', ADMIN_EMPRESA: '#f5c518', USUARIO_EMPRESA: '#a78be8' }[role];
-  }
-
-  private recarregarAuditoria(): void {
-    this.adminService.listarAuditoria({}, 0, 5).subscribe({ next: (r) => this.auditoria.set(r.items), error: () => {} });
+    return role === 'SUPER_ADMIN' ? '#f5c518' : '#3b1478';
   }
 
   private avisar(mensagem: string): void {
