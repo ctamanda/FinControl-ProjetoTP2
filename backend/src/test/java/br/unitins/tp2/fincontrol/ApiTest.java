@@ -864,6 +864,93 @@ class ApiTest {
                 .body("find { it.nome == 'Salário' }.totalContas", greaterThanOrEqualTo(2));
     }
 
+    // ------------------------------------------------------------------ visão geral do painel
+
+    @Test
+    void painelTrazOsIndicadoresDoMesEDoMesAnterior() {
+        String admin = logar(ADMIN_EMAIL);
+        String pessoal = registrarELogar();
+        criarTransacao(pessoal, "DESPESA");
+
+        given().auth().oauth2(admin).when().get("/admin/painel")
+                .then().statusCode(200)
+                .body("mes", equalTo(java.time.YearMonth.now().toString()))
+                .body("usuariosAtivos.atual", greaterThanOrEqualTo(1))
+                .body("usuariosAtivos.anterior", notNullValue())
+                .body("novosCadastros.atual", greaterThanOrEqualTo(1))
+                .body("lancamentos.atual", greaterThanOrEqualTo(1))
+                .body("volume.atual", greaterThan(0f))
+                .body("totais.administradores", greaterThanOrEqualTo(1))
+                .body("cadastrosPorMes.size()", equalTo(6))
+                .body("cadastrosPorMes[5].mes", equalTo(java.time.YearMonth.now().toString()))
+                .body("modulos.size()", equalTo(13))
+                .body("modulos.find { it.modulo == 'DESPESAS' }.comDados", greaterThanOrEqualTo(1))
+                .body("modulos.find { it.modulo == 'DASHBOARD' }.comDados", equalTo(null))
+                .body("categoriasPadrao.nome", hasItem("Alimentação"))
+                .body("seguranca.contasBloqueadasHoje", greaterThanOrEqualTo(0));
+
+        // Mês sem nada: os indicadores zeram, sem inventar valores.
+        given().auth().oauth2(admin).queryParam("mes", "2001-01").when().get("/admin/painel")
+                .then().statusCode(200)
+                .body("lancamentos.atual", equalTo(0))
+                .body("volume.atual", equalTo(0))
+                .body("usuariosAtivos.atual", equalTo(0));
+
+        given().auth().oauth2(admin).queryParam("mes", "janeiro").when().get("/admin/painel")
+                .then().statusCode(400).body("errors[0].field", equalTo("mes"));
+        given().auth().oauth2(pessoal).when().get("/admin/painel").then().statusCode(403);
+    }
+
+    @Test
+    void resumoDeSegurancaContaAsSenhasTrocadas() {
+        String admin = logar(ADMIN_EMAIL);
+        int antes = given().auth().oauth2(admin).when().get("/admin/painel")
+                .then().statusCode(200).extract().path("seguranca.senhasTrocadasSemana");
+
+        String token = registrarELogar();
+        given().auth().oauth2(token).contentType(ContentType.JSON)
+                .body(Map.of("senhaAtual", SENHA, "novaSenha", "Outra@Senha1", "confirmacaoSenha", "Outra@Senha1"))
+                .when().put("/usuarios/me/senha").then().statusCode(200);
+
+        given().auth().oauth2(admin).when().get("/admin/painel")
+                .then().statusCode(200).body("seguranca.senhasTrocadasSemana", equalTo(antes + 1));
+    }
+
+    @Test
+    void loginGravaOUltimoAcesso() {
+        String email = novoEmail();
+        registrar(email);
+        long id = idDoUsuario(logar(email));
+        given().auth().oauth2(logar(ADMIN_EMAIL)).when().get("/admin/usuarios/" + id)
+                .then().statusCode(200).body("ultimoAcesso", notNullValue());
+    }
+
+    @Test
+    void auditoriaFiltraPorAutorAcaoEPeriodoENaoPodeSerAlterada() {
+        String admin = logar(ADMIN_EMAIL);
+        given().auth().oauth2(admin).when().get("/admin/transacoes").then().statusCode(200);
+        String hoje = java.time.LocalDate.now().toString();
+        String ontem = java.time.LocalDate.now().minusDays(1).toString();
+
+        given().auth().oauth2(admin)
+                .queryParam("autor", "ADMIN@teste").queryParam("acao", "CONSULTA_TRANSACOES")
+                .queryParam("inicio", hoje).queryParam("fim", hoje)
+                .when().get("/admin/auditoria")
+                .then().statusCode(200)
+                .body("totalItems", greaterThanOrEqualTo(1))
+                .body("items.autorEmail", everyItem(equalTo(ADMIN_EMAIL)));
+        given().auth().oauth2(admin).queryParam("acao", "CONSULTA_TRANSACOES").queryParam("fim", ontem)
+                .when().get("/admin/auditoria")
+                .then().statusCode(200).body("totalItems", equalTo(0));
+        given().auth().oauth2(admin).queryParam("inicio", hoje).queryParam("fim", ontem)
+                .when().get("/admin/auditoria").then().statusCode(400);
+
+        // Só leitura: não existe rota para alterar ou apagar a trilha.
+        given().auth().oauth2(admin).when().delete("/admin/auditoria").then().statusCode(405);
+        given().auth().oauth2(admin).contentType(ContentType.JSON).body(Map.of())
+                .when().put("/admin/auditoria").then().statusCode(405);
+    }
+
     // ------------------------------------------------------------------ apoio
 
     private static String novoEmail() {
