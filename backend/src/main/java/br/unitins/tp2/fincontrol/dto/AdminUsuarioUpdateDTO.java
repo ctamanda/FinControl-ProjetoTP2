@@ -10,9 +10,8 @@ import br.unitins.tp2.fincontrol.validation.Telefone;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-// Edição pelo SUPER_ADMIN (PUT /admin/usuarios/{id}). E-mail, senha e empresa não mudam por aqui.
-// O perfil só troca entre USUÁRIO e ADMINISTRADOR do mesmo tipo de conta:
-// PESSOAL <-> SUPER_ADMIN e USUARIO_EMPRESA <-> ADMIN_EMPRESA.
+// Edição pelo SUPER_ADMIN (PUT /admin/usuarios/{id}). E-mail e senha não mudam por aqui.
+// O perfil alterna entre PESSOAL e SUPER_ADMIN.
 public record AdminUsuarioUpdateDTO(
 
         @NotBlank(message = "O nome deve ser informado.")

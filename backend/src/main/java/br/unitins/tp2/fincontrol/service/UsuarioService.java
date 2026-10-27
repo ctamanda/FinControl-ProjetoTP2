@@ -7,9 +7,7 @@ import br.unitins.tp2.fincontrol.dto.RegisterRequestDTO;
 import br.unitins.tp2.fincontrol.dto.SenhaUpdateDTO;
 import br.unitins.tp2.fincontrol.dto.UsuarioUpdateDTO;
 import br.unitins.tp2.fincontrol.exception.ValidationException;
-import br.unitins.tp2.fincontrol.model.Modulo;
 import br.unitins.tp2.fincontrol.model.Role;
-import br.unitins.tp2.fincontrol.model.TipoConta;
 import br.unitins.tp2.fincontrol.model.Usuario;
 import br.unitins.tp2.fincontrol.repository.UsuarioRepository;
 import br.unitins.tp2.fincontrol.security.ControleDeSenha;
@@ -38,8 +36,7 @@ public class UsuarioService {
     @Inject
     AuditoriaService auditoria;
 
-    // PESSOAL já sai pronto para usar (todos os módulos pessoais e 6 categorias).
-    // EMPRESA vira ADMIN_EMPRESA com a empresa pendente: só entra no sistema depois de POST /empresa.
+    // A conta pessoal já sai pronta para usar: todos os módulos, as categorias padrão e a Carteira.
     @Transactional
     public Usuario criar(RegisterRequestDTO dto) {
         String email = normalizarEmail(dto.email());
@@ -54,19 +51,12 @@ public class UsuarioService {
         usuario.setTelefone(Documentos.soDigitos(dto.telefone()));
         usuario.setPassword(BcryptUtil.bcryptHash(dto.password()));
 
-        if (dto.tipoConta() == TipoConta.PESSOAL) {
-            usuario.setRole(Role.PESSOAL);
-            usuario.setProfissao(dto.profissao().trim());
-            usuario.setModulos(Permissoes.pessoais());
-        } else {
-            usuario.setRole(Role.ADMIN_EMPRESA);
-        }
+        usuario.setRole(Role.PESSOAL);
+        usuario.setProfissao(dto.profissao().trim());
+        usuario.setModulos(Permissoes.todos());
 
         repository.persist(usuario);
-
-        if (usuario.getRole() == Role.PESSOAL) {
-            dadosIniciais.criar(usuario, null);
-        }
+        dadosIniciais.criar(usuario);
 
         return usuario;
     }
@@ -93,8 +83,8 @@ public class UsuarioService {
         return repository.findByEmail(email);
     }
 
-    // Usuário dono do token (upn). Se a conta (ou a empresa dela) não existe mais ou foi
-    // desativada, o token deixa de valer: 401.
+    // Usuário dono do token (upn). Se a conta não existe mais ou foi desativada,
+    // o token deixa de valer: 401.
     public Usuario buscarLogado(String email) {
         Usuario usuario = repository.findByEmail(email);
 
@@ -138,8 +128,7 @@ public class UsuarioService {
         if (usuario.getRole() != Role.PESSOAL) {
             throw new ForbiddenException("Só a conta pessoal escolhe as próprias funcionalidades.");
         }
-        usuario.setModulos(Permissoes.exigirPermitidos(dto.modulos(), Modulo::isPessoal,
-                "Estes módulos não existem na conta pessoal: "));
+        usuario.setModulos(Permissoes.escolhidos(dto.modulos()));
         return usuario;
     }
 

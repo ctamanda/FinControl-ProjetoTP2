@@ -40,7 +40,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 @Path("transacoes")
-@RolesAllowed({"SUPER_ADMIN", "PESSOAL", "ADMIN_EMPRESA", "USUARIO_EMPRESA"})
+@RolesAllowed({"SUPER_ADMIN", "PESSOAL"})
 // Receitas/Despesas limitam ao seu tipo (regra no TransacaoServiceImpl); o Dashboard só lê.
 @RequerModulo({Modulo.LANCAMENTOS, Modulo.RECEITAS, Modulo.DESPESAS})
 @Produces(MediaType.APPLICATION_JSON)

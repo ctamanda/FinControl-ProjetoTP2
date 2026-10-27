@@ -10,7 +10,6 @@ import br.unitins.tp2.fincontrol.dto.SenhaUpdateDTO;
 import br.unitins.tp2.fincontrol.dto.UsuarioResponseDTO;
 import br.unitins.tp2.fincontrol.dto.UsuarioUpdateDTO;
 import br.unitins.tp2.fincontrol.mapper.UsuarioResponseMapper;
-import br.unitins.tp2.fincontrol.security.PermiteEmpresaPendente;
 import br.unitins.tp2.fincontrol.security.Tokens;
 import br.unitins.tp2.fincontrol.service.UsuarioService;
 import jakarta.annotation.security.RolesAllowed;
@@ -25,12 +24,10 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 
-// A própria conta. O perfil fica liberado mesmo com a empresa pendente:
-// é por ele que o front descobre que precisa mandar para o cadastro da empresa.
+// A própria conta.
 // Alterar dados pessoais, senha ou e-mail exige a senha atual (reautenticação).
 @Path("usuarios")
-@RolesAllowed({"SUPER_ADMIN", "PESSOAL", "ADMIN_EMPRESA", "USUARIO_EMPRESA"})
-@PermiteEmpresaPendente
+@RolesAllowed({"SUPER_ADMIN", "PESSOAL"})
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class UsuarioResource {

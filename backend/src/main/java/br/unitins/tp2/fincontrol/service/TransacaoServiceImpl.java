@@ -12,7 +12,6 @@ import br.unitins.tp2.fincontrol.exception.ResourceNotFoundException;
 import br.unitins.tp2.fincontrol.exception.ValidationException;
 import br.unitins.tp2.fincontrol.model.Categoria;
 import br.unitins.tp2.fincontrol.model.ContaFinanceira;
-import br.unitins.tp2.fincontrol.model.Escopo;
 import br.unitins.tp2.fincontrol.model.TipoTransacao;
 import br.unitins.tp2.fincontrol.model.Transacao;
 import br.unitins.tp2.fincontrol.model.Usuario;
@@ -26,7 +25,7 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.ForbiddenException;
 
-// Transações da conta pessoal ou da empresa do usuário (ver repository.Dono).
+// Transações do próprio usuário (ver repository.Dono).
 // Com os módulos Receitas/Despesas, o usuário só vê e altera o tipo liberado;
 // Lançamentos libera os dois tipos.
 // Todo lançamento cai numa conta financeira; os pendentes (não pagos) são as contas
@@ -56,8 +55,6 @@ public class TransacaoServiceImpl implements TransacaoService {
         Transacao novaTransacao = new Transacao();
         aplicarDados(novaTransacao, transacao, usuario);
         novaTransacao.setUsuario(usuario);
-        novaTransacao.setEmpresa(usuario.getEmpresa());
-        novaTransacao.setEscopo(usuario.getEmpresa() != null ? Escopo.EMPRESA : Escopo.PESSOAL);
 
         transacaoRepository.persist(novaTransacao);
 
@@ -200,7 +197,7 @@ public class TransacaoServiceImpl implements TransacaoService {
         }
     }
 
-    // Só aceita categoria do mesmo dono (conta pessoal ou empresa): sem isso daria para
+    // Só aceita categoria do mesmo dono: sem isso daria para
     // vincular (e ler) a categoria de outra pessoa informando o id dela.
     private Categoria buscarCategoriaOuFalhar(Long idCategoria, Usuario usuario) {
         Categoria categoria = idCategoria == null

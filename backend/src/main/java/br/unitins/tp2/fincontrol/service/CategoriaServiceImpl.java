@@ -27,7 +27,6 @@ public class CategoriaServiceImpl implements CategoriaService {
     public Categoria create(CategoriaRequestDTO dto, Usuario usuario) {
         Categoria categoria = new Categoria();
         categoria.setUsuario(usuario);
-        categoria.setEmpresa(usuario.getEmpresa());
         aplicarDados(categoria, dto, usuario);
 
         repository.persist(categoria);

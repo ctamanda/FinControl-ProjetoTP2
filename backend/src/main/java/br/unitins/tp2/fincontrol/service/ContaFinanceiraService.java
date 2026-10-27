@@ -21,7 +21,7 @@ import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 
-// Contas financeiras da conta pessoal ou da empresa (ver repository.Dono).
+// Contas financeiras do próprio usuário (ver repository.Dono).
 // Os saldos não são gravados: saem dos lançamentos a cada consulta.
 @ApplicationScoped
 public class ContaFinanceiraService {
@@ -39,7 +39,6 @@ public class ContaFinanceiraService {
     public ContaFinanceira criar(ContaFinanceiraRequestDTO dto, Usuario usuario) {
         ContaFinanceira conta = new ContaFinanceira();
         conta.setUsuario(usuario);
-        conta.setEmpresa(usuario.getEmpresa());
         aplicarDados(conta, dto, usuario);
         repository.persist(conta);
         return conta;

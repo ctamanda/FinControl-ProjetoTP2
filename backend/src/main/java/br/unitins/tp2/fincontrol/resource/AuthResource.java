@@ -26,7 +26,6 @@ public class AuthResource {
     UsuarioService usuarioService;
 
     // 201 com os dados públicos do usuário criado (sem senha).
-    // Conta EMPRESA volta com empresaPendente = true: o próximo passo é POST /empresa.
     @POST
     @Path("register")
     public Response register(

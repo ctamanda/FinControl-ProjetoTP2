@@ -18,7 +18,6 @@ public final class TransacaoResponseMapper {
                 transacao.getValor(),
                 transacao.getData(),
                 transacao.getTipo(),
-                transacao.getEscopo(),
                 CategoriaResponseMapper.toResponse(transacao.getCategoria()),
                 AdminMapper.pessoa(transacao.getUsuario()),
                 new ContaResumoDTO(conta.getId(), conta.getNome(), conta.getTipo(), conta.getCor()),

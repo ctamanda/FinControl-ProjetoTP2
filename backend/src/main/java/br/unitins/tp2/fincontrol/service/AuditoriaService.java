@@ -1,6 +1,5 @@
 package br.unitins.tp2.fincontrol.service;
 
-import br.unitins.tp2.fincontrol.model.Empresa;
 import br.unitins.tp2.fincontrol.model.RegistroAuditoria;
 import br.unitins.tp2.fincontrol.model.Usuario;
 import br.unitins.tp2.fincontrol.repository.AuditoriaRepository;
@@ -29,11 +28,6 @@ public class AuditoriaService {
 
     public static String alvo(Usuario usuario) {
         return "Usuário #" + usuario.getId() + " (" + usuario.getEmail() + ")";
-    }
-
-    public static String alvo(Empresa empresa) {
-        String nome = empresa.getNomeFantasia() != null ? empresa.getNomeFantasia() : empresa.getRazaoSocial();
-        return "Empresa #" + empresa.getId() + " (" + nome + ")";
     }
 
     private static String cortar(String texto, int max) {

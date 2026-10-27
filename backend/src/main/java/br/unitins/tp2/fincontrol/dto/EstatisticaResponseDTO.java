@@ -13,13 +13,6 @@ public record EstatisticaResponseDTO(
         long totalAdmins,
         long totalUsers,
         long totalContasPessoais,
-        long totalEmpresas,
-        long empresasAtivas,
-        long totalUsuariosEmpresa,
-        long totalAdminsEmpresa,
-        long totalColaboradores,
-        long totalMeis,
-        long totalMicroempresas,
         long totalTransacoes,
         long totalCategorias,
         double mediaTransacoesPorUsuario,
@@ -36,7 +29,7 @@ public record EstatisticaResponseDTO(
     public record TransacoesMesDTO(String mes, long quantidade, BigDecimal valor) {
     }
 
-    // Novas contas pessoais e novas empresas cadastradas no mês ("mes" no formato yyyy-MM).
-    public record CadastrosMesDTO(String mes, long contasPessoais, long empresas) {
+    // Novas contas pessoais cadastradas no mês ("mes" no formato yyyy-MM).
+    public record CadastrosMesDTO(String mes, long contasPessoais) {
     }
 }

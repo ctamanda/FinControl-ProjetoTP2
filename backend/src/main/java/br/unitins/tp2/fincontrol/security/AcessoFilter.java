@@ -20,12 +20,11 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.ext.Provider;
 
 // Roda em toda requisição autenticada, antes do endpoint:
-//  1. o usuário do token ainda existe e está ativo, assim como a empresa dele
-//     (desativar corta o acesso na hora), o perfil do token ainda é o atual e a versão
-//     da sessão do token ainda é a atual (troca de senha/e-mail encerra as sessões);
-//  2. ADMIN_EMPRESA sem empresa só usa o que tem @PermiteEmpresaPendente;
-//  3. se o endpoint tem @RequerModulo, o usuário precisa de pelo menos um daqueles módulos.
-// O perfil (SUPER_ADMIN, PESSOAL...) continua sendo checado pelo @RolesAllowed.
+//  1. o usuário do token ainda existe e está ativo (desativar corta o acesso na hora),
+//     o perfil do token ainda é o atual e a versão da sessão do token ainda é a atual
+//     (troca de senha/e-mail encerra as sessões);
+//  2. se o endpoint tem @RequerModulo, o usuário precisa de pelo menos um daqueles módulos.
+// O perfil (SUPER_ADMIN ou PESSOAL) continua sendo checado pelo @RolesAllowed.
 @Provider
 @Priority(Priorities.AUTHORIZATION + 10)
 public class AcessoFilter implements ContainerRequestFilter {
@@ -76,12 +75,6 @@ public class AcessoFilter implements ContainerRequestFilter {
         Class<?> classe = resourceInfo.getResourceClass();
         if (metodo == null || classe == null) {
             return;
-        }
-
-        if (Permissoes.empresaPendente(usuario)
-                && !metodo.isAnnotationPresent(PermiteEmpresaPendente.class)
-                && !classe.isAnnotationPresent(PermiteEmpresaPendente.class)) {
-            throw new ForbiddenException("Cadastre a empresa para continuar.");
         }
 
         RequerModulo requer = metodo.isAnnotationPresent(RequerModulo.class)

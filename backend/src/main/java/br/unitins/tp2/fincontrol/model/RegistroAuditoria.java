@@ -20,7 +20,7 @@ public class RegistroAuditoria extends DefaultEntity {
     @Column(length = 40, nullable = false)
     private String acao;
 
-    // Ex.: "Usuário #12 (ana@x.com)", "Empresa #3 (Doces da Joana)".
+    // Ex.: "Usuário #12 (ana@x.com)", "Categoria padrão #3 (Lazer)".
     @Column(length = 200, nullable = false)
     private String alvo;
 

@@ -6,7 +6,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 
-// Modelo de categoria que toda conta pessoal e toda empresa nova recebe.
+// Modelo de categoria que toda conta pessoal nova recebe.
 // Administrada pelo SUPER_ADMIN; só as ativas são copiadas para as contas novas.
 @Entity
 @Table(name = "categoria_padrao")

@@ -2,20 +2,14 @@ package br.unitins.tp2.fincontrol.dto;
 
 import org.hibernate.validator.constraints.Length;
 
-import br.unitins.tp2.fincontrol.model.TipoConta;
 import br.unitins.tp2.fincontrol.validation.SenhaForte;
 import br.unitins.tp2.fincontrol.validation.Telefone;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
-// Cadastro inicial. PESSOAL informa a profissão; EMPRESA cadastra o responsável
-// e depois a empresa (POST /empresa), antes de poder usar o sistema.
+// Cadastro de uma conta pessoal (o único tipo de conta aberto ao público).
 public record RegisterRequestDTO(
-
-    @NotNull(message = "Escolha o tipo de conta: PESSOAL ou EMPRESA.")
-    TipoConta tipoConta,
 
     @NotBlank(message = "O nome deve ser informado.")
     @Length(max = 100, message = "O nome deve conter no máximo 100 caracteres.")
@@ -30,6 +24,7 @@ public record RegisterRequestDTO(
     @Telefone
     String telefone,
 
+    @NotBlank(message = "A profissão deve ser informada.")
     @Length(max = 100, message = "A profissão deve conter no máximo 100 caracteres.")
     String profissao,
 
@@ -48,10 +43,5 @@ public record RegisterRequestDTO(
         }
 
         return password.equals(confirmPassword);
-    }
-
-    @AssertTrue(message = "A profissão deve ser informada na conta pessoal.")
-    public boolean isProfissaoInformada() {
-        return tipoConta != TipoConta.PESSOAL || (profissao != null && !profissao.isBlank());
     }
 }

@@ -13,10 +13,8 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-// SUPER_ADMIN cadastrando qualquer tipo de usuário (POST /admin/usuarios).
-//  - SUPER_ADMIN e PESSOAL: sem empresa (PESSOAL exige profissão);
-//  - USUARIO_EMPRESA: exige idEmpresa;
-//  - ADMIN_EMPRESA: com idEmpresa entra numa empresa existente; sem, fica com a empresa pendente.
+// SUPER_ADMIN cadastrando um usuário (POST /admin/usuarios): outro administrador (SUPER_ADMIN)
+// ou uma conta pessoal (PESSOAL, que exige profissão).
 public record AdminUsuarioRequestDTO(
 
         @NotBlank(message = "O nome deve ser informado.")
@@ -37,8 +35,6 @@ public record AdminUsuarioRequestDTO(
 
         @NotNull(message = "Escolha o perfil do usuário.")
         Role role,
-
-        Long idEmpresa,
 
         Set<Modulo> modulos,
 

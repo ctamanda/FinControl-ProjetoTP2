@@ -17,7 +17,7 @@ import jakarta.validation.Payload;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 
-// Regras de senha usadas no cadastro e na criação de usuários da empresa.
+// Regras de senha usadas no cadastro, na troca de senha e na criação de usuários pelo admin.
 // Cada regra tem a sua mensagem, então a resposta 400 lista tudo o que falta.
 @NotBlank(message = "A senha deve ser informada.")
 @Length(min = 6, max = 100, message = "A senha deve conter entre 6 e 100 caracteres.")

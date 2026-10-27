@@ -28,12 +28,6 @@ public class Categoria extends DefaultEntity {
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
 
-    // Preenchida quando a categoria é da empresa (compartilhada entre os usuários dela);
-    // nula numa conta pessoal. Nesse caso "usuario" é quem criou.
-    @ManyToOne
-    @JoinColumn(name = "empresa_id")
-    private Empresa empresa;
-
     public String getNome() {
         return nome;
     }
@@ -64,14 +58,6 @@ public class Categoria extends DefaultEntity {
 
     public void setUsuario(Usuario usuario) {
         this.usuario = usuario;
-    }
-
-    public Empresa getEmpresa() {
-        return empresa;
-    }
-
-    public void setEmpresa(Empresa empresa) {
-        this.empresa = empresa;
     }
 
     public String getIcone() {

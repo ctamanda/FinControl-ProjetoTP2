@@ -38,10 +38,6 @@ public class Transacao extends DefaultEntity {
     @Column(length = 10, nullable = false)
     private TipoTransacao tipo;
 
-    @Enumerated(EnumType.STRING)
-    @Column(length = 10, nullable = false)
-    private Escopo escopo;
-
     @ManyToOne(optional = false)
     @JoinColumn(name = "id_categoria", nullable = false)
     private Categoria categoria;
@@ -49,12 +45,6 @@ public class Transacao extends DefaultEntity {
     @ManyToOne(optional = false)
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
-
-    // Preenchida quando a transação é da empresa; nula numa conta pessoal.
-    // Nesse caso "usuario" é quem lançou.
-    @ManyToOne
-    @JoinColumn(name = "empresa_id")
-    private Empresa empresa;
 
     public String getDescricao() {
         return descricao;
@@ -88,14 +78,6 @@ public class Transacao extends DefaultEntity {
         this.tipo = tipo;
     }
 
-    public Escopo getEscopo() {
-        return escopo;
-    }
-
-    public void setEscopo(Escopo escopo) {
-        this.escopo = escopo;
-    }
-
     public Categoria getCategoria() {
         return categoria;
     }
@@ -110,14 +92,6 @@ public class Transacao extends DefaultEntity {
 
     public void setUsuario(Usuario usuario) {
         this.usuario = usuario;
-    }
-
-    public Empresa getEmpresa() {
-        return empresa;
-    }
-
-    public void setEmpresa(Empresa empresa) {
-        this.empresa = empresa;
     }
 
     public boolean isPago() {

@@ -53,11 +53,10 @@ public class AdminUsuarioResource {
     public PageResponse<UsuarioResponseDTO> listar(@QueryParam("busca") String busca,
             @QueryParam("role") Role role,
             @QueryParam("ativo") Boolean ativo,
-            @QueryParam("idEmpresa") Long idEmpresa,
             @QueryParam("page") @DefaultValue("0") int page,
             @QueryParam("pageSize") @DefaultValue("20") int pageSize) {
         AdminConsultaService.validarPaginacao(page, pageSize);
-        PanacheQuery<Usuario> query = service.pesquisar(busca, role, ativo, idEmpresa);
+        PanacheQuery<Usuario> query = service.pesquisar(busca, role, ativo);
         List<Usuario> usuarios = query.page(page, pageSize).list();
         return PageResponse.of(usuarios, page, pageSize, query.count(), UsuarioResponseMapper::toResponse);
     }

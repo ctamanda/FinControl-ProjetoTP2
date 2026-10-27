@@ -29,7 +29,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 @Path("categorias")
-@RolesAllowed({"SUPER_ADMIN", "PESSOAL", "ADMIN_EMPRESA", "USUARIO_EMPRESA"})
+@RolesAllowed({"SUPER_ADMIN", "PESSOAL"})
 // Ver a lista serve também a quem lança transações (para escolher a categoria);
 // criar, alterar e excluir exige o módulo Categorias.
 @RequerModulo(Modulo.CATEGORIAS)

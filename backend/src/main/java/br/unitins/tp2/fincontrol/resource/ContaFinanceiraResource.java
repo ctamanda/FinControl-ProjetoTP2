@@ -35,7 +35,7 @@ import jakarta.ws.rs.core.Response;
 // Contas financeiras (bancos, carteira...). Ver a lista serve a quem lança (para escolher
 // a conta) e ao dashboard; cadastrar, alterar, arquivar e excluir exige o módulo Contas.
 @Path("contas")
-@RolesAllowed({"PESSOAL", "ADMIN_EMPRESA", "USUARIO_EMPRESA"})
+@RolesAllowed("PESSOAL")
 @RequerModulo(Modulo.CONTAS)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)

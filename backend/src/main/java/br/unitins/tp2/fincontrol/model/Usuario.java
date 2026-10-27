@@ -12,7 +12,6 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 
 @Entity
 public class Usuario extends DefaultEntity {
@@ -42,13 +41,7 @@ public class Usuario extends DefaultEntity {
     @Column(nullable = false)
     private boolean ativo = true;
 
-    // Empresa do usuário (ADMIN_EMPRESA e USUARIO_EMPRESA).
-    // ADMIN_EMPRESA sem empresa = cadastro da empresa pendente.
-    @ManyToOne
-    @JoinColumn(name = "empresa_id")
-    private Empresa empresa;
-
-    // Módulos escolhidos (conta pessoal) ou liberados pelo admin (usuário da empresa).
+    // Módulos escolhidos pela conta pessoal.
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "usuario_modulo", joinColumns = @JoinColumn(name = "usuario_id"))
     @Enumerated(EnumType.STRING)
@@ -122,14 +115,6 @@ public class Usuario extends DefaultEntity {
 
     public void setAtivo(boolean ativo) {
         this.ativo = ativo;
-    }
-
-    public Empresa getEmpresa() {
-        return empresa;
-    }
-
-    public void setEmpresa(Empresa empresa) {
-        this.empresa = empresa;
     }
 
     public Set<Modulo> getModulos() {

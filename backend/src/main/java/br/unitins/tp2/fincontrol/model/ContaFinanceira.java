@@ -12,7 +12,7 @@ import jakarta.persistence.Table;
 
 // Conta onde o dinheiro está (banco, poupança, carteira...). O saldo atual é calculado:
 // saldo inicial + receitas pagas - despesas pagas lançadas nela.
-// Mesmo dono das categorias e transações: a empresa ou, sem empresa, o usuário.
+// Mesmo dono das categorias e transações: o usuário.
 @Entity
 @Table(name = "conta_financeira")
 public class ContaFinanceira extends DefaultEntity {
@@ -38,10 +38,6 @@ public class ContaFinanceira extends DefaultEntity {
     @ManyToOne(optional = false)
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
-
-    @ManyToOne
-    @JoinColumn(name = "empresa_id")
-    private Empresa empresa;
 
     public String getNome() {
         return nome;
@@ -89,13 +85,5 @@ public class ContaFinanceira extends DefaultEntity {
 
     public void setUsuario(Usuario usuario) {
         this.usuario = usuario;
-    }
-
-    public Empresa getEmpresa() {
-        return empresa;
-    }
-
-    public void setEmpresa(Empresa empresa) {
-        this.empresa = empresa;
     }
 }

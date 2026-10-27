@@ -4,9 +4,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Set;
-import java.util.function.Predicate;
 
-import br.unitins.tp2.fincontrol.exception.ValidationException;
 import br.unitins.tp2.fincontrol.model.Modulo;
 import br.unitins.tp2.fincontrol.model.Role;
 import br.unitins.tp2.fincontrol.model.TipoTransacao;
@@ -18,28 +16,20 @@ public final class Permissoes {
     private Permissoes() {
     }
 
-    public static Set<Modulo> pessoais() {
-        return filtrar(EnumSet.allOf(Modulo.class), Modulo::isPessoal);
-    }
-
-    public static Set<Modulo> liberaveisNaEmpresa() {
-        return filtrar(EnumSet.allOf(Modulo.class), Modulo::isLiberavelNaEmpresa);
+    public static Set<Modulo> todos() {
+        return EnumSet.allOf(Modulo.class);
     }
 
     // Módulos que o usuário pode usar de fato.
-    //  - SUPER_ADMIN: os pessoais, para os próprios lançamentos.
-    //  - PESSOAL: os que escolheu (dentre os pessoais).
-    //  - ADMIN_EMPRESA: todos, depois de cadastrar a empresa.
-    //  - USUARIO_EMPRESA: os que o admin liberou.
+    //  - SUPER_ADMIN: todos, para os próprios lançamentos.
+    //  - PESSOAL: os que escolheu.
     public static Set<Modulo> efetivos(Usuario usuario) {
-        return switch (usuario.getRole()) {
-            case SUPER_ADMIN -> pessoais();
-            case PESSOAL -> filtrar(usuario.getModulos(), Modulo::isPessoal);
-            case ADMIN_EMPRESA -> usuario.getEmpresa() == null
-                    ? EnumSet.noneOf(Modulo.class)
-                    : EnumSet.allOf(Modulo.class);
-            case USUARIO_EMPRESA -> filtrar(usuario.getModulos(), Modulo::isLiberavelNaEmpresa);
-        };
+        if (usuario.getRole() == Role.SUPER_ADMIN) {
+            return todos();
+        }
+        Set<Modulo> escolhidos = EnumSet.noneOf(Modulo.class);
+        escolhidos.addAll(usuario.getModulos());
+        return escolhidos;
     }
 
     public static boolean temAlgum(Usuario usuario, Modulo... modulos) {
@@ -49,19 +39,7 @@ public final class Permissoes {
 
     // Motivo para não deixar o usuário entrar/usar o sistema, ou null se estiver liberado.
     public static String motivoBloqueio(Usuario usuario) {
-        if (!usuario.isAtivo()) {
-            return usuario.getEmpresa() != null
-                    ? "Usuário desativado. Fale com o administrador da empresa."
-                    : "Usuário desativado. Fale com o suporte do FinControl.";
-        }
-        if (usuario.getEmpresa() != null && !usuario.getEmpresa().isAtivo()) {
-            return "Empresa desativada. Fale com o suporte do FinControl.";
-        }
-        return null;
-    }
-
-    public static boolean empresaPendente(Usuario usuario) {
-        return usuario.getRole() == Role.ADMIN_EMPRESA && usuario.getEmpresa() == null;
+        return usuario.isAtivo() ? null : "Usuário desativado. Fale com o suporte do FinControl.";
     }
 
     // Dashboard e Lançamentos mostram tudo; sem eles, Receitas/Despesas mostram só o seu tipo.
@@ -87,25 +65,10 @@ public final class Permissoes {
         return tipos;
     }
 
-    // Confere módulos vindos do cliente: qualquer um fora da regra vira 400 listando os inválidos.
-    public static Set<Modulo> exigirPermitidos(Collection<Modulo> pedidos, Predicate<Modulo> permitido,
-            String mensagem) {
+    // Módulos vindos do cliente (nome desconhecido já vira 400 na leitura do JSON).
+    public static Set<Modulo> escolhidos(Collection<Modulo> pedidos) {
         Set<Modulo> aceitos = EnumSet.noneOf(Modulo.class);
-        Set<Modulo> invalidos = EnumSet.noneOf(Modulo.class);
-        for (Modulo modulo : pedidos) {
-            if (modulo != null) {
-                (permitido.test(modulo) ? aceitos : invalidos).add(modulo);
-            }
-        }
-        if (!invalidos.isEmpty()) {
-            throw ValidationException.of("modulos", mensagem + invalidos + ".");
-        }
+        pedidos.stream().filter(m -> m != null).forEach(aceitos::add);
         return aceitos;
-    }
-
-    private static Set<Modulo> filtrar(Collection<Modulo> modulos, Predicate<Modulo> regra) {
-        Set<Modulo> resultado = EnumSet.noneOf(Modulo.class);
-        modulos.stream().filter(regra).forEach(resultado::add);
-        return resultado;
     }
 }
