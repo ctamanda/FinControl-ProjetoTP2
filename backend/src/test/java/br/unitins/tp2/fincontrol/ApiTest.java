@@ -873,7 +873,6 @@ class ApiTest {
         String adminEmpresa = registrarEmpresaCompleta();
         for (String token : List.of(pessoal, adminEmpresa)) {
             given().auth().oauth2(token).when().get("/admin/estatisticas").then().statusCode(403);
-            given().auth().oauth2(token).when().get("/admin/parametros").then().statusCode(403);
         }
     }
 
@@ -896,57 +895,12 @@ class ApiTest {
     }
 
     @Test
-    void empresaConsultaParametrosVigentesDoSeuTipo() {
-        String admin = logar(ADMIN_EMAIL);
-        String sufixo = UUID.randomUUID().toString().substring(0, 6).toUpperCase();
-        String hoje = java.time.LocalDate.now().toString();
-        for (String tipo : List.of("MEI", "MICROEMPRESA")) {
-            given().auth().oauth2(admin).contentType(ContentType.JSON)
-                    .body(Map.of("chave", "TESTE_" + tipo + "_" + sufixo, "valor", 10, "vigenciaInicio", hoje,
-                            "vigenciaFim", hoje, "tipoEmpresa", tipo))
-                    .when().post("/admin/parametros").then().statusCode(201);
-        }
-
-        String mei = registrarEmpresaCompleta();
-        given().auth().oauth2(mei).when().get("/empresa/parametros")
-                .then().statusCode(200)
-                .body("chave", hasItem("TESTE_MEI_" + sufixo))
-                .body("chave", not(hasItem("TESTE_MICROEMPRESA_" + sufixo)));
-        given().auth().oauth2(registrarELogar()).when().get("/empresa/parametros").then().statusCode(403);
-    }
-
-    @Test
     void transacaoInformaQuemLancou() {
         String token = registrarELogar();
         long id = criarTransacao(token, "RECEITA");
         given().auth().oauth2(token).when().get("/transacoes/" + id)
                 .then().statusCode(200)
                 .body("usuario.id", equalTo((int) idDoUsuario(token)));
-    }
-
-    @Test
-    void parametroFiscalNormalizaChaveENaoAceitaSobreposicao() {
-        String admin = logar(ADMIN_EMAIL);
-        String sufixo = UUID.randomUUID().toString().substring(0, 6);
-
-        int id = given().auth().oauth2(admin).contentType(ContentType.JSON)
-                .body(parametro("teto mei " + sufixo, "2030-01-01", "2030-12-31"))
-                .when().post("/admin/parametros")
-                .then().statusCode(201)
-                .body("chave", equalTo(("TETO_MEI_" + sufixo).toUpperCase()))
-                .extract().path("id");
-
-        given().auth().oauth2(admin).contentType(ContentType.JSON)
-                .body(parametro("TETO_MEI_" + sufixo.toUpperCase(), "2030-06-01", "2031-05-31"))
-                .when().post("/admin/parametros")
-                .then().statusCode(400);
-
-        given().auth().oauth2(admin).contentType(ContentType.JSON)
-                .body(parametro("teto mei " + sufixo, "2030-01-01", "2030-12-31"))
-                .when().put("/admin/parametros/" + id)
-                .then().statusCode(200);
-
-        given().auth().oauth2(admin).when().delete("/admin/parametros/" + id).then().statusCode(204);
     }
 
     // ------------------------------------------------------------------ painel do SUPER_ADMIN
@@ -1120,37 +1074,6 @@ class ApiTest {
         given().auth().oauth2(logar(ADMIN_EMAIL)).when().get("/admin/categorias/ranking")
                 .then().statusCode(200)
                 .body("find { it.nome == 'Salário' }.totalContas", greaterThanOrEqualTo(2));
-    }
-
-    @Test
-    void parametroDesativadoSaiDeUsoEGuardaQuemAlterou() {
-        String admin = logar(ADMIN_EMAIL);
-        String chave = "TESTE_" + UUID.randomUUID().toString().substring(0, 6).toUpperCase();
-        int id = given().auth().oauth2(admin).contentType(ContentType.JSON)
-                .body(parametro(chave, "2031-01-01", "2031-12-31"))
-                .when().post("/admin/parametros")
-                .then().statusCode(201)
-                .body("ativo", equalTo(true))
-                .body("alteradoPor", equalTo(ADMIN_EMAIL))
-                .body("ultimaAlteracao", notNullValue())
-                .extract().path("id");
-
-        given().auth().oauth2(admin).when().patch("/admin/parametros/" + id + "/desativar")
-                .then().statusCode(200).body("ativo", equalTo(false));
-        // Desativado não bloqueia outro valor no mesmo período...
-        given().auth().oauth2(admin).contentType(ContentType.JSON)
-                .body(parametro(chave, "2031-06-01", "2031-12-31"))
-                .when().post("/admin/parametros").then().statusCode(201);
-        // ...e não pode ser reativado por cima dele.
-        given().auth().oauth2(admin).when().patch("/admin/parametros/" + id + "/ativar").then().statusCode(400);
-    }
-
-    @Test
-    void parametroComFimAntesDoInicioDevolve400() {
-        given().auth().oauth2(logar(ADMIN_EMAIL)).contentType(ContentType.JSON)
-                .body(parametro("QUALQUER", "2030-12-31", "2030-01-01"))
-                .when().post("/admin/parametros")
-                .then().statusCode(400);
     }
 
     // ------------------------------------------------------------------ apoio
@@ -1373,7 +1296,4 @@ class ApiTest {
                 .orElseThrow();
     }
 
-    private static Map<String, Object> parametro(String chave, String inicio, String fim) {
-        return Map.of("chave", chave, "valor", 81000.00, "vigenciaInicio", inicio, "vigenciaFim", fim);
-    }
 }

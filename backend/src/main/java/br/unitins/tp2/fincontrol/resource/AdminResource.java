@@ -47,7 +47,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 // Painel administrativo do FinControl: só SUPER_ADMIN.
-// Usuários ficam em AdminUsuarioResource e parâmetros fiscais em ParametroFiscalResource.
+// Usuários ficam em AdminUsuarioResource.
 @Path("admin")
 @RolesAllowed("SUPER_ADMIN")
 @Produces(MediaType.APPLICATION_JSON)

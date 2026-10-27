@@ -19,7 +19,6 @@ import br.unitins.tp2.fincontrol.model.TipoEmpresa;
 import br.unitins.tp2.fincontrol.repository.AuditoriaRepository;
 import br.unitins.tp2.fincontrol.repository.CategoriaRepository;
 import br.unitins.tp2.fincontrol.repository.EmpresaRepository;
-import br.unitins.tp2.fincontrol.repository.ParametroFiscalRepository;
 import br.unitins.tp2.fincontrol.repository.TransacaoRepository;
 import br.unitins.tp2.fincontrol.repository.UsuarioRepository;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -43,9 +42,6 @@ public class EstatisticaServiceImpl implements EstatisticaService {
 
     @Inject
     EmpresaRepository empresaRepository;
-
-    @Inject
-    ParametroFiscalRepository parametroRepository;
 
     @Inject
     AuditoriaRepository auditoriaRepository;
@@ -76,7 +72,7 @@ public class EstatisticaServiceImpl implements EstatisticaService {
         long transacoes30Dias = transacaoRepository.count("dataCadastro >= ?1", ha30Dias);
 
         long totalRegistros = totalUsuarios + totalEmpresas + totalTransacoes + totalCategorias
-                + parametroRepository.count() + auditoriaRepository.count();
+                + auditoriaRepository.count();
 
         double mediaTransacoesPorUsuario = totalUsuarios == 0
                 ? 0.0
