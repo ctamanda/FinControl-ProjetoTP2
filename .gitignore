@@ -14,6 +14,25 @@
 # Exceção: a chave PÚBLICA do JWT pode ir para o repositório.
 !backend/src/main/resources/publicKey.pem
 
+# --- Arquivos de IA, prompts e referências de design: NUNCA versionar ---
+CLAUDE.md
+AGENTS.md
+GEMINI.md
+.claude/
+.codex/
+.cursor/
+.gemini/
+.aider*
+.github/copilot-instructions.md
+.vscode/mcp.json
+prompts/
+*.prompt.md
+referencias/
+referencias-design/
+design/
+mockups/
+*.fig
+
 # --- Gerados no build -------------------------------------------------
 backend/target/
 backend/.quarkus/

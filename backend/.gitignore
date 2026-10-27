@@ -41,3 +41,22 @@ dist/
 
 # Exceção: chave pública PODE ir pro repo
 !**/publicKey.pem
+
+# --- Arquivos de IA, prompts e referências de design: NUNCA versionar ---
+CLAUDE.md
+AGENTS.md
+GEMINI.md
+.claude/
+.codex/
+.cursor/
+.gemini/
+.aider*
+.github/copilot-instructions.md
+.vscode/mcp.json
+prompts/
+*.prompt.md
+referencias/
+referencias-design/
+design/
+mockups/
+*.fig

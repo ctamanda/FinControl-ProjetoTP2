@@ -26,7 +26,6 @@ yarn-error.log
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
-!.vscode/mcp.json
 .history/*
 
 # Miscellaneous
@@ -42,3 +41,28 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Segredos e variáveis de ambiente
+.env
+.env.*
+*.pem
+*.key
+
+# --- Arquivos de IA, prompts e referências de design: NUNCA versionar ---
+CLAUDE.md
+AGENTS.md
+GEMINI.md
+.claude/
+.codex/
+.cursor/
+.gemini/
+.aider*
+.github/copilot-instructions.md
+.vscode/mcp.json
+prompts/
+*.prompt.md
+referencias/
+referencias-design/
+design/
+mockups/
+*.fig
