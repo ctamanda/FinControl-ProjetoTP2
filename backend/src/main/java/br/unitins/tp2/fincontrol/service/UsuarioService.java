@@ -79,6 +79,11 @@ public class UsuarioService {
         return usuario;
     }
 
+    @Transactional
+    public void registrarAcesso(Usuario usuario) {
+        repository.findById(usuario.getId()).setUltimoAcesso(java.time.LocalDateTime.now());
+    }
+
     public Usuario buscarPorEmail(String email) {
         return repository.findByEmail(email);
     }

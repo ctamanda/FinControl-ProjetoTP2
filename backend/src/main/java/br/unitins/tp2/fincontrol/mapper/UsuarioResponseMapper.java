@@ -19,7 +19,8 @@ public final class UsuarioResponseMapper {
                 usuario.getRole(),
                 usuario.isAtivo(),
                 Permissoes.efetivos(usuario),
-                usuario.getDataCadastro()
+                usuario.getDataCadastro(),
+                usuario.getUltimoAcesso()
         );
     }
 }

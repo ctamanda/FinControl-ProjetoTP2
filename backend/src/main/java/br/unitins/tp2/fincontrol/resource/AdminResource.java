@@ -1,6 +1,7 @@
 package br.unitins.tp2.fincontrol.resource;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 
 import org.eclipse.microprofile.jwt.JsonWebToken;
@@ -12,6 +13,7 @@ import br.unitins.tp2.fincontrol.dto.CategoriaRankingDTO;
 import br.unitins.tp2.fincontrol.dto.CategoriaRequestDTO;
 import br.unitins.tp2.fincontrol.dto.EstatisticaResponseDTO;
 import br.unitins.tp2.fincontrol.dto.PageResponse;
+import br.unitins.tp2.fincontrol.dto.PainelAdminDTO;
 import br.unitins.tp2.fincontrol.mapper.AdminMapper;
 import br.unitins.tp2.fincontrol.model.TipoTransacao;
 import br.unitins.tp2.fincontrol.model.Transacao;
@@ -20,7 +22,9 @@ import br.unitins.tp2.fincontrol.repository.AuditoriaRepository;
 import br.unitins.tp2.fincontrol.service.AdminConsultaService;
 import br.unitins.tp2.fincontrol.service.AdminConsultaService.FiltroTransacoes;
 import br.unitins.tp2.fincontrol.service.CategoriaPadraoService;
+import br.unitins.tp2.fincontrol.exception.ValidationException;
 import br.unitins.tp2.fincontrol.service.EstatisticaService;
+import br.unitins.tp2.fincontrol.service.PainelAdminService;
 import br.unitins.tp2.fincontrol.service.UsuarioService;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import jakarta.annotation.security.RolesAllowed;
@@ -55,6 +59,9 @@ public class AdminResource {
     AdminConsultaService consultas;
 
     @Inject
+    PainelAdminService painelService;
+
+    @Inject
     CategoriaPadraoService categoriaPadraoService;
 
     @Inject
@@ -70,6 +77,24 @@ public class AdminResource {
     @Path("estatisticas")
     public EstatisticaResponseDTO obterEstatisticas() {
         return estatisticaService.obterEstatisticas();
+    }
+
+    // Visão geral do painel para o mês escolhido (padrão: mês atual), com o mês anterior para comparar.
+    @GET
+    @Path("painel")
+    public PainelAdminDTO painel(@QueryParam("mes") String mes) {
+        return painelService.montar(lerMes(mes));
+    }
+
+    private static YearMonth lerMes(String mes) {
+        if (mes == null || mes.isBlank()) {
+            return YearMonth.now();
+        }
+        try {
+            return YearMonth.parse(mes.trim());
+        } catch (java.time.format.DateTimeParseException e) {
+            throw ValidationException.of("mes", "Informe o mês no formato aaaa-mm.");
+        }
     }
 
     // ---------------------------------------------------------- transações (só leitura)
@@ -132,16 +157,23 @@ public class AdminResource {
         return AdminMapper.categoriaPadrao(categoriaPadraoService.alterarAtivo(id, false, getUsuarioLogado()));
     }
 
-    // ---------------------------------------------------------- auditoria
+    // ---------------------------------------------------------- auditoria (só leitura)
+    // Não há rota para alterar ou apagar registros: a trilha é imutável.
 
     @GET
     @Path("auditoria")
     public PageResponse<AuditoriaResponseDTO> listarAuditoria(@QueryParam("busca") String busca,
             @QueryParam("acao") String acao,
+            @QueryParam("autor") String autor,
+            @QueryParam("inicio") LocalDate inicio,
+            @QueryParam("fim") LocalDate fim,
             @QueryParam("page") @DefaultValue("0") int page,
             @QueryParam("pageSize") @DefaultValue("20") int pageSize) {
         AdminConsultaService.validarPaginacao(page, pageSize);
-        var query = auditoriaRepository.pesquisar(busca, acao);
+        if (inicio != null && fim != null && fim.isBefore(inicio)) {
+            throw ValidationException.of("fim", "A data final deve ser igual ou posterior à data inicial.");
+        }
+        var query = auditoriaRepository.pesquisar(busca, acao, autor, inicio, fim);
         return PageResponse.of(query.page(page, pageSize).list(), page, pageSize, query.count(), AdminMapper::auditoria);
     }
 

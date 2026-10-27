@@ -61,6 +61,10 @@ public class Usuario extends DefaultEntity {
     @Column(name = "versao_sessao", nullable = false)
     private int versaoSessao;
 
+    // Último login com sucesso (o painel do admin mostra; a renovação do token não conta).
+    @Column(name = "ultimo_acesso")
+    private LocalDateTime ultimoAcesso;
+
     public String getEmail() {
         return email;
     }
@@ -147,5 +151,13 @@ public class Usuario extends DefaultEntity {
 
     public void setVersaoSessao(int versaoSessao) {
         this.versaoSessao = versaoSessao;
+    }
+
+    public LocalDateTime getUltimoAcesso() {
+        return ultimoAcesso;
+    }
+
+    public void setUltimoAcesso(LocalDateTime ultimoAcesso) {
+        this.ultimoAcesso = ultimoAcesso;
     }
 }

@@ -44,6 +44,7 @@ public class AuthResource {
         Usuario usuario = usuarioService.autenticar(
                 dto.email(),
                 dto.password());
+        usuarioService.registrarAcesso(usuario);
 
         return Tokens.emitir(usuario);
     }

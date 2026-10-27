@@ -16,6 +16,7 @@ public record UsuarioResponseDTO(
         Role role,
         boolean ativo,
         Set<Modulo> modulos,
-        LocalDateTime dataCadastro
+        LocalDateTime dataCadastro,
+        LocalDateTime ultimoAcesso
 ) {
 }
