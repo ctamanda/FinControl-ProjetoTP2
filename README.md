@@ -5,7 +5,7 @@
 <h1 align="center">FinControl</h1>
 
 <p align="center">
-  Sistema de controle financeiro para <b>pessoas, MEIs e microempresas</b>.<br />
+  Sistema de controle de <b>finanças pessoais</b>.<br />
   API REST em <b>Quarkus</b> + interface web em <b>Angular</b>.<br />
   Projeto da disciplina de <b>Tópicos II</b>.
 </p>
@@ -39,19 +39,17 @@
 
 ## Sobre o projeto
 
-O FinControl organiza **receitas, despesas e categorias** e mostra para onde vai cada real. Ele separa o que é **pessoal** do que é da **empresa**, pensando em quem é MEI ou tem uma microempresa.
-
-No cadastro a pessoa escolhe o tipo de conta: **Pessoal** ou **MEI / Microempresa**.
+O FinControl organiza **receitas, despesas, contas a pagar e a receber, contas financeiras e categorias** e mostra para onde vai cada real. É um sistema de **finanças pessoais**: cada pessoa cria a própria conta e controla o próprio dinheiro.
 
 | Perfil | Ambiente | O que faz |
 |---|---|---|
 | **Visitante** | — | Vê a página de apresentação e cria conta |
-| **PESSOAL** | Ambiente pessoal | Controla as próprias finanças: dashboard, lançamentos e categorias, nas funcionalidades que escolheu |
-| **ADMIN_EMPRESA** | Ambiente empresarial | Cadastra a empresa (CNPJ, MEI ou Microempresa), cuida do financeiro dela e gerencia a **equipe**: usuários, perfis e o que cada um acessa |
-| **USUARIO_EMPRESA** | Ambiente empresarial | Funcionário: usa só as funcionalidades liberadas pelo administrador da empresa |
-| **SUPER_ADMIN** | Painel administrativo | Administra o FinControl: indicadores, todos os usuários e empresas, transações (só consulta), categorias padrão, parâmetros fiscais e auditoria |
+| **PESSOAL** | Minhas finanças | Controla as próprias finanças: visão geral do mês, lançamentos, contas a pagar, contas e categorias, nas funcionalidades que escolheu |
+| **SUPER_ADMIN** | Painel do administrador | Administra o FinControl: visão geral do mês com indicadores reais, usuários, transações (só consulta), categorias padrão e auditoria |
 
-**Privacidade:** cada conta só enxerga os próprios dados; numa empresa, os dados são compartilhados entre os usuários dela. O SUPER_ADMIN **consulta** as transações de todos sem poder alterá-las, e cada consulta fica registrada na auditoria.
+**Privacidade:** cada conta só enxerga os próprios dados. O SUPER_ADMIN **consulta** as transações de todos sem poder alterá-las, e cada consulta fica registrada na auditoria.
+
+> As contas de MEI/microempresa, os colaboradores e os parâmetros fiscais saíram do escopo (migrations V17 e V18; os dados antigos viraram contas pessoais).
 
 ## Arquitetura
 
@@ -66,7 +64,7 @@ No cadastro a pessoa escolhe o tipo de conta: **Pessoal** ou **MEI / Microempres
 
 1. O usuário faz login em `POST /auth/login` e recebe um **token JWT** (válido por 1 hora).
 2. O frontend envia esse token em todas as chamadas.
-3. Em toda requisição o backend valida o token e confere se o usuário (e a empresa dele) está ativo, se o cadastro da empresa foi concluído e se ele tem acesso à funcionalidade. Só então devolve os dados da conta ou da empresa dele.
+3. Em toda requisição o backend valida o token e confere se o usuário está ativo, se a sessão ainda vale e se ele tem acesso à funcionalidade. Só então devolve os dados dele.
 
 ## Estrutura do repositório
 
@@ -75,12 +73,12 @@ FinControl-ProjetoTP2/
 ├── backend/                 # API REST (Java 25 + Quarkus)
 │   ├── src/main/java/...    # resource, service, repository, model, dto, mapper, security, validation, exception
 │   ├── src/main/resources/  # application.properties, migrations Flyway, chave PÚBLICA JWT
-│   ├── src/test/java/...    # testes de ponta a ponta (52 cenários)
+│   ├── src/test/java/...    # testes de ponta a ponta (55 testes)
 │   ├── docker-compose.yml   # PostgreSQL para desenvolvimento
 │   ├── Dockerfile
 │   └── README.md            # documentação completa da API
 ├── frontend/                # Interface web (Angular 22)
-│   ├── src/app/...          # telas (ambientes pessoal, empresarial e administrativo), serviços, autenticação
+│   ├── src/app/...          # telas (finanças pessoais e painel do administrador), serviços, autenticação
 │   ├── public/              # favicon e logo
 │   └── README.md            # documentação do frontend
 ├── docs/                    # diagramas e requisitos
@@ -163,6 +161,10 @@ cd backend
 
 Pronto quando aparecer `Listening on: http://localhost:8080`. Na primeira vez, o Flyway cria as tabelas e o **usuário administrador**.
 
+No modo dev o backend também carrega os **dados de demonstração** (contas pessoais, lançamentos de vários
+meses e eventos de auditoria) para o painel do administrador ter números. Para zerar ou gerar de novo:
+`-Dfincontrol.demo=zerar` ou `-Dfincontrol.demo=recarregar` (detalhes no [README do backend](backend/README.md#dados-de-demonstração-só-no-perfil-dev)).
+
 ### 5. Iniciar o frontend
 
 Em **outro terminal**:
@@ -195,9 +197,9 @@ O Swagger UI mostra todos os endpoints, os formatos de entrada e saída, e permi
    → **Execute**.
 3. Copie o valor de **`token`** da resposta (sem as aspas).
 4. Clique em **Authorize** (cadeado no topo), cole o token e confirme. Não precisa escrever "Bearer".
-5. Agora as rotas protegidas funcionam: experimente **`GET /usuarios/me`**, **`GET /categorias`** ou, como admin, **`GET /admin/estatisticas`**.
+5. Agora as rotas protegidas funcionam: experimente **`GET /usuarios/me`** ou, como admin, **`GET /admin/painel`**.
 
-> O cadeado ao lado de cada rota indica que ela exige login. O perfil necessário (`PESSOAL`, `ADMIN_EMPRESA`, `USUARIO_EMPRESA` ou `SUPER_ADMIN`) aparece na própria rota.
+> O cadeado ao lado de cada rota indica que ela exige login. O perfil necessário (`PESSOAL` ou `SUPER_ADMIN`) aparece na própria rota.
 > O Swagger UI fica disponível no modo de desenvolvimento (`quarkus:dev`).
 
 ## Usando a API pelo terminal
@@ -206,7 +208,7 @@ O Swagger UI mostra todos os endpoints, os formatos de entrada e saída, e permi
 # 1. Criar uma conta
 curl -X POST http://localhost:8080/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"tipoConta":"PESSOAL","email":"maria@email.com","nome":"Maria","telefone":"63999990000","profissao":"Professora","password":"Senha@123","confirmPassword":"Senha@123"}'
+  -d '{"email":"maria@email.com","nome":"Maria","telefone":"63999990000","profissao":"Professora","password":"Senha@123","confirmPassword":"Senha@123"}'
 
 # 2. Entrar e guardar o token
 TOKEN=$(curl -s -X POST http://localhost:8080/auth/login \
@@ -227,12 +229,12 @@ curl -X POST http://localhost:8080/transacoes \
 | Perfil | E-mail | Senha | Origem |
 |---|---|---|---|
 | **SUPER_ADMIN** | `admin@fincontrol.com` | `admin123` | Criado pela migration `V10` (perfil atualizado na `V12`) |
-| **PESSOAL** / **ADMIN_EMPRESA** | — | — | Crie em **Criar conta** ou por `POST /auth/register` |
-| **USUARIO_EMPRESA** | — | — | Criado pelo administrador da empresa em **Usuários e acessos** |
+| **PESSOAL** | `ana.souza@fincontrol.demo` (e outras 12) | `Demo@123` | Dados de demonstração do modo dev |
+| **PESSOAL** | — | — | Crie em **Criar conta** ou por `POST /auth/register` |
 
-> Toda conta pessoal e toda empresa começam com as **categorias padrão** ativas (de início: Alimentação, Moradia, Transporte, Lazer, Salário e Vendas).
+> Toda conta pessoal começa com as **categorias padrão** ativas (de início: Alimentação, Moradia, Transporte, Lazer, Salário e Vendas) e com a conta "Carteira".
 > Senhas novas precisam de 6+ caracteres, com maiúscula, minúscula, número e caractere especial.
-> A senha do admin é de demonstração. **Troque-a em qualquer uso fora do ambiente acadêmico.**
+> A senha do admin e as de demonstração são públicas. **Troque-as em qualquer uso fora do ambiente acadêmico.**
 
 ## Endpoints
 
@@ -241,19 +243,18 @@ Resumo; detalhes, exemplos de JSON e códigos de resposta estão no [README do b
 | Recurso | Rotas | Acesso |
 |---|---|---|
 | Autenticação | `POST /auth/register` · `POST /auth/login` | Público |
-| Perfil | `GET /usuarios/me` · `PUT /usuarios/me` | Usuário logado |
-| Empresa | `GET/POST/PUT /empresa` | Usuários da empresa (cadastrar/editar: ADMIN_EMPRESA) |
-| Equipe | `GET/POST /empresa/usuarios` · `GET/PUT/DELETE /empresa/usuarios/{id}` · `PATCH .../ativar` · `.../desativar` | ADMIN_EMPRESA |
-| Transações | `GET/POST /transacoes` · `GET/PUT/DELETE /transacoes/{id}` (paginação e busca por descrição) | Conforme as funcionalidades liberadas |
-| Categorias | `GET/POST /categorias` · `GET/PUT/DELETE /categorias/{id}` | Conforme as funcionalidades liberadas |
-| Painel administrativo | `/admin/estatisticas` · `/admin/usuarios` · `/admin/empresas` · `/admin/transacoes` · `/admin/categorias-padrao` · `/admin/categorias/ranking` · `/admin/parametros` · `/admin/auditoria` | SUPER_ADMIN |
+| Perfil | `GET/PUT /usuarios/me` · `PUT /usuarios/me/modulos` · `/senha` · `/email` · `POST /usuarios/me/encerrar-sessoes` | Usuário logado |
+| Transações | `GET/POST /transacoes` · `GET/PUT/DELETE /transacoes/{id}` · `PATCH .../pagar` · `.../reabrir` (paginação e filtros) | Conforme as funcionalidades escolhidas |
+| Contas | `GET/POST /contas` · `GET/PUT/DELETE /contas/{id}` · `PATCH .../arquivar` · `.../reativar` | Conta pessoal |
+| Categorias | `GET/POST /categorias` · `GET/PUT/DELETE /categorias/{id}` | Conforme as funcionalidades escolhidas |
+| Painel do administrador | `/admin/painel` · `/admin/estatisticas` · `/admin/usuarios` · `/admin/transacoes` · `/admin/categorias-padrao` · `/admin/categorias/ranking` · `/admin/auditoria` | SUPER_ADMIN |
 
 Os erros seguem o padrão **RFC 7807** (`application/problem+json`), com a lista de campos inválidos quando for o caso.
 
 ## Testes
 
 ```bash
-# Backend: 52 testes de ponta a ponta (H2 em memória, sem Docker)
+# Backend: 55 testes de ponta a ponta (H2 em memória, sem Docker)
 cd backend
 ./mvnw test          # Linux/Mac
 .\mvnw.cmd test      # Windows
@@ -264,12 +265,13 @@ npm test
 ```
 
 Os testes do backend cobrem:
-- cadastro e login (conta pessoal e de empresa, regras de senha, telefone, CNPJ);
+- cadastro e login (regras de senha, telefone, profissão, categorias e conta iniciais);
+- segurança da conta (senha atual para alterar dados, tokens antigos invalidados, bloqueio por senhas erradas);
 - validações e erros de entrada;
-- **isolamento entre contas e empresas** (ninguém lê, edita ou usa dados de outra pessoa);
-- empresa pendente, usuários da empresa, funcionalidades liberadas, desativação de usuário e de empresa;
-- regras de transações, categorias e parâmetros fiscais;
-- painel administrativo (usuários, empresas, transações, categorias padrão, auditoria) e acesso restrito a ele.
+- **isolamento entre contas** (ninguém lê, edita ou usa dados de outra pessoa);
+- regras de transações, pagamentos, contas financeiras e categorias;
+- painel do administrador (visão geral do mês, usuários, desativação imediata, transações auditadas,
+  categorias padrão, auditoria com filtros e sem rota para alterar) e acesso restrito a ele.
 
 ## Site no GitHub Pages
 
@@ -282,10 +284,10 @@ O frontend é publicado automaticamente em **https://ctamanda.github.io/FinContr
 
 - **Senhas** guardadas com BCrypt.
 - **Login** por token JWT assinado com RSA, válido por 1 hora.
-- **A chave privada JWT não vai para o repositório.** Cada pessoa gera a sua (passo 3), e o `.gitignore` bloqueia arquivos `.pem`, `.key` e `.env`. Só a chave **pública** é versionada.
-- **Isolamento de dados:** toda consulta é filtrada pelo dono (conta pessoal ou empresa), e um id de outra conta responde 404.
-- **Checagem em toda requisição:** usuário e empresa ativos, cadastro da empresa concluído e funcionalidade liberada.
-- **Painel administrativo:** o SUPER_ADMIN gerencia usuários e empresas e só **consulta** as transações; as alterações importantes e as consultas ficam na **auditoria**. Sempre existe pelo menos um administrador ativo.
+- **A chave privada JWT não vai para o repositório.** Cada pessoa gera a sua (passo 3), e o `.gitignore` bloqueia arquivos `.pem`, `.key` e `.env`. Só a chave **pública** é versionada. Arquivos de IA, prompts e referências de design também ficam fora do Git.
+- **Isolamento de dados:** toda consulta é filtrada pelo dono (o usuário), e um id de outra conta responde 404.
+- **Checagem em toda requisição:** usuário ativo, sessão válida e funcionalidade liberada.
+- **Painel do administrador:** o SUPER_ADMIN gerencia os usuários e só **consulta** as transações; as alterações importantes, as consultas e os eventos de segurança ficam na **auditoria**, que não pode ser alterada. Sempre existe pelo menos um administrador ativo.
 - As senhas que aparecem no projeto (`123456` do banco local e `admin123` do admin) são **apenas de desenvolvimento**. Em produção, use as variáveis de ambiente descritas no [README do backend](backend/README.md#variáveis-de-ambiente).
 
 ## Problemas comuns

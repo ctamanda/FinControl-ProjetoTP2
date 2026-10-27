@@ -5,13 +5,13 @@
 <h1 align="center">FinControl — Frontend</h1>
 
 <p align="center">
-  Interface web do FinControl, sistema de controle financeiro para pessoas, MEIs e microempresas.<br />
+  Interface web do FinControl, sistema de controle de finanças pessoais.<br />
   Projeto da disciplina de Tópicos II.
 </p>
 
 <p align="center">
-  <a href="https://ctamanda.github.io/topicos-2-front/"><b>Ver online (GitHub Pages)</b></a> ·
-  <a href="https://github.com/ctamanda/topicos-2-back">Backend (API)</a>
+  <a href="https://ctamanda.github.io/FinControl-ProjetoTP2/"><b>Ver online (GitHub Pages)</b></a> ·
+  <a href="../backend/README.md">Backend (API)</a>
 </p>
 
 ---
@@ -35,39 +35,38 @@
 
 ## Visão geral
 
-O frontend consome a API REST do FinControl. No cadastro a pessoa escolhe o tipo de conta: **Pessoal** ou **MEI / Microempresa**.
+O frontend consome a API REST do FinControl, um sistema de **finanças pessoais**: cada pessoa cria a
+própria conta e controla o próprio dinheiro.
 
 | Para quem | O que pode fazer |
 |---|---|
 | **Visitante** | Ver a página de apresentação, criar conta e entrar |
-| **Conta pessoal** (`PESSOAL`) | Visão geral, lançamentos, categorias e perfil, nas funcionalidades que escolheu usar |
-| **Administrador da empresa** (`ADMIN_EMPRESA`) | Cadastrar e editar a empresa, tudo do financeiro da empresa e **usuários e acessos** da equipe |
-| **Usuário da empresa** (`USUARIO_EMPRESA`) | Só as funcionalidades que o administrador liberou, com os dados da empresa |
-| **Administrador do FinControl** (`SUPER_ADMIN`) | Painel administrativo: indicadores, usuários, empresas, transações (só consulta), categorias padrão, parâmetros fiscais e auditoria |
+| **Conta pessoal** (`PESSOAL`) | Visão geral do mês, lançamentos, contas a pagar e a receber, contas financeiras, categorias e perfil, nas funcionalidades que escolheu usar |
+| **Administrador do FinControl** (`SUPER_ADMIN`) | Painel do administrador: visão geral do mês, usuários, transações (só consulta), categorias padrão e auditoria |
 
-Cada conta enxerga **apenas os próprios dados**; numa empresa, os dados são compartilhados entre os usuários dela. O administrador do FinControl consulta as transações de todos sem poder alterá-las, e cada consulta fica na auditoria.
+Cada conta enxerga **apenas os próprios dados**. O administrador do FinControl consulta as transações de
+todos sem poder alterá-las, e cada consulta fica na auditoria.
 
 ### Fluxo de entrada
 
 ```
 ENTRAR NO FINCONTROL
-  ├─ já tem conta ──► Login ───────────────────────────────────────────┐
-  └─ criar conta ──► Tipo (Pessoal | MEI/Microempresa)                  │
-                     └► Cadastro + senha                                │
-                        └► Completar perfil (telefone; profissão)       │
-                           └► [MEI/ME] Cadastro da empresa              │
-                              └► Configuração inicial ──────────────────┤
-                                                                        ▼
-                                          ENTRAR NO SISTEMA (identifica o perfil)
-                                 ┌────────────────────┼────────────────────┐
-                              PESSOAL             MEI/MICRO               ADMIN
-                          Ambiente pessoal   Ambiente empresarial   Painel administrativo
+  ├─ já tem conta ──► Login ───────────────────────────────┐
+  └─ criar conta ──► Cadastro + senha                       │
+                     └► Completar perfil (telefone, profissão)
+                        └► Configuração inicial ────────────┤
+                                                            ▼
+                                ENTRAR NO SISTEMA (identifica o perfil)
+                                   ┌────────────┴────────────┐
+                                PESSOAL                    ADMIN
+                           Minhas finanças        Painel do administrador
 ```
 
-Na área logada, a **barra superior** roxa traz o mês do dashboard, o botão **+** (ações rápidas), as notificações, a conta ativa e o avatar.
-No computador, a **barra lateral** mostra só os ícones das funções que o perfil pode usar; clicar nela (fora de um ícone) abre a lista com os nomes.
-Funcionalidades liberadas que ainda não têm tela ficam num ícone ⋯ ("Em breve"), e o colaborador vê com cadeado o que não foi liberado.
-No celular, os atalhos principais ficam na **barra inferior**, com o **+** no centro; o restante abre pelo avatar ("Todas as telas").
+Na área logada, a **barra superior** roxa traz o logo, o seletor de mês (nas telas que usam), o botão
+amarelo **+** (ações rápidas), as notificações e o avatar. No computador, a **barra lateral** roxa mostra
+só os ícones das funções do perfil; clicar nela (fora de um ícone) abre a lista com os nomes. Funcionalidades
+escolhidas que ainda não têm tela ficam num ícone ⋯ ("Em breve"). No celular, os atalhos principais ficam
+na **barra inferior** branca, com o **+** redondo no centro; o restante abre pelo avatar ("Todas as telas").
 
 ## Tecnologias
 
@@ -86,13 +85,13 @@ No celular, os atalhos principais ficam na **barra inferior**, com o **+** no ce
 ### Pré-requisitos
 
 - **Node.js 22** (ou superior) e npm
-- **Backend rodando** em `http://localhost:8080` — veja o [README do backend](https://github.com/ctamanda/topicos-2-back)
+- **Backend rodando** em `http://localhost:8080` — veja o [README do backend](../backend/README.md)
 
 ### Passos
 
 ```bash
-git clone https://github.com/ctamanda/topicos-2-front.git
-cd topicos-2-front
+git clone https://github.com/ctamanda/FinControl-ProjetoTP2.git
+cd FinControl-ProjetoTP2/frontend
 npm install
 npm start
 ```
@@ -112,23 +111,22 @@ Abra **http://localhost:4200**.
 | Perfil | E-mail | Senha | Observação |
 |---|---|---|---|
 | SUPER_ADMIN | `admin@fincontrol.com` | `admin123` | Criado pelas migrations `V10`/`V12` do backend |
-| PESSOAL ou ADMIN_EMPRESA | — | — | Crie em **Criar conta** (ou o super admin cria em Usuários) |
-| USUARIO_EMPRESA | — | — | Criado pelo administrador da empresa em **Colaboradores** |
+| PESSOAL | — | — | Crie em **Criar conta** (ou o administrador cria em Usuários) |
 
-### Contas de demonstração (com dados)
+### Dados de demonstração
 
-Para ver os dashboards preenchidos, rode uma vez, com o backend no ar, o script do backend
-`python scripts/criar-contas-demo.py` (detalhes no README do backend). Ele cria pela API:
+Com o backend rodando em modo dev (`quarkus:dev`), a carga de demonstração cria 13 contas pessoais
+(`nome.sobrenome@fincontrol.demo`, senha **`Demo@123`**) com cadastros, lançamentos e eventos de segurança
+espalhados pelos últimos 6 meses. É o que deixa o painel do administrador cheio para a apresentação.
+Como carregar e zerar: veja **Dados de demonstração** no README do backend.
 
-| Dashboard | E-mail | Senha | O que dá para ver |
-|---|---|---|---|
-| Pessoal | `demo.pessoal@fincontrol.com` | `Senha@123` | Lucas Pereira: 6 meses de receitas e despesas, ranking de categorias e próximas contas (despesas com data futura) |
-| Empresa / MEI | `demo.mei@fincontrol.com` | `Senha@123` | Ana Souza, administradora do **Studio Aurora** (MEI): fluxo de caixa, limite de faturamento, contas a pagar e colaboradores |
-| Colaborador | `demo.colab@fincontrol.com` | `Senha@123` | Marina Costa: módulos Dashboard, Lançamentos e Relatórios; tem lançamentos próprios em "Meus registros" |
-| Colaborador | `demo.vendas@fincontrol.com` | `Senha@123` | Pedro Alves: só o módulo Lançamentos (abre direto em Lançamentos, sem dashboard) |
-| Administração | `admin@fincontrol.com` | `admin123` | Painel do sistema com as contas acima nos indicadores, usuários, empresas e auditoria |
+| Para ver | E-mail | Senha |
+|---|---|---|
+| Painel do administrador | `admin@fincontrol.com` | `admin123` |
+| Uma conta pessoal com 6 meses de dados | `ana.souza@fincontrol.demo` | `Demo@123` |
+| Conta pessoal só com o básico (Dashboard, Lançamentos, Receitas, Despesas, Categorias) | `diego.alves@fincontrol.demo` | `Demo@123` |
 
-> Toda conta pessoal e toda empresa começam com as **categorias padrão** ativas (de início: Alimentação, Moradia, Transporte, Lazer, Salário e Vendas), que o super admin administra.
+> Toda conta pessoal começa com as **categorias padrão** ativas (de início: Alimentação, Moradia, Transporte, Lazer, Salário e Vendas), que o administrador mantém, e com a conta "Carteira".
 
 ## Estrutura de pastas
 
@@ -143,24 +141,26 @@ src/
     ├── core/
     │   ├── api.ts              # API_URL e tradução de erros (RFC 7807)
     │   ├── acesso.ts           # regras de acesso na tela: módulos, tipos liberados, rota inicial
-    │   ├── validadores.ts      # senha forte, telefone, CNPJ e máscaras (mesmas regras do back)
+    │   ├── validadores.ts      # senha forte e telefone (mesmas regras do back)
+    │   ├── mes.service.ts      # mês escolhido no seletor da barra superior
     │   ├── auth/               # AuthService, interceptor e guards
     │   └── usuario/            # UsuarioService (perfil logado: GET/PUT /usuarios/me)
-    ├── models/                 # tipos: usuário (perfis, módulos), empresa, auth, transação, categoria, admin
-    ├── services/               # acesso à API: transações, categorias, empresa e usuários, admin
+    ├── models/                 # tipos: usuário (perfis, módulos), auth, transação, conta, categoria, admin
+    ├── services/               # acesso à API: transações, contas, categorias, admin
     └── components/
         ├── landing/            # página inicial pública
-        ├── auth/               # login e criar conta (tipo → cadastro + senha → perfil)
+        ├── auth/               # login e criar conta (cadastro + senha → perfil)
         ├── configuracao-inicial/ # última etapa da entrada (/bem-vindo)
         ├── configuracoes/      # funcionalidades da conta pessoal
-        ├── layout/shell/       # barra lateral por ambiente + cabeçalho (área logada)
-        ├── dashboard/          # visão geral (cards coloridos; equipe para o admin da empresa)
+        ├── layout/shell/       # barra superior, barra lateral e barra inferior (área logada)
+        ├── dashboard/          # visão geral do mês da conta pessoal
+        ├── a-pagar/            # contas a pagar e a receber
+        ├── contas/             # contas financeiras
         ├── transacoes/         # lista e formulário
         ├── categorias/         # lista e formulário
         ├── perfil/             # cartão de identidade + dados pessoais + acesso
-        ├── empresa/            # cadastro/dados da empresa, usuários da empresa (lista e formulário)
-        ├── admin/              # painel administrativo: visão geral, usuários, empresas, transações,
-        │                       #   categorias, parâmetros fiscais e auditoria
+        ├── admin/              # painel do administrador: visão geral, usuários, transações,
+        │                       #   categorias padrão e auditoria
         └── shared/             # logo, valor, diálogo, fundo do login, máscara, requisitos da senha,
                                 #   seletor de funcionalidades, etapas do cadastro
 public/
@@ -174,25 +174,20 @@ public/
 |---|---|---|
 | `/` | Página inicial (apresentação do sistema e da API) | Público |
 | `/login` | Login | Só visitante¹ |
-| `/cadastro` | Criar conta: tipo → cadastro + senha → completar perfil (`?perfil=empresa` já marca "MEI / Microempresa") | Só visitante¹ |
-| `/empresa/cadastro` | Cadastro da empresa (etapa da conta MEI/Microempresa) | Admin de empresa **com a empresa pendente** |
-| `/bem-vindo` | Configuração inicial: funcionalidades (pessoal) ou primeiros passos (empresa) | Logado |
-| `/dashboard` | Visão geral do mês escolhido no topo: um modelo para cada perfil (pessoal, empresa/MEI, colaborador) — saldo início → atual → previsto, categorias, contas, próximas contas a pagar | Módulo `DASHBOARD` |
+| `/cadastro` | Criar conta pessoal: cadastro + senha → completar perfil | Só visitante¹ |
+| `/bem-vindo` | Configuração inicial: escolher as funcionalidades | Logado |
+| `/dashboard` | Visão geral do mês escolhido no topo: saldo início → atual → previsto, categorias, contas, próximas contas a pagar | Módulo `DASHBOARD` |
 | `/transacoes` · `/transacoes/nova` · `/transacoes/:id` | Lançamentos com abas Todos / A pagar / A receber / Pagos / Atrasados, conta, situação e "marcar como pago" (`?conta=ID` filtra por conta; `?tipo=` e `?pendente=1` preenchem o formulário) | `LANCAMENTOS`, `RECEITAS` ou `DESPESAS` |
 | `/a-pagar` | Contas a pagar e a receber: atrasadas, próximos 7 dias e mais adiante, com pagar/receber e desfazer | `LANCAMENTOS`, `RECEITAS` ou `DESPESAS` |
 | `/contas` | Contas financeiras (banco, carteira, poupança): saldo atual e previsto no mês, cadastro, arquivar, excluir | `CONTAS` |
 | `/categorias` · `/categorias/nova` · `/categorias/:id` | Categorias com ícone e cor | `CATEGORIAS` |
 | `/perfil` | Meu perfil: identidade, dados pessoais (nome, telefone, profissão), **segurança da conta** (senha, e-mail de acesso, sair dos outros aparelhos) e acesso | Logado |
 | `/configuracoes` | Funcionalidades da conta pessoal | `PESSOAL` |
-| `/empresa` | Dados da empresa (só o administrador edita) | `ADMIN_EMPRESA` ou `USUARIO_EMPRESA` |
-| `/empresa/usuarios` · `/novo` · `/:id` | Usuários e acessos da empresa | `ADMIN_EMPRESA` |
-| `/admin/painel` | Visão geral do sistema: usuários, empresas, transações, volume de dados, categorias mais usadas | `SUPER_ADMIN` |
-| `/admin/usuarios` · `/novo` · `/:id` | Todos os usuários: busca, filtros, cadastro de qualquer perfil, ativar/desativar, excluir | `SUPER_ADMIN` |
-| `/admin/empresas` · `/:id` | Empresas: dados, situação, quem tem acesso, números vinculados | `SUPER_ADMIN` |
-| `/admin/transacoes` | Transações do sistema (só consulta) com filtros por período, empresa, usuário, categoria, tipo e origem | `SUPER_ADMIN` |
-| `/admin/categorias` | Categorias padrão + ranking de uso | `SUPER_ADMIN` |
-| `/admin/parametros` · `/novo` · `/:id` | Parâmetros fiscais (vale para MEI/ME, ativo, última alteração) | `SUPER_ADMIN` |
-| `/admin/auditoria` | Quem fez cada alteração administrativa | `SUPER_ADMIN` |
+| `/admin/painel` | Visão geral do mês (seletor no topo): usuários ativos, novos cadastros, lançamentos e volume com a variação do mês anterior; novos cadastros em 6 meses; tabela de usuários com abas; uso dos módulos; segurança; categorias padrão mais usadas; auditoria recente | `SUPER_ADMIN` |
+| `/admin/usuarios` · `/novo` · `/:id` | Usuários: busca, abas Todos / Ativos / Inativos / Administradores, paginação, último acesso, criar conta pessoal ou administrador (`?perfil=SUPER_ADMIN`), editar, ativar/desativar (corta o acesso na hora), excluir só sem histórico | `SUPER_ADMIN` |
+| `/admin/transacoes` | Transações de todos os usuários (só consulta e auditada) com filtros por período, usuário (`?usuario=ID`), categoria, tipo e descrição | `SUPER_ADMIN` |
+| `/admin/categorias` | Categorias padrão (criar, editar, ativar/desativar, cor e ícone) + ranking de uso | `SUPER_ADMIN` |
+| `/admin/auditoria` | Auditoria só leitura com filtros de autor, ação (`?acao=`) e período | `SUPER_ADMIN` |
 
 ¹ Quem já está logado é levado direto para a primeira tela que pode abrir (ver `rotaInicial` em `core/acesso.ts`).
 
@@ -200,21 +195,19 @@ Sem acesso a uma tela, o guard leva para a primeira tela permitida.
 
 ### Cadastro
 
-| Etapa | Pessoal | MEI / Microempresa |
-|---|---|---|
-| 1. Tipo | Pessoal | MEI / Microempresa |
-| 2. Cadastro + senha | Nome, e-mail, senha e confirmação | Dados do responsável: nome, e-mail, senha e confirmação |
-| 3. Completar perfil | Telefone e profissão | Telefone |
-| 4. Empresa | — | Nome, nome fantasia, CNPJ, tipo, telefone e e-mail |
-| 5. Configuração inicial | Escolher as funcionalidades | Primeiros passos: equipe, categorias, primeiro lançamento |
+| Etapa | O que pede |
+|---|---|
+| 1. Cadastro + senha | Nome, e-mail, senha e confirmação |
+| 2. Completar perfil | Telefone e profissão |
+| 3. Configuração inicial | Escolher as funcionalidades |
 
 - **Senha:** mínimo de 6 caracteres, 1 maiúscula, 1 minúscula, 1 número e 1 caractere especial. A lista de requisitos fica verde em tempo real, e o olho mostra/oculta a senha.
-- **Telefone e CNPJ** ganham máscara enquanto a pessoa digita. O CNPJ tem os dígitos verificadores conferidos.
+- **Telefone** ganha máscara enquanto a pessoa digita.
 - O backend valida tudo de novo: as regras da tela só guiam quem digita.
 
 ### Funcionalidades (módulos)
 
-A conta pessoal escolhe na configuração inicial e depois em **Conta → Funcionalidades** o que quer usar. O administrador da empresa libera, por usuário comum, o que cada um acessa (tem acesso / não tem acesso). Os módulos que ainda não têm tela aparecem como "em breve", mas já podem ser liberados.
+A conta pessoal escolhe na configuração inicial e depois em **Conta → Funcionalidades** o que quer usar (tem acesso / não tem acesso). Os módulos que ainda não têm tela aparecem como "em breve", mas já podem ser escolhidos. O painel do administrador mostra quantas contas usam cada um.
 
 ## Autenticação
 
@@ -225,7 +218,7 @@ Login ──POST /auth/login──▶ { token, expiresIn }
         │
         ├─ AuthService lê o payload do JWT: upn (e-mail), groups (perfil), exp (validade)
         ├─ authInterceptor envia  Authorization: Bearer <token>  em toda chamada à API
-        ├─ UsuarioService carrega o perfil (GET /usuarios/me): role, módulos, empresa, empresaPendente
+        ├─ UsuarioService carrega o perfil (GET /usuarios/me): role e módulos
         └─ resposta 401 ─▶ logout automático e volta ao login ("Sua sessão expirou", "Seu acesso foi desativado"
                            ou "Sessão encerrada", quando a senha/e-mail mudou em outro aparelho)
 ```
@@ -241,13 +234,12 @@ esta sessão continua e as outras caem. Depois de 5 senhas erradas seguidas a co
 |---|---|---|
 | `AuthService` | `core/auth/auth.service.ts` | Login, cadastro, logout, `isLoggedIn()`, `isSuperAdmin()`, rota inicial |
 | `authInterceptor` | `core/auth/auth.interceptor.ts` | Anexa o token (exceto em `/auth/*`) e trata 401 |
-| `authGuard` | `core/auth/auth.guard.ts` | Exige usuário logado e com o cadastro completo (empresa cadastrada) |
-| `empresaPendenteGuard` | `core/auth/auth.guard.ts` | Só deixa abrir o cadastro da empresa quem ainda não cadastrou |
+| `authGuard` | `core/auth/auth.guard.ts` | Exige usuário logado (com o perfil ainda válido no back) |
 | `moduloGuard(...)` | `core/auth/auth.guard.ts` | Exige pelo menos um dos módulos |
-| `perfilGuard(...)` | `core/auth/auth.guard.ts` | Exige um dos perfis (ex.: `SUPER_ADMIN`, `ADMIN_EMPRESA`) |
+| `perfilGuard(...)` | `core/auth/auth.guard.ts` | Exige um dos perfis (`SUPER_ADMIN` ou `PESSOAL`) |
 | `visitanteGuard` | `core/auth/auth.guard.ts` | Tira usuários logados das telas de login/cadastro |
 
-> O frontend **só decide o que mostrar**. Quem valida token, usuário ativo, empresa cadastrada, perfil e módulo é o backend, em toda requisição.
+> O frontend **só decide o que mostrar**. Quem valida token, usuário ativo, sessão, perfil e módulo é o backend, em toda requisição.
 
 ## Comunicação com a API
 
@@ -260,10 +252,11 @@ export const API_URL = 'http://localhost:8080';
 | Serviço | Endpoints usados |
 |---|---|
 | `AuthService` | `POST /auth/register`, `POST /auth/login` |
-| `UsuarioService` | `GET /usuarios/me`, `PUT /usuarios/me` |
-| `TransacaoService` | `GET/POST /transacoes`, `GET/PUT/DELETE /transacoes/{id}` |
+| `UsuarioService` | `GET /usuarios/me`, `PUT /usuarios/me`, `PUT /usuarios/me/modulos` (senha, e-mail e sessões ficam no `AuthService`) |
+| `TransacaoService` | `GET/POST /transacoes`, `GET/PUT/DELETE /transacoes/{id}`, `PATCH /transacoes/{id}/pagar` e `/reabrir` |
+| `ContaService` | `GET/POST /contas`, `GET/PUT/DELETE /contas/{id}`, `PATCH /contas/{id}/arquivar` e `/reativar` |
 | `CategoriaService` | `GET/POST /categorias`, `GET/PUT/DELETE /categorias/{id}` |
-| `AdminService` | `GET /admin/estatisticas`, CRUD `/admin/parametros` |
+| `AdminService` | `GET /admin/painel?mes=`, `/admin/usuarios`, `/admin/transacoes`, `/admin/categorias-padrao`, `/admin/categorias/ranking`, `/admin/auditoria` |
 
 **Erros:** o backend responde no formato RFC 7807. A função `mensagemDeErro()` (em `core/api.ts`) transforma a resposta em uma frase para a tela: usa a lista `errors` (erros de campo) ou o `detail`.
 
@@ -280,7 +273,7 @@ export const API_URL = 'http://localhost:8080';
 | `--fc-roxo-claro` | `#F3EDFC` | Fundos suaves, item selecionado |
 | `--fc-amarelo` | `#FACC15` | Destaques, botão "Começar grátis", avatar |
 | `--fc-azul` / `--fc-danger` | `#2B5FB4` / `#E0384B` | Valores positivos / negativos |
-| `--fc-success` | `#1E8A5F` | Confirmações e situação "vigente" |
+| `--fc-success` | `#1E8A5F` | Confirmações e situação "pago" |
 
 - **Logo:** `public/logo/fincontrol-simbolo-fundo-claro.svg` e `...-fundo-escuro.svg`. No app ela é desenhada pelo componente `<app-logo>` (SVG embutido), com as opções `[pequeno]` e `[fundoClaro]`.
 - **Favicon:** `public/favicon.svg`.
@@ -305,9 +298,9 @@ export const API_URL = 'http://localhost:8080';
 
 ## Publicação no GitHub Pages
 
-O workflow **`.github/workflows/deploy-pages.yml`** roda a cada push na `main` (ou na branch de trabalho) e:
+O workflow **`.github/workflows/deploy-pages.yml`** (na raiz do repositório) roda a cada push na `main` que altere a pasta `frontend/` e:
 
-1. instala as dependências e compila com `--base-href /topicos-2-front/`;
+1. instala as dependências e compila com `--base-href /<nome-do-repositório>/` (hoje `/FinControl-ProjetoTP2/`);
 2. copia o `index.html` para `404.html`, para que links diretos (ex.: `/admin/painel`) abram o app;
 3. publica o resultado na branch **`gh-pages`**.
 

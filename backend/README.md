@@ -5,13 +5,13 @@
 <h1 align="center">FinControl — Backend (API)</h1>
 
 <p align="center">
-  API REST do FinControl, sistema de controle financeiro para pessoas, MEIs e microempresas.<br />
+  API REST do FinControl, sistema de controle de finanças pessoais.<br />
   Projeto da disciplina de Tópicos II.
 </p>
 
 <p align="center">
-  <a href="https://github.com/ctamanda/topicos-2-front">Frontend (Angular)</a> ·
-  <a href="https://ctamanda.github.io/topicos-2-front/">Frontend online</a>
+  <a href="../frontend/README.md">Frontend (Angular)</a> ·
+  <a href="https://ctamanda.github.io/FinControl-ProjetoTP2/">Frontend online</a>
 </p>
 
 ---
@@ -37,19 +37,16 @@
 
 ## Visão geral
 
-A API controla **usuários, empresas, transações (receitas e despesas), categorias** e **parâmetros fiscais**, com autenticação JWT. Existem dois tipos de conta, escolhidos no cadastro:
-
-- **Pessoal**: a pessoa controla as próprias finanças.
-- **MEI / Microempresa**: o responsável cadastra a empresa e pode cadastrar outros usuários para ajudar na gestão.
+A API controla **usuários, contas financeiras, transações (receitas e despesas, pagas ou a pagar)** e **categorias**, com autenticação JWT. O FinControl é um sistema de **finanças pessoais**: cada pessoa cria a própria conta e controla o próprio dinheiro.
 
 | Perfil (`role`) | Quem é | Acesso |
 |---|---|---|
-| **PESSOAL** | Titular de uma conta pessoal | Os próprios dados, nos módulos que escolheu usar |
-| **ADMIN_EMPRESA** | Administrador de um MEI/Microempresa | Todos os dados e módulos da empresa + usuários e acessos da empresa |
-| **USUARIO_EMPRESA** | Usuário comum cadastrado pelo administrador | Os dados da empresa, **só nos módulos liberados** pelo administrador |
-| **SUPER_ADMIN** | Administração interna do FinControl | Painel administrativo: indicadores, todos os usuários e empresas, transações (só leitura), categorias padrão, parâmetros fiscais e auditoria |
+| **PESSOAL** | Titular de uma conta pessoal (único tipo aberto no cadastro) | Os próprios dados, nos módulos que escolheu usar |
+| **SUPER_ADMIN** | Administração interna do FinControl | Painel administrativo: visão geral com indicadores do mês, todos os usuários, transações (só leitura e auditada), categorias padrão e auditoria |
 
-Os dados ficam **isolados pelo dono**: numa conta pessoal, o dono é o usuário; numa empresa, é a empresa (todos os usuários dela enxergam os mesmos dados, conforme as permissões). Ninguém altera dados de outra conta ou empresa. O SUPER_ADMIN **consulta** as transações de todos (só leitura, com cada pesquisa registrada na auditoria).
+Os dados ficam **isolados pelo dono**, que é sempre o usuário: ninguém lê nem altera dados de outra conta (um id de outra pessoa responde **404**). O SUPER_ADMIN **consulta** as transações de todos (só leitura, com cada pesquisa registrada na auditoria).
+
+> Até a V17/V18 o sistema também tinha contas de MEI/microempresa, colaboradores e parâmetros fiscais. Isso saiu do escopo; veja [Migrations](#migrations) para o que aconteceu com os dados.
 
 ## Tecnologias
 
@@ -73,17 +70,18 @@ Camadas clássicas, uma pasta para cada:
 src/main/java/br/unitins/tp2/fincontrol/
 ├── resource/     # Endpoints REST (JAX-RS): recebem a requisição, pegam o usuário do JWT
 ├── service/      # Regras de negócio e transações (@Transactional)
-├── repository/   # Consultas Panache (dados financeiros sempre filtrados pelo dono: conta ou empresa)
+├── repository/   # Consultas Panache (dados financeiros sempre filtrados pelo dono: o usuário)
 ├── model/        # Entidades JPA e enums
 ├── dto/          # Records de entrada (RequestDTO, com validação) e saída (ResponseDTO)
 ├── mapper/       # Conversão entidade → DTO de resposta
 ├── security/     # AcessoFilter (checagem em toda requisição), Permissoes, @RequerModulo
-├── validation/   # Validações reutilizáveis: @SenhaForte, @Telefone, @Cnpj
+├── validation/   # Validações reutilizáveis: @SenhaForte, @Telefone
+├── dev/          # Carga de dados de demonstração (só existe no perfil dev)
 └── exception/    # Exceções e ExceptionMappers no formato RFC 7807
 src/main/resources/
 ├── application.properties
 ├── publicKey.pem             # chave pública JWT (a privada NÃO é versionada)
-└── db/migration/             # V4__ ... V12__
+└── db/migration/             # V4__ ... V19__
 ```
 
 Fluxo de uma requisição autenticada:
@@ -92,10 +90,10 @@ Fluxo de uma requisição autenticada:
 HTTP + "Authorization: Bearer <jwt>"
   → SmallRye JWT valida assinatura, emissor e validade
   → @RolesAllowed confere o perfil (groups)
-  → AcessoFilter: usuário ativo, empresa cadastrada e módulo liberado (@RequerModulo)
+  → AcessoFilter: usuário ativo, perfil e sessão ainda válidos, módulo liberado (@RequerModulo)
   → Resource lê o e-mail do token (upn) e busca o Usuario
   → Service aplica as regras usando esse usuário
-  → Repository consulta pelo dono (empresa do usuário ou, na conta pessoal, o próprio usuário)
+  → Repository consulta pelo dono (o próprio usuário)
 ```
 
 ## Como executar
@@ -161,27 +159,35 @@ Na primeira execução, o Flyway cria as tabelas e o **usuário administrador**.
 
 Criado pela migration `V10__cria_admin.sql` (perfil **SUPER_ADMIN** desde a V12). **Troque a senha antes de qualquer uso fora do ambiente acadêmico.**
 
-### Contas de demonstração (opcional)
+### Dados de demonstração (só no perfil dev)
 
-Para testar e apresentar os dashboards com dados, com a API no ar:
+Para apresentar o painel do administrador com números de verdade, o perfil **dev** (`quarkus:dev`)
+carrega uma massa de exemplo gerada pela classe `dev/CargaDemonstracao`. Ela **não existe** no build
+de produção nem nos testes (`@IfBuildProfile("dev")`).
 
-```bash
-python scripts/criar-contas-demo.py                         # usa http://localhost:8080
-python scripts/criar-contas-demo.py http://outro-host:8080  # ou informe a URL da API
-```
+O que a carga cria (tudo com e-mail `@fincontrol.demo` e senha **`Demo@123`**):
 
-O script usa só a API pública (cadastro, empresa, usuários da empresa e transações) e pode ser
-rodado de novo: o que já existe não é duplicado. Os valores mudam um pouco a cada banco (são sorteados)
-e as datas são relativas ao dia em que o script roda (últimos 6 meses + algumas despesas futuras).
+- **13 contas pessoais** cadastradas ao longo dos últimos 6 meses (2 delas desativadas pelo admin), com módulos variados;
+- contas financeiras (Carteira, Nubank, Banco Inter, Poupança) e categorias próprias (Pet, Saúde, Assinaturas, Educação, Freelance);
+- **lançamentos de todos os meses** desde o cadastro de cada uma: salário, aluguel, luz, mercado, transporte, lazer...
+  Os do resto do mês atual ficam **a pagar/receber** e algumas contas do mês passado ficam **atrasadas**;
+- **eventos de auditoria**: senhas trocadas, contas bloqueadas por senha errada (hoje), sessões encerradas,
+  e-mail alterado, usuário criado e desativado pelo admin;
+- último acesso de cada conta.
 
-| Perfil | E-mail | Senha | Conteúdo |
-|---|---|---|---|
-| PESSOAL | `demo.pessoal@fincontrol.com` | `Senha@123` | Lucas Pereira, salário, aluguel, mercado etc. em 6 meses; 3 despesas futuras |
-| ADMIN_EMPRESA | `demo.mei@fincontrol.com` | `Senha@123` | Ana Souza, empresa **Studio Aurora** (MEI, CNPJ gerado na hora), receitas de serviços e despesas do estúdio |
-| USUARIO_EMPRESA | `demo.colab@fincontrol.com` | `Senha@123` | Marina Costa (Studio Aurora), módulos `DASHBOARD`, `LANCAMENTOS`, `RELATORIOS`; 3 lançamentos próprios |
-| USUARIO_EMPRESA | `demo.vendas@fincontrol.com` | `Senha@123` | Pedro Alves (Studio Aurora), só `LANCAMENTOS` |
+Como usar (propriedade `fincontrol.demo`):
 
-> Contas só para ambiente local/apresentação: a senha é pública. Não rode o script em produção.
+| Comando | O que faz |
+|---|---|
+| `./mvnw quarkus:dev` | **Carrega** se ainda não existir (`%dev.fincontrol.demo=carregar` no `application.properties`). Se já existe, não mexe em nada |
+| `./mvnw quarkus:dev -Dfincontrol.demo=recarregar` | **Zera e carrega de novo** (as datas acompanham o dia de hoje) |
+| `./mvnw quarkus:dev -Dfincontrol.demo=zerar` | **Zera**: apaga só as contas `@fincontrol.demo`, os dados delas e os registros de auditoria em que elas aparecem |
+| `./mvnw quarkus:dev -Dfincontrol.demo=nada` | Sobe sem tocar nos dados de demonstração |
+
+No Windows, use `.\mvnw.cmd` no lugar de `./mvnw`. Os valores são gerados com semente fixa: a mesma carga
+dá os mesmos números. Os seus dados e os do admin não são alterados.
+
+> As contas de demonstração têm senha pública: servem só para o ambiente local e para a apresentação.
 
 ## Variáveis de ambiente
 
@@ -212,43 +218,40 @@ Conteúdo do token:
 |---|---|---|
 | `iss` | `fincontrol` | Emissor (validado pelo backend) |
 | `upn` | `maria@email.com` | E-mail do usuário: é por ele que a API identifica quem chama |
-| `groups` | `["PESSOAL"]` | Perfil (`SUPER_ADMIN`, `PESSOAL`, `ADMIN_EMPRESA` ou `USUARIO_EMPRESA`), usado pelo `@RolesAllowed` |
+| `groups` | `["PESSOAL"]` | Perfil (`SUPER_ADMIN` ou `PESSOAL`), usado pelo `@RolesAllowed` |
 | `exp` | `1792200352` | Validade (1 hora após o login) |
+| `sv` | `0` | Versão da sessão: trocar senha/e-mail ou encerrar as sessões invalida os tokens antigos |
 
-> `/auth/register` cria **PESSOAL** ou **ADMIN_EMPRESA**. O `USUARIO_EMPRESA` é criado pelo administrador da empresa e o SUPER_ADMIN inicial vem das migrations V10/V12.
+> `/auth/register` cria só **PESSOAL**. Outros administradores são criados pelo SUPER_ADMIN no painel; o primeiro vem das migrations V10/V12.
 
 ### Checagem em toda requisição
 
 Antes de qualquer endpoint autenticado, o `security/AcessoFilter` confere:
 
 1. **Usuário existe e está ativo.** Desativado recebe **401** na hora, mesmo com um token ainda válido.
-2. **Cadastro completo.** `ADMIN_EMPRESA` sem empresa cadastrada recebe **403** `"Cadastre a empresa para continuar."` em tudo, exceto `/usuarios/me` e `POST /empresa`.
+2. **Perfil e sessão.** Se o perfil mudou depois do login ou a sessão foi encerrada (claim `sv`), o token antigo recebe **401**.
 3. **Módulo.** Endpoints com `@RequerModulo` exigem pelo menos um dos módulos listados (ver tabela abaixo).
 
 O perfil continua sendo checado pelo `@RolesAllowed` de cada resource.
 
 ### Módulos (funcionalidades)
 
-Liberação simples por módulo: **tem acesso / não tem acesso**. Os módulos que o usuário pode usar vêm em `modulos` no `GET /usuarios/me`.
+Liberação simples por módulo: **tem acesso / não tem acesso**. A conta pessoal escolhe os módulos no
+cadastro (todos vêm marcados) e depois em `PUT /usuarios/me/modulos`. Os que pode usar vêm em `modulos`
+no `GET /usuarios/me`. O SUPER_ADMIN tem todos, para os próprios lançamentos.
 
-| Módulo | Conta pessoal | Usuário comum da empresa | Endpoints hoje |
-|---|---|---|---|
-| `DASHBOARD` | ✔ | ✔ | lê `/transacoes` e `/categorias` |
-| `LANCAMENTOS` | ✔ | ✔ | `/transacoes` (receitas e despesas) |
-| `RECEITAS` / `DESPESAS` | ✔ | ✔ | `/transacoes`, **só do seu tipo** |
-| `CATEGORIAS` | ✔ | ✔ | `/categorias` (criar, alterar, excluir) |
-| `CONTAS`, `RECORRENTES`, `CARTOES`, `TAGS`, `ORCAMENTOS`, `RELATORIOS`, `IMPORTACAO`, `EXPORTACAO` | ✔ | ✔ | ainda sem endpoints |
-| `CLIENTES`, `FORNECEDORES` | — | ✔ | ainda sem endpoints |
-| `USUARIOS` | — | — (vem do perfil `ADMIN_EMPRESA`) | `/empresa/usuarios` |
-
-- **PESSOAL** escolhe os seus módulos em `PUT /usuarios/me` (no cadastro, todos os pessoais vêm marcados).
-- **ADMIN_EMPRESA** tem todos os módulos.
-- **USUARIO_EMPRESA** tem só os que o administrador liberar.
-- **SUPER_ADMIN** tem os módulos pessoais, para os próprios lançamentos.
+| Módulo | Endpoints hoje |
+|---|---|
+| `DASHBOARD` | lê `/transacoes`, `/categorias` e `/contas` |
+| `LANCAMENTOS` | `/transacoes` (receitas e despesas) |
+| `RECEITAS` / `DESPESAS` | `/transacoes`, **só do seu tipo** |
+| `CATEGORIAS` | `/categorias` (criar, alterar, excluir) |
+| `CONTAS` | `/contas` (criar, alterar, arquivar, excluir) |
+| `RECORRENTES`, `CARTOES`, `TAGS`, `ORCAMENTOS`, `RELATORIOS`, `IMPORTACAO`, `EXPORTACAO` | ainda sem endpoints ("em breve" na tela) |
 
 ## Endpoints
 
-Legenda de acesso: 🌐 público · 👤 qualquer usuário logado · 🏢 ADMIN_EMPRESA ou USUARIO_EMPRESA · 🔑 só ADMIN_EMPRESA · 🛡️ só SUPER_ADMIN
+Legenda de acesso: 🌐 público · 👤 qualquer usuário logado · 🛡️ só SUPER_ADMIN
 
 ### Autenticação — `/auth`
 
@@ -260,11 +263,10 @@ Legenda de acesso: 🌐 público · 👤 qualquer usuário logado · 🏢 ADMIN_
 ```jsonc
 // POST /auth/register
 {
-  "tipoConta": "PESSOAL",           // PESSOAL | EMPRESA
-  "nome": "Maria Souza",            // na conta EMPRESA, o nome do responsável
+  "nome": "Maria Souza",
   "email": "maria@email.com",
   "telefone": "(63) 99999-0000",    // DDD + número; pontuação opcional
-  "profissao": "Professora",        // obrigatória só na conta PESSOAL
+  "profissao": "Professora",        // obrigatória
   "password": "Senha@123",          // ver regras de senha
   "confirmPassword": "Senha@123"    // igual a password
 }
@@ -273,7 +275,8 @@ Legenda de acesso: 🌐 público · 👤 qualquer usuário logado · 🏢 ADMIN_
 { "email": "maria@email.com", "password": "Senha@123" }
 ```
 
-A conta **EMPRESA** volta com `"empresaPendente": true`: o próximo passo é `POST /empresa`.
+A conta já nasce pronta para usar: todos os módulos, as categorias padrão ativas e a conta "Carteira".
+O login grava o **último acesso** do usuário (mostrado no painel do admin).
 
 ### Perfil do usuário — `/usuarios/me`
 
@@ -293,58 +296,15 @@ invalidam todos os tokens anteriores e devolvem um token novo para a sessão atu
 
 ```jsonc
 // UsuarioResponseDTO
-{ "id": 7, "email": "joana@doces.com", "nome": "Joana", "telefone": "63999990000",
-  "profissao": null, "role": "ADMIN_EMPRESA", "ativo": true,
-  "modulos": ["DASHBOARD", "CONTAS", "RECEITAS", "...", "USUARIOS"],
-  "empresa": { "id": 2, "nome": "Doces da Joana", "tipo": "MEI", "responsavel": true },
-  "empresaPendente": false }
+{ "id": 7, "email": "maria@email.com", "nome": "Maria Souza", "telefone": "63999990000",
+  "profissao": "Professora", "role": "PESSOAL", "ativo": true,
+  "modulos": ["DASHBOARD", "CONTAS", "RECEITAS", "..."],
+  "dataCadastro": "2026-10-16T10:20:00", "ultimoAcesso": "2026-10-26T22:54:12" }
 
 // UsuarioUpdateDTO (e-mail e perfil de acesso não mudam por aqui)
-// "profissao" só vale na conta PESSOAL; os módulos mudam em PUT /usuarios/me/modulos.
+// "profissao" é obrigatória na conta PESSOAL; os módulos mudam em PUT /usuarios/me/modulos.
 { "nome": "Maria S. Souza", "telefone": "63999990000", "profissao": "Professora",
   "senhaAtual": "Senha@123" }
-```
-
-### Empresa — `/empresa`
-
-| Método | Rota | Acesso | Corpo | Resposta |
-|---|---|---|---|---|
-| GET | `/empresa` | 🏢 | — | **200** `EmpresaResponseDTO` |
-| POST | `/empresa` | 🔑 (com a empresa pendente) | `EmpresaRequestDTO` | **201** · **400** CNPJ inválido/repetido ou empresa já cadastrada |
-| PUT | `/empresa` | 🔑 | `EmpresaRequestDTO` | **200** |
-
-```jsonc
-// EmpresaRequestDTO
-{ "razaoSocial": "Joana Doces LTDA", "nomeFantasia": "Doces da Joana",  // nome fantasia opcional
-  "cnpj": "12.345.678/0001-95",     // dígitos verificadores conferidos; gravado só com números
-  "tipo": "MEI",                    // MEI | MICROEMPRESA
-  "telefone": "(63) 3215-0000", "email": "contato@doces.com" }
-```
-
-Quem cadastra a empresa vira o **administrador principal** (`idResponsavel`) e a empresa ganha as 6 categorias iniciais.
-
-### Usuários da empresa — `/empresa/usuarios`
-
-| Método | Rota | Acesso | Corpo | Resposta |
-|---|---|---|---|---|
-| GET | `/empresa/usuarios` | 🔑 | — | **200** lista de `UsuarioResponseDTO` |
-| GET | `/empresa/usuarios/{id}` | 🔑 | — | **200** · **404** se não for da empresa |
-| POST | `/empresa/usuarios` | 🔑 | `UsuarioEmpresaRequestDTO` | **201** |
-| PUT | `/empresa/usuarios/{id}` | 🔑 | `UsuarioEmpresaUpdateDTO` | **200** |
-| PATCH | `/empresa/usuarios/{id}/desativar` | 🔑 | — | **200** · remove o acesso sem apagar o cadastro |
-| PATCH | `/empresa/usuarios/{id}/ativar` | 🔑 | — | **200** |
-| DELETE | `/empresa/usuarios/{id}` | 🔑 | — | **204** · **400** se já registrou lançamentos/categorias |
-
-```jsonc
-// UsuarioEmpresaRequestDTO
-{ "nome": "Carlos", "email": "carlos@doces.com", "telefone": "63988887777",
-  "role": "USUARIO_EMPRESA",                 // USUARIO_EMPRESA | ADMIN_EMPRESA
-  "modulos": ["DASHBOARD", "RECEITAS"],      // ignorado para ADMIN_EMPRESA (tem todos)
-  "password": "Senha@123", "confirmPassword": "Senha@123" }
-
-// UsuarioEmpresaUpdateDTO (e-mail e senha não mudam por aqui)
-{ "nome": "Carlos", "telefone": "63988887777",
-  "role": "USUARIO_EMPRESA", "modulos": ["DASHBOARD", "LANCAMENTOS"] }
 ```
 
 ### Transações — `/transacoes`
@@ -366,7 +326,6 @@ Quem cadastra a empresa vira o **administrador principal** (`idResponsavel`) e a
 - **Contas a pagar e a receber:** lançamento com `pago: false` é pendente e a `data` é o vencimento.
   Só os pagos mexem no saldo da conta. O `status` é calculado: `PAGO`, `PENDENTE` ou `ATRASADO` (vencido).
 - Com só `RECEITAS` (ou só `DESPESAS`), a lista traz e aceita apenas aquele tipo.
-- O `escopo` (`PESSOAL` ou `EMPRESA`) não é enviado: sai do tipo de conta de quem lança.
 
 ```jsonc
 // TransacaoRequestDTO
@@ -375,7 +334,7 @@ Quem cadastra a empresa vira o **administrador principal** (`idResponsavel`) e a
   "valor": 152.37,               // > 0, até 2 casas
   "data": "2026-10-10",          // yyyy-MM-dd; se pendente, é o vencimento
   "tipo": "DESPESA",             // RECEITA | DESPESA
-  "idCategoria": 3,              // categoria da mesma conta/empresa e do mesmo tipo
+  "idCategoria": 3,              // categoria do mesmo dono e do mesmo tipo
   "idConta": 2,                  // opcional: padrão = conta ativa mais antiga (não aceita arquivada)
   "pago": true,                  // opcional: padrão = data até hoje (data futura vira pendente)
   "dataPagamento": "2026-10-10"  // opcional: padrão = a data (ou hoje); não pode ser futura
@@ -383,7 +342,7 @@ Quem cadastra a empresa vira o **administrador principal** (`idResponsavel`) e a
 
 // PageResponse
 { "items": [ { "id": 1, "descricao": "Mercado", "valor": 152.37, "data": "2026-10-10",
-               "tipo": "DESPESA", "escopo": "PESSOAL",
+               "tipo": "DESPESA",
                "categoria": { "id": 3, "nome": "Alimentação", "tipo": "DESPESA", "cor": "#FF5733", "icone": "restaurant" },
                "usuario": { "id": 7, "nome": "Maria", "email": "maria@ex.com" },
                "conta": { "id": 2, "nome": "Nubank", "tipo": "CONTA_CORRENTE", "cor": "#820AD1" },
@@ -410,12 +369,12 @@ Quem cadastra a empresa vira o **administrador principal** (`idResponsavel`) e a
 
 Onde o dinheiro está (banco, poupança, carteira...). O saldo é calculado a cada consulta:
 `saldoAtual` = saldo inicial + receitas pagas − despesas pagas. Toda conta pessoal nasce com a conta
-**Carteira** e toda empresa com **Caixa**.
+**Carteira**.
 
 | Método | Rota | Acesso | Corpo | Resposta |
 |---|---|---|---|---|
-| GET | `/contas?mes=aaaa-mm&inativas=false` | 👤 `CONTAS` ou algum módulo de transações/dashboard | — | **200** lista com os saldos do mês |
-| GET | `/contas/{id}?mes=` | idem | — | **200** · **404** de outra conta/empresa |
+| GET | `/contas?mes=aaaa-mm&inativas=false` | PESSOAL com `CONTAS` ou algum módulo de transações/dashboard | — | **200** lista com os saldos do mês |
+| GET | `/contas/{id}?mes=` | idem | — | **200** · **404** de outro usuário |
 | POST | `/contas` | 👤 `CONTAS` | `ContaFinanceiraRequestDTO` | **201** |
 | PUT | `/contas/{id}` | 👤 `CONTAS` | `ContaFinanceiraRequestDTO` | **200** |
 | PATCH | `/contas/{id}/arquivar` · `/reativar` | 👤 `CONTAS` | — | **200** · **400** se for a última conta ativa |
@@ -438,68 +397,65 @@ Onde o dinheiro está (banco, poupança, carteira...). O saldo é calculado a ca
 
 Toda alteração importante fica registrada na **auditoria** (quem, o quê, em quê, quando).
 
-**Indicadores**
+**Visão geral do mês**
 
 | Método | Rota | Resposta |
 |---|---|---|
-| GET | `/admin/estatisticas` | **200** `EstatisticaResponseDTO` |
+| GET | `/admin/painel?mes=aaaa-mm` | **200** `PainelAdminDTO` (padrão: mês atual) · **400** mês em formato errado |
+| GET | `/admin/estatisticas` | **200** `EstatisticaResponseDTO` (totais gerais do sistema) |
 
 ```jsonc
-// EstatisticaResponseDTO
-{ "totalUsuarios": 9, "usuariosAtivos": 8, "usuariosInativos": 1,
-  "totalAdmins": 1, "totalUsers": 8,              // SUPER_ADMIN x demais
-  "totalContasPessoais": 3, "totalUsuariosEmpresa": 5,
-  "totalEmpresas": 2, "empresasAtivas": 2,
-  "totalTransacoes": 7, "totalCategorias": 43, "mediaTransacoesPorUsuario": 0.8,
-  "volumeDadosBytes": 8493215,                    // tamanho do banco (null se o banco não informar)
-  "totalRegistros": 76, "novosUsuarios30Dias": 9, "transacoes30Dias": 7,
-  "categoriasMaisUtilizadas": [ { "nome": "Vendas", "tipo": "RECEITA", "totalTransacoes": 3, "totalContas": 1 } ],
-  "transacoesPorMes": [ { "mes": "2026-10", "quantidade": 5 } ] }   // últimos 6 meses
+// PainelAdminDTO: cada indicador vem com o mês anterior, para a variação
+{ "mes": "2026-10",
+  "usuariosAtivos": { "atual": 15, "anterior": 12 },   // contas pessoais com lançamento no mês
+  "novosCadastros": { "atual": 11, "anterior": 2 },    // contas pessoais criadas no mês
+  "lancamentos":    { "atual": 131, "anterior": 107 }, // lançamentos com data no mês
+  "volume":         { "atual": 26403.20, "anterior": 10751.64 }, // receitas + despesas do mês
+  "totais": { "usuarios": 22, "ativos": 20, "inativos": 2, "administradores": 1, "contasPessoaisAtivas": 19 },
+  "cadastrosPorMes": [ { "mes": "2026-05", "contasPessoais": 2 }, "... 6 meses até o escolhido" ],
+  "modulos": [ { "modulo": "DESPESAS", "ligados": 19, "comDados": 15 },
+               { "modulo": "DASHBOARD", "ligados": 19, "comDados": null } ],  // null = não guarda dados para contar
+  "categoriasPadrao": [ { "id": 1, "nome": "Alimentação", "tipo": "DESPESA", "cor": "#FF5733", "icone": "restaurant",
+                          "ativo": true, "lancamentos": 43, "usuarios": 14 } ],  // uso no mês, somando as cópias
+  "seguranca": { "contasBloqueadasHoje": 2, "senhasTrocadasSemana": 5,
+                 "sessoesEncerradasSemana": 2, "emailsTrocadosSemana": 1 } }  // contados na auditoria
 ```
 
-**Usuários** — qualquer tipo de conta
+Nada no painel é estimado: tudo sai de cadastros, lançamentos e auditoria. "Ligado" é o módulo escolhido
+pela conta; "com dados" é quem já usou de fato (lançou receita/despesa, cadastrou conta além da Carteira
+ou criou categoria própria). A base dos percentuais são as contas pessoais ativas.
+
+**Usuários**
 
 | Método | Rota | Corpo | Resposta |
 |---|---|---|---|
-| GET | `/admin/usuarios?busca=&role=&ativo=&idEmpresa=&page=0&pageSize=20` | — | **200** `PageResponse<UsuarioResponseDTO>` |
+| GET | `/admin/usuarios?busca=&role=&ativo=&page=0&pageSize=20` | — | **200** `PageResponse<UsuarioResponseDTO>` (com `ultimoAcesso`) |
 | GET | `/admin/usuarios/{id}` | — | **200** · **404** |
 | POST | `/admin/usuarios` | `AdminUsuarioRequestDTO` | **201** |
 | PUT | `/admin/usuarios/{id}` | `AdminUsuarioUpdateDTO` | **200** |
-| PATCH | `/admin/usuarios/{id}/ativar` · `/desativar` | — | **200** |
-| DELETE | `/admin/usuarios/{id}` | — | **204** · **400** se já registrou lançamentos |
+| PATCH | `/admin/usuarios/{id}/ativar` · `/desativar` | — | **200** · desativar corta o acesso na hora (401 no próximo pedido) |
+| DELETE | `/admin/usuarios/{id}` | — | **204** · **400** se tiver histórico (lançamentos ou ações na auditoria) |
 
 ```jsonc
 // AdminUsuarioRequestDTO
 { "nome": "Ana", "email": "ana@x.com", "telefone": "63977776666",
   "profissao": "Contadora",           // obrigatória para PESSOAL
-  "role": "PESSOAL",                  // PESSOAL | SUPER_ADMIN | USUARIO_EMPRESA | ADMIN_EMPRESA
-  "idEmpresa": null,                  // obrigatório para USUARIO_EMPRESA; opcional para ADMIN_EMPRESA
+  "role": "PESSOAL",                  // PESSOAL | SUPER_ADMIN
   "modulos": ["DASHBOARD", "LANCAMENTOS"],
   "password": "Senha@123", "confirmPassword": "Senha@123" }
 
-// AdminUsuarioUpdateDTO — o perfil só alterna entre USUÁRIO e ADMINISTRADOR do mesmo tipo de conta:
-// PESSOAL <-> SUPER_ADMIN e USUARIO_EMPRESA <-> ADMIN_EMPRESA
+// AdminUsuarioUpdateDTO — o perfil alterna entre PESSOAL e SUPER_ADMIN
 { "nome": "Ana", "telefone": "63977776666", "profissao": "Contadora", "role": "SUPER_ADMIN", "modulos": null }
 ```
-
-**Empresas**
-
-| Método | Rota | Corpo | Resposta |
-|---|---|---|---|
-| GET | `/admin/empresas?busca=&ativo=&page=0&pageSize=20` | — | **200** `PageResponse<AdminEmpresaResponseDTO>` (com responsável, total de usuários e de transações) |
-| GET | `/admin/empresas/{id}` | — | **200** · **404** |
-| PUT | `/admin/empresas/{id}` | `EmpresaRequestDTO` | **200** |
-| PATCH | `/admin/empresas/{id}/ativar` · `/desativar` | — | **200** — desativada, nenhum usuário dela entra |
-
-Os usuários de uma empresa saem de `GET /admin/usuarios?idEmpresa={id}`.
 
 **Transações** — só leitura
 
 | Método | Rota | Resposta |
 |---|---|---|
-| GET | `/admin/transacoes?inicio=&fim=&idEmpresa=&idUsuario=&categoria=&tipo=&escopo=&descricao=&page=0&pageSize=20` | **200** `PageResponse<AdminTransacaoResponseDTO>` (cada item traz a empresa — nula na conta pessoal — e quem lançou) |
+| GET | `/admin/transacoes?inicio=&fim=&idUsuario=&categoria=&tipo=&descricao=&page=0&pageSize=20` | **200** `PageResponse<AdminTransacaoResponseDTO>` (cada item traz o usuário dono) |
 
-Cada nova pesquisa (página 0) é registrada na auditoria como `CONSULTA_TRANSACOES`.
+Cada nova pesquisa (página 0) é registrada na auditoria como `CONSULTA_TRANSACOES`. Não existe rota
+para o admin alterar ou apagar lançamentos.
 
 **Categorias**
 
@@ -507,38 +463,23 @@ Cada nova pesquisa (página 0) é registrada na auditoria como `CONSULTA_TRANSAC
 |---|---|---|---|
 | GET | `/admin/categorias/ranking?limite=50` | — | **200** uso das categorias no sistema todo (somadas por nome e tipo) |
 | GET | `/admin/categorias-padrao` | — | **200** categorias que toda conta nova recebe |
-| POST | `/admin/categorias-padrao` | `CategoriaRequestDTO` | **201** |
+| POST | `/admin/categorias-padrao` | `CategoriaRequestDTO` (nome, tipo, cor, ícone) | **201** |
 | PUT | `/admin/categorias-padrao/{id}` | `CategoriaRequestDTO` | **200** |
 | PATCH | `/admin/categorias-padrao/{id}/ativar` · `/desativar` | — | **200** — só as ativas são copiadas para contas novas |
 
-**Parâmetros fiscais** — valores fiscais ficam no banco, nunca fixos no código
-
-| Método | Rota | Corpo | Resposta |
-|---|---|---|---|
-| GET | `/admin/parametros` | — | **200** lista (por chave e vigência) |
-| GET | `/admin/parametros/{id}` | — | **200** · **404** |
-| POST | `/admin/parametros` | `ParametroFiscalRequestDTO` | **201** |
-| PUT | `/admin/parametros/{id}` | `ParametroFiscalRequestDTO` | **200** |
-| PATCH | `/admin/parametros/{id}/ativar` · `/desativar` | — | **200** — desativado sai de uso e fica no histórico |
-| DELETE | `/admin/parametros/{id}` | — | **204** |
-
-```jsonc
-// ParametroFiscalRequestDTO
-{ "chave": "LIMITE_FATURAMENTO_MEI", "valor": 81000.00,
-  "vigenciaInicio": "2026-01-01", "vigenciaFim": "2026-12-31",
-  "descricao": "Teto de faturamento anual do MEI",   // opcional
-  "tipoEmpresa": "MEI" }                            // MEI | MICROEMPRESA | null (os dois)
-
-// A resposta traz também "ativo", "ultimaAlteracao" e "alteradoPor" (e-mail de quem alterou por último).
-```
-
-**Auditoria**
+**Auditoria** — só leitura
 
 | Método | Rota | Resposta |
 |---|---|---|
-| GET | `/admin/auditoria?busca=&acao=&page=0&pageSize=20` | **200** `PageResponse<AuditoriaResponseDTO>` (`dataHora`, `autorEmail`, `acao`, `alvo`, `detalhe`) |
+| GET | `/admin/auditoria?autor=&acao=&inicio=aaaa-mm-dd&fim=aaaa-mm-dd&busca=&page=0&pageSize=20` | **200** `PageResponse<AuditoriaResponseDTO>` (`dataHora`, `autorEmail`, `acao`, `alvo`, `detalhe`) · **400** fim antes do início |
 
-Ações registradas: `USUARIO_CRIADO`, `USUARIO_ALTERADO`, `PERFIL_ALTERADO`, `USUARIO_ATIVADO`, `USUARIO_DESATIVADO`, `USUARIO_EXCLUIDO`, `EMPRESA_CADASTRADA`, `EMPRESA_ALTERADA`, `EMPRESA_ATIVADA`, `EMPRESA_DESATIVADA`, `CATEGORIA_PADRAO_*`, `PARAMETRO_*` e `CONSULTA_TRANSACOES`. Vale também para o que o administrador da empresa faz com a equipe.
+`autor` procura no e-mail de quem fez; `acao` é a ação exata; `inicio` e `fim` são dias inteiros;
+`busca` procura no autor, no alvo e no detalhe. **Não há** `PUT`, `PATCH` nem `DELETE` em `/admin/auditoria` (405): a trilha é imutável.
+
+Ações registradas: `USUARIO_CRIADO`, `USUARIO_ALTERADO`, `PERFIL_ALTERADO`, `USUARIO_ATIVADO`, `USUARIO_DESATIVADO`,
+`USUARIO_EXCLUIDO`, `CATEGORIA_PADRAO_*`, `CONSULTA_TRANSACOES` e os eventos de segurança `DADOS_PESSOAIS_ALTERADOS`,
+`SENHA_ALTERADA`, `EMAIL_ALTERADO`, `SESSOES_ENCERRADAS` e `CONTA_BLOQUEADA`. Registros antigos de empresa e
+parâmetros fiscais (`EMPRESA_*`, `PARAMETRO_*`) continuam guardados como histórico.
 
 ## Formato de erros
 
@@ -561,9 +502,11 @@ Os erros da aplicação seguem o padrão **RFC 7807 / 9457** (`application/probl
 | Status | Quando |
 |---|---|
 | 400 | Validação de campos (`errors`), regra de negócio (`detail`), corpo ausente ou JSON inválido (ex.: enum inexistente lista os valores aceitos; data fora de `aaaa-mm-dd`) |
-| 401 | Sem token, token inválido ou expirado (**sem corpo**, vem da camada de segurança); senha errada no login; **usuário desativado** (com corpo RFC 7807) |
-| 403 | Perfil sem permissão, ex.: PESSOAL em `/admin/*` (**sem corpo**); sem o módulo, tipo de transação não liberado ou empresa ainda não cadastrada (com `detail`) |
-| 404 | Recurso inexistente **ou de outra conta/empresa** (não revela que existe) |
+| 401 | Sem token, token inválido ou expirado (**sem corpo**, vem da camada de segurança); senha errada no login; **usuário desativado** ou sessão encerrada (com corpo RFC 7807) |
+| 429 | Conta bloqueada por alguns minutos depois de 5 senhas erradas seguidas |
+| 403 | Perfil sem permissão, ex.: PESSOAL em `/admin/*` (**sem corpo**); sem o módulo ou tipo de transação não liberado (com `detail`) |
+| 404 | Recurso inexistente **ou de outro usuário** (não revela que existe) |
+| 405 | Método que não existe na rota (ex.: `DELETE /admin/auditoria`) |
 | 409 | Conflito no banco em requisições simultâneas (ex.: dois cadastros com o mesmo e-mail ao mesmo tempo) |
 | 500 | Erro inesperado (detalhe só no log do servidor) |
 
@@ -572,63 +515,52 @@ Os erros da aplicação seguem o padrão **RFC 7807 / 9457** (`application/probl
 | Regra | Onde |
 |---|---|
 | E-mail único, **sem diferenciar maiúsculas** (gravado em minúsculas; login aceita qualquer caixa) | `UsuarioService` + índice `uk_usuario_email_lower` (V11) |
-| Senha: 6 a 100 caracteres, com pelo menos 1 maiúscula, 1 minúscula, 1 número e 1 caractere especial; `confirmPassword` igual a `password`. A resposta 400 lista **todas** as regras que faltam. Vale no cadastro e na criação de usuários da empresa | `validation/SenhaForte` + `@AssertTrue` nos DTOs |
-| Senha guardada com **BCrypt** (nunca em texto puro) | `UsuarioService`, `UsuarioEmpresaService` |
+| Senha: 6 a 100 caracteres, com pelo menos 1 maiúscula, 1 minúscula, 1 número e 1 caractere especial; `confirmPassword` igual a `password`. A resposta 400 lista **todas** as regras que faltam | `validation/SenhaForte` + `@AssertTrue` nos DTOs |
+| Senha guardada com **BCrypt** (nunca em texto puro) | `UsuarioService`, `AdminUsuarioService` |
 | Telefone com DDD: 10 dígitos (fixo) ou 11 (celular, começando com 9); gravados só com números | `validation/Telefone` + `Documentos.soDigitos` |
-| Conta PESSOAL exige profissão | `RegisterRequestDTO`, `UsuarioService.atualizarPerfil` |
-| CNPJ com dígitos verificadores válidos e **único**; gravado só com números | `validation/Cnpj` + `EmpresaService` |
-| ADMIN_EMPRESA só usa o sistema depois de cadastrar a empresa (uma única vez) | `AcessoFilter` + `EmpresaService.criar` |
-| Conta pessoal e empresa começam com as categorias padrão ativas (de início: Alimentação, Moradia, Transporte, Lazer, Salário e Vendas) e uma conta financeira ("Carteira" ou "Caixa") | `DadosIniciais` |
+| O cadastro público cria só conta PESSOAL, que exige profissão | `RegisterRequestDTO`, `UsuarioService` |
+| Conta pessoal começa com as categorias padrão ativas e uma conta financeira "Carteira" | `DadosIniciais` |
+| O dono dos dados é sempre o usuário: categorias, contas e transações de outra pessoa respondem **404** | `repository/Dono` |
 | Só lançamento pago mexe no saldo; pendente é conta a pagar/receber e a data é o vencimento | `TransacaoServiceImpl`, `ContaFinanceiraService` |
 | Data de pagamento não pode ser futura; conta arquivada não recebe lançamento novo | `TransacaoServiceImpl` |
 | Sempre sobra uma conta ativa; conta com lançamentos não é excluída (só arquivada) | `ContaFinanceiraService` |
-| Dados da empresa (categorias e transações) são **compartilhados** entre os usuários dela; os da conta pessoal são só do titular | `repository/Dono` |
-| Usuário comum não recebe o módulo `USUARIOS`; conta pessoal não escolhe `CLIENTES`/`FORNECEDORES` (400 listando os inválidos) | `Permissoes.exigirPermitidos` |
-| O administrador **não altera o próprio perfil** nem se desativa/exclui | `UsuarioEmpresaService` |
-| O **administrador principal** (quem criou a empresa) não pode ser rebaixado, desativado nem excluído | `UsuarioEmpresaService` |
-| Usuário que já registrou lançamentos ou categorias **não é excluído**: deve ser desativado (mantém o histórico) | `UsuarioEmpresaService.excluir` |
-| Usuário desativado não entra (401 no login) e perde o acesso na hora (401 em qualquer requisição) | `UsuarioService.autenticar` + `AcessoFilter` |
-| Nome de categoria único **por conta/empresa**, sem diferenciar maiúsculas e ignorando espaços nas pontas | `CategoriaServiceImpl` |
+| Nome de categoria único **por usuário**, sem diferenciar maiúsculas e ignorando espaços nas pontas | `CategoriaServiceImpl` |
 | Cor de categoria vazia vira `null`; cor informada é gravada em maiúsculas | `CategoriaServiceImpl` |
 | Não dá para **mudar o tipo** de uma categoria que já tem transações | `CategoriaServiceImpl` |
 | Categoria com transações vinculadas **não pode ser excluída** | `CategoriaServiceImpl.delete` |
-| Transação só aceita categoria **da mesma conta/empresa** e **do mesmo tipo** (despesa → categoria de despesa) | `TransacaoServiceImpl` |
+| Transação só aceita categoria **do mesmo dono** e **do mesmo tipo** (despesa → categoria de despesa) | `TransacaoServiceImpl` |
 | Paginação: `page ≥ 0` e `1 ≤ pageSize ≤ 100` | `TransacaoServiceImpl.validarPaginacao` |
-| Parâmetro fiscal: `vigenciaFim ≥ vigenciaInicio` | DTO (`@AssertTrue`) + `ParametroFiscalServiceImpl` |
-| Parâmetro fiscal: chave normalizada em `MAIUSCULAS_COM_UNDERLINE` (`"teto mei"` → `TETO_MEI`) | `ParametroFiscalServiceImpl.normalizarChave` |
-| Parâmetro fiscal: **sem sobreposição** de vigência para a mesma chave | `ParametroFiscalServiceImpl.verificarSobreposicao` |
+| Usuário desativado não entra (401 no login) e perde o acesso na hora (401 em qualquer requisição) | `UsuarioService.autenticar` + `AcessoFilter` |
 | Token de uma conta que não existe mais responde **401** | `AcessoFilter` + `UsuarioService.buscarLogado` |
 | Perfil mudou depois do login (ex.: admin rebaixado): o token antigo responde **401** | `AcessoFilter` |
-| Empresa desativada: nenhum usuário dela entra (401 no login e em qualquer requisição) | `Permissoes.motivoBloqueio` |
 | Sempre existe **pelo menos um SUPER_ADMIN ativo**; ninguém altera o próprio perfil nem se desativa/exclui | `AdminUsuarioService` |
-| Exclusão só de quem não tem histórico (lançamentos ou categorias criadas numa empresa); as categorias iniciais da conta pessoal vão junto | `AdminUsuarioService.temHistorico` |
+| Exclusão só de quem não tem histórico (lançamentos ou ações na auditoria); as categorias e a conta iniciais vão junto | `AdminUsuarioService.temHistorico` |
+| Admin rebaixado a PESSOAL ganha as categorias padrão e a Carteira, se ainda não tiver | `AdminUsuarioService` |
 | Categorias iniciais das contas novas vêm das **categorias padrão ativas** (com cor e ícone) | `DadosIniciais` + `categoria_padrao` |
-| Parâmetro fiscal: só os **ativos** contam na vigência e na regra de sobreposição | `ParametroFiscalServiceImpl` |
-| Alterações administrativas importantes ficam na **auditoria** | `AuditoriaService` |
+| Alterações administrativas importantes e eventos de segurança ficam na **auditoria**, que não pode ser alterada | `AuditoriaService` |
 
 ## Modelo de dados
 
 ```
-empresa  1 ───< usuario           (usuario.empresa_id; nulo na conta pessoal)
-usuario  1 ───< usuario_modulo    (módulos escolhidos/liberados)
-empresa  1 ───< categoria         (categoria.empresa_id; nulo = conta pessoal)
-empresa  1 ───< transacao         (transacao.empresa_id; nulo = conta pessoal)
-usuario  1 ───< categoria         (categoria.usuario_id = dono pessoal ou quem criou)
-usuario  1 ───< transacao         (transacao.usuario_id = dono pessoal ou quem lançou)
+usuario  1 ───< usuario_modulo    (módulos escolhidos)
+usuario  1 ───< categoria         (categoria.usuario_id = dono)
+usuario  1 ───< conta_financeira  (conta_financeira.usuario_id = dono)
+usuario  1 ───< transacao         (transacao.usuario_id = dono)
 categoria 1 ─< transacao          (transacao.id_categoria)
-conta_financeira 1 ─< transacao   (transacao.conta_id; dono igual ao da categoria)
-parametro_fiscal                  (global, administrado pelo SUPER_ADMIN)
+conta_financeira 1 ─< transacao   (transacao.conta_id)
+categoria_padrao                  (global: o que toda conta nova recebe)
+auditoria                         (global, imutável; autor gravado como id + e-mail, sem chave estrangeira)
 ```
 
 | Tabela | Colunas principais |
 |---|---|
-| `usuario` | `email` (único, sem diferenciar maiúsculas), `nome`, `password` (BCrypt), `telefone`, `profissao`, `role`, `ativo`, `empresa_id` |
+| `usuario` | `email` (único, sem diferenciar maiúsculas), `nome`, `password` (BCrypt), `telefone`, `profissao`, `role`, `ativo`, `tentativas_login`, `bloqueado_ate`, `versao_sessao`, `ultimo_acesso` |
 | `usuario_modulo` | `usuario_id`, `modulo` |
-| `empresa` | `razao_social`, `nome_fantasia`, `cnpj` (único), `tipo`, `telefone`, `email`, `responsavel_id` |
-| `categoria` | `nome`, `tipo`, `cor`, `icone`, `usuario_id`, `empresa_id` |
-| `conta_financeira` | `nome`, `tipo`, `saldo_inicial` NUMERIC(15,2), `cor`, `ativa`, `usuario_id`, `empresa_id` |
-| `transacao` | `descricao`, `valor` NUMERIC(15,2), `data` (vencimento se pendente), `tipo`, `escopo`, `pago`, `data_pagamento`, `id_categoria`, `conta_id`, `usuario_id`, `empresa_id` |
-| `parametro_fiscal` | `chave`, `valor` NUMERIC(15,2), `vigencia_inicio`, `vigencia_fim` · único (`chave`, `vigencia_inicio`) |
+| `categoria` | `nome`, `tipo`, `cor`, `icone`, `usuario_id` |
+| `conta_financeira` | `nome`, `tipo`, `saldo_inicial` NUMERIC(15,2), `cor`, `ativa`, `usuario_id` |
+| `transacao` | `descricao`, `valor` NUMERIC(15,2), `data` (vencimento se pendente), `tipo`, `pago`, `data_pagamento`, `id_categoria`, `conta_id`, `usuario_id` |
+| `categoria_padrao` | `nome` (único sem diferenciar maiúsculas), `tipo`, `cor`, `icone`, `ativo` |
+| `auditoria` | `autor_id`, `autor_email`, `acao`, `alvo`, `detalhe`, `datacadastro` |
 
 Todas as entidades herdam de `DefaultEntity`: `id` (IDENTITY), `dataCadastro` e `dataAlteracao`, preenchidas automaticamente.
 
@@ -636,12 +568,9 @@ Todas as entidades herdam de `DefaultEntity`: `id` (IDENTITY), `dataCadastro` e 
 
 | Enum | Valores |
 |---|---|
-| `Role` | `SUPER_ADMIN`, `PESSOAL`, `ADMIN_EMPRESA`, `USUARIO_EMPRESA` |
-| `TipoConta` | `PESSOAL`, `EMPRESA` (só no cadastro) |
-| `TipoEmpresa` | `MEI`, `MICROEMPRESA` |
+| `Role` | `SUPER_ADMIN`, `PESSOAL` |
 | `Modulo` | ver [Módulos](#módulos-funcionalidades) |
 | `TipoTransacao` / `TipoCategoria` | `RECEITA`, `DESPESA` |
-| `Escopo` | `PESSOAL`, `EMPRESA` |
 | `TipoContaFinanceira` | `CONTA_CORRENTE`, `POUPANCA`, `CARTEIRA`, `INVESTIMENTO`, `OUTRA` |
 | `StatusPagamento` (calculado) | `PAGO`, `PENDENTE`, `ATRASADO` |
 
@@ -660,15 +589,27 @@ Quem cria e altera tabelas é o **Flyway**; o Hibernate só valida (`database.ge
 | V10 | Cria o usuário administrador inicial e as 6 categorias dele |
 | V11 | Padroniza e-mails em minúsculas e cria índice único que ignora maiúsculas |
 | V12 | Tipos de conta: cria `empresa` e `usuario_modulo`; adiciona telefone, WhatsApp, profissão, `ativo` e `empresa_id` no usuário e `empresa_id` em categoria/transação; converte ADMIN → SUPER_ADMIN, PF → PESSOAL e MEI/ME → ADMIN_EMPRESA (com a empresa pendente); remove `perfil_fiscal` e `atividade_mei` |
-
 | V13 | Painel administrativo: empresa ativa/inativa, `categoria_padrao` (as 6 iniciais saem do código), descrição/tipo de empresa/ativo/"alterado por" no parâmetro fiscal, tabela `auditoria` e os tetos de faturamento do MEI e da ME de 2026 |
 | V14 | Remove a coluna `whatsapp` do usuário (o cadastro pede só o telefone) |
 | V15 | Segurança da conta: tentativas de login, bloqueio temporário e versão da sessão |
 | V16 | Contas financeiras; lançamento com conta, `pago` e data de pagamento; ícone nas categorias (os lançamentos antigos vão para a conta "Carteira"/"Caixa" criada para cada dono, e os de data futura viram pendentes) |
+| V17 | Remove a tabela `parametro_fiscal` (só existia para os limites do MEI/ME) |
+| V18 | **Remove empresa** (ver abaixo): converte os perfis de empresa em PESSOAL, passa os dados da empresa para o responsável e apaga a tabela `empresa`, as colunas `empresa_id` e `transacao.escopo` |
+| V19 | Último acesso do usuário (`ultimo_acesso`), gravado no login |
 
-> **Regra do time:** migration que já foi para a `main` **nunca é editada**. Para mudar algo, crie uma nova (`V15__...`).
+> **Regra do time:** migration que já foi para a `main` **nunca é editada**. Para mudar algo, crie uma nova (`V20__...`).
 
-Contas MEI/ME antigas viram ADMIN_EMPRESA com a empresa pendente. Ao cadastrar a empresa, as categorias e transações que já tinham passam a ser da empresa.
+**O que a V18 faz com os dados que já existem** (nada financeiro é apagado):
+
+1. Todo `ADMIN_EMPRESA` e `USUARIO_EMPRESA` vira **PESSOAL**, continua ativo ou inativo como estava e recebe todos os módulos.
+2. As categorias, contas financeiras e lançamentos de cada empresa passam para o **responsável** dela,
+   inclusive o que os colaboradores lançaram.
+3. Se o responsável já tinha uma categoria pessoal com o mesmo nome: sendo do mesmo tipo, os lançamentos
+   vão para a dele e a repetida sai; sendo de outro tipo, a da empresa ganha o sufixo " (empresa)".
+4. Quem fica sem categorias ou sem conta (colaboradores e admin com empresa pendente) recebe as categorias
+   padrão ativas e a conta "Carteira", como num cadastro novo.
+5. Saem os módulos `CLIENTES`, `FORNECEDORES` e `USUARIOS`, as colunas `empresa_id` e `transacao.escopo` e a tabela `empresa`.
+6. A auditoria antiga fica como está (é imutável).
 
 ## Segurança e LGPD
 
@@ -681,12 +622,13 @@ Contas MEI/ME antigas viram ADMIN_EMPRESA com a empresa pendente. Ao cadastrar a
 - **Encerramento de sessões:** o token leva a versão da sessão do usuário (claim `sv`). Trocar a senha
   ou o e-mail, ou usar "sair de todos os outros aparelhos", sobe a versão e os tokens antigos passam a
   responder **401** na hora.
-- **Checagem em toda requisição** (`AcessoFilter`): usuário ativo, cadastro da empresa concluído e módulo liberado.
-- **Isolamento pelo dono:** transações e categorias são sempre buscadas pelo dono (conta pessoal ou empresa), que vem do token. Um id de outra conta responde **404**, como se não existisse.
-- **Painel administrativo:** o SUPER_ADMIN gerencia usuários e empresas e **consulta** as transações de todos (sem alterar), e cada pesquisa de transações fica na auditoria. Essa visão foi uma decisão do projeto e substitui a regra anterior de "só dados agregados".
-- **Auditoria** de toda alteração administrativa importante (usuários, perfis, empresas, categorias padrão, parâmetros fiscais)
+- **Checagem em toda requisição** (`AcessoFilter`): usuário ativo, perfil e sessão válidos e módulo liberado.
+- **Isolamento pelo dono:** transações, contas e categorias são sempre buscadas pelo dono (o usuário do token). Um id de outra conta responde **404**, como se não existisse.
+- **Painel administrativo:** o SUPER_ADMIN gerencia os usuários e **consulta** as transações de todos (sem alterar), e cada pesquisa de transações fica na auditoria. Essa visão foi uma decisão do projeto e substitui a regra anterior de "só dados agregados".
+- **Auditoria imutável** de toda alteração administrativa importante (usuários, perfis, categorias padrão, consultas de transações)
   e dos eventos de segurança da conta (dados pessoais, senha e e-mail alterados, sessões encerradas, conta bloqueada).
 - **Logs:** a exibição de SQL com parâmetros reais vale só no perfil `dev`.
+- **Repositório:** `.env`, chaves (só a `publicKey.pem` vai para o Git), arquivos de IA, prompts e referências de design ficam no `.gitignore`.
 
 ## Testes automatizados
 
@@ -697,15 +639,17 @@ Testes de ponta a ponta em `src/test/java/.../ApiTest.java` (JUnit 5 + RestAssur
 .\mvnw.cmd test   # Windows
 ```
 
-Cobrem 52 cenários:
-- cadastro e login (conta pessoal e de empresa, e-mail sem diferenciar maiúsculas, regras de senha e confirmação, profissão, telefone, senha errada, categorias iniciais);
-- empresa (só usa o sistema depois de cadastrar, CNPJ inválido/repetido, cadastro único, conta pessoal não cadastra empresa);
-- usuários da empresa (módulos liberados, dados compartilhados, Receitas sem Despesas, `USUARIOS` não liberável, desativar/ativar, administrador principal protegido, exclusão só sem histórico, isolamento entre empresas);
-- conta pessoal personalizando os módulos;
+São **55 testes**, todos passando. Cobrem:
+- cadastro e login (conta pessoal, e-mail sem diferenciar maiúsculas, regras de senha e confirmação, profissão, telefone, senha errada, categorias e conta iniciais);
+- segurança da conta (senha atual para alterar dados, troca de senha/e-mail invalidando os tokens, encerrar sessões, bloqueio depois de 5 senhas erradas);
+- módulos da conta pessoal (Receitas sem Despesas, módulo inexistente recusado);
 - erros de entrada (corpo ausente, JSON malformado, enum inválido, sem token);
-- isolamento entre contas (ler, editar e excluir dados de outra pessoa; usar categoria alheia);
-- regras de transação, categoria, perfil e paginação;
-- painel administrativo (403 para os outros perfis, indicadores, busca e cadastro de usuários de todos os tipos, troca de perfil e token antigo invalidado, proteção do próprio usuário, exclusão só sem histórico, empresa desativada bloqueando a equipe, transações de todos com filtros e auditoria, categorias padrão e ranking, parâmetros fiscais ativos/inativos com "alterado por").
+- isolamento entre contas (ler, editar e excluir dados de outra pessoa; usar categoria ou conta alheia);
+- regras de transação, pagamento, contas financeiras, categoria, perfil e paginação;
+- painel administrativo (403 para a conta pessoal, visão geral do mês com mês anterior e mês sem dados, resumo de segurança,
+  último acesso, busca e cadastro de usuários e administradores, troca de perfil com token antigo invalidado, desativar cortando o
+  acesso na hora, proteção do próprio usuário, exclusão só sem histórico, transações de todos com filtros e auditoria,
+  categorias padrão e ranking, auditoria com filtros de autor, ação e período e sem rota para alterar ou apagar).
 
 > Rodar `mvnw test` com o `quarkus:dev` aberto faz o modo dev reiniciar (as classes são recompiladas). Espere alguns segundos antes da próxima requisição.
 
