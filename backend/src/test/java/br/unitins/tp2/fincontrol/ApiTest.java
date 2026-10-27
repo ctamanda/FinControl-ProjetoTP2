@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -94,8 +93,7 @@ class ApiTest {
                 .body("telefone", equalTo("63999990000"))
                 .body("profissao", equalTo("Analista"))
                 .body("modulos", hasItem("DASHBOARD"))
-                .body("modulos", not(hasItem("CLIENTES")))
-                .body("empresaPendente", equalTo(false))
+                .body("modulos", hasItem("CONTAS"))
                 .body("id", notNullValue());
     }
 
@@ -180,7 +178,7 @@ class ApiTest {
                 .body(corpo)
                 .when().post("/auth/register")
                 .then().statusCode(400)
-                .body("errors.message", contains("A profissão deve ser informada na conta pessoal."));
+                .body("errors.message", contains("A profissão deve ser informada."));
     }
 
     @Test
@@ -224,14 +222,12 @@ class ApiTest {
 
     @Test
     void enumInvalidoListaValoresAceitos() {
-        var corpo = cadastroPessoal(novoEmail());
-        corpo.put("tipoConta", "XYZ");
-        given().contentType(ContentType.JSON)
-                .body(corpo)
-                .when().post("/auth/register")
+        given().auth().oauth2(registrarELogar()).contentType(ContentType.JSON)
+                .body(Map.of("nome", "Qualquer", "tipo", "XYZ"))
+                .when().post("/categorias")
                 .then().statusCode(400)
-                .body("errors[0].field", equalTo("tipoConta"))
-                .body("errors[0].message", equalTo("Valor inválido. Use um destes: PESSOAL, EMPRESA."));
+                .body("errors[0].field", equalTo("tipo"))
+                .body("errors[0].message", equalTo("Valor inválido. Use um destes: RECEITA, DESPESA."));
     }
 
     @Test
@@ -239,121 +235,15 @@ class ApiTest {
         given().when().get("/transacoes").then().statusCode(401);
     }
 
-    // ------------------------------------------------------------------ empresa
-
-    @Test
-    void contaEmpresaSoUsaOSistemaDepoisDeCadastrarAEmpresa() {
-        String email = novoEmail();
-        given().contentType(ContentType.JSON).body(cadastroEmpresa(email))
-                .when().post("/auth/register")
-                .then().statusCode(201)
-                .body("role", equalTo("ADMIN_EMPRESA"))
-                .body("empresaPendente", equalTo(true));
-        String token = logar(email);
-
-        given().auth().oauth2(token).when().get("/usuarios/me")
-                .then().statusCode(200)
-                .body("empresaPendente", equalTo(true))
-                .body("modulos", empty());
-        given().auth().oauth2(token).when().get("/transacoes")
-                .then().statusCode(403)
-                .body("detail", equalTo("Cadastre a empresa para continuar."));
-        given().auth().oauth2(token).when().get("/categorias").then().statusCode(403);
-
-        given().auth().oauth2(token).contentType(ContentType.JSON)
-                .body(empresa(novoCnpj()))
-                .when().post("/empresa")
-                .then().statusCode(201)
-                .body("tipo", equalTo("MEI"));
-
-        given().auth().oauth2(token).when().get("/usuarios/me")
-                .then().statusCode(200)
-                .body("empresaPendente", equalTo(false))
-                .body("empresa.responsavel", equalTo(true))
-                .body("modulos", hasItem("USUARIOS"));
-        given().auth().oauth2(token).when().get("/categorias")
-                .then().statusCode(200).body("size()", equalTo(6));
-    }
-
-    @Test
-    void cnpjInvalidoOuRepetidoDevolve400() {
-        String tokenA = registrarEmpresaPendente();
-        given().auth().oauth2(tokenA).contentType(ContentType.JSON)
-                .body(empresa("11.111.111/1111-11"))
-                .when().post("/empresa")
-                .then().statusCode(400)
-                .body("errors[0].field", equalTo("cnpj"));
-
-        String cnpj = novoCnpj();
-        criarEmpresa(tokenA, cnpj);
-
-        String tokenB = registrarEmpresaPendente();
-        given().auth().oauth2(tokenB).contentType(ContentType.JSON)
-                .body(empresa(cnpj))
-                .when().post("/empresa")
-                .then().statusCode(400)
-                .body("errors[0].message", equalTo("Já existe uma empresa cadastrada com este CNPJ."));
-    }
-
-    @Test
-    void empresaNaoECadastradaDuasVezes() {
-        String token = registrarEmpresaPendente();
-        criarEmpresa(token, novoCnpj());
-        given().auth().oauth2(token).contentType(ContentType.JSON)
-                .body(empresa(novoCnpj()))
-                .when().post("/empresa")
-                .then().statusCode(400);
-    }
-
-    @Test
-    void contaPessoalNaoCadastraEmpresa() {
-        given().auth().oauth2(registrarELogar()).contentType(ContentType.JSON)
-                .body(empresa(novoCnpj()))
-                .when().post("/empresa")
-                .then().statusCode(403);
-    }
-
-    // ------------------------------------------------------------------ usuários da empresa
-
-    @Test
-    void usuarioComumSoAcessaOsModulosLiberados() {
-        String admin = registrarEmpresaCompleta();
-        String usuario = logar(criarUsuarioEmpresa(admin, "USUARIO_EMPRESA", List.of("CATEGORIAS")));
-
-        given().auth().oauth2(usuario).when().get("/usuarios/me")
-                .then().statusCode(200)
-                .body("modulos", contains("CATEGORIAS"));
-        given().auth().oauth2(usuario).when().get("/categorias").then().statusCode(200);
-        given().auth().oauth2(usuario).when().get("/transacoes").then().statusCode(403);
-        given().auth().oauth2(usuario).when().get("/empresa/usuarios").then().statusCode(403);
-        given().auth().oauth2(usuario).contentType(ContentType.JSON)
-                .body(empresa(novoCnpj()))
-                .when().put("/empresa").then().statusCode(403);
-    }
-
-    @Test
-    void dadosDaEmpresaSaoCompartilhadosEntreOsUsuariosDela() {
-        String admin = registrarEmpresaCompleta();
-        String usuario = logar(criarUsuarioEmpresa(admin, "USUARIO_EMPRESA", List.of("LANCAMENTOS")));
-        String pessoal = registrarELogar();
-
-        given().auth().oauth2(admin).contentType(ContentType.JSON)
-                .body(transacao("Venda", "RECEITA", categoria(admin, "RECEITA")))
-                .when().post("/transacoes")
-                .then().statusCode(201)
-                .body("escopo", equalTo("EMPRESA"));
-
-        given().auth().oauth2(usuario).when().get("/transacoes")
-                .then().statusCode(200).body("totalItems", equalTo(1));
-        given().auth().oauth2(pessoal).when().get("/transacoes")
-                .then().statusCode(200).body("totalItems", equalTo(0));
-    }
+    // ------------------------------------------------------------------ módulos e acesso
 
     @Test
     void moduloReceitasNaoLancaNemVeDespesas() {
-        String admin = registrarEmpresaCompleta();
-        criarTransacao(admin, "DESPESA");
-        String usuario = logar(criarUsuarioEmpresa(admin, "USUARIO_EMPRESA", List.of("RECEITAS")));
+        String usuario = registrarELogar();
+        criarTransacao(usuario, "DESPESA");
+        given().auth().oauth2(usuario).contentType(ContentType.JSON)
+                .body(Map.of("modulos", List.of("RECEITAS")))
+                .when().put("/usuarios/me/modulos").then().statusCode(200);
 
         given().auth().oauth2(usuario).contentType(ContentType.JSON)
                 .body(transacao("Conta de luz", "DESPESA", categoria(usuario, "DESPESA")))
@@ -370,24 +260,14 @@ class ApiTest {
     }
 
     @Test
-    void moduloUsuariosNaoELiberadoParaUsuarioComum() {
-        String admin = registrarEmpresaCompleta();
-        var corpo = usuarioEmpresa(novoEmail(), "USUARIO_EMPRESA", List.of("DASHBOARD", "USUARIOS"));
-        given().auth().oauth2(admin).contentType(ContentType.JSON)
-                .body(corpo)
-                .when().post("/empresa/usuarios")
-                .then().statusCode(400)
-                .body("errors[0].field", equalTo("modulos"));
-    }
-
-    @Test
     void desativarCortaOAcessoNaHoraEAtivarDevolve() {
-        String admin = registrarEmpresaCompleta();
-        String email = criarUsuarioEmpresa(admin, "USUARIO_EMPRESA", List.of("DASHBOARD"));
+        String admin = logar(ADMIN_EMAIL);
+        String email = novoEmail();
+        registrar(email);
         String token = logar(email);
         long id = idDoUsuario(token);
 
-        given().auth().oauth2(admin).when().patch("/empresa/usuarios/" + id + "/desativar")
+        given().auth().oauth2(admin).when().patch("/admin/usuarios/" + id + "/desativar")
                 .then().statusCode(200).body("ativo", equalTo(false));
 
         given().auth().oauth2(token).when().get("/usuarios/me").then().statusCode(401);
@@ -395,53 +275,11 @@ class ApiTest {
                 .body(Map.of("email", email, "password", SENHA))
                 .when().post("/auth/login")
                 .then().statusCode(401)
-                .body("detail", equalTo("Usuário desativado. Fale com o administrador da empresa."));
+                .body("detail", equalTo("Usuário desativado. Fale com o suporte do FinControl."));
 
-        given().auth().oauth2(admin).when().patch("/empresa/usuarios/" + id + "/ativar")
+        given().auth().oauth2(admin).when().patch("/admin/usuarios/" + id + "/ativar")
                 .then().statusCode(200).body("ativo", equalTo(true));
         logar(email);
-    }
-
-    @Test
-    void administradorPrincipalNaoPodeSerRebaixadoDesativadoNemExcluido() {
-        String principal = registrarEmpresaCompleta();
-        long idPrincipal = idDoUsuario(principal);
-        String outroAdmin = logar(criarUsuarioEmpresa(principal, "ADMIN_EMPRESA", List.of()));
-
-        given().auth().oauth2(outroAdmin).when().patch("/empresa/usuarios/" + idPrincipal + "/desativar")
-                .then().statusCode(400);
-        given().auth().oauth2(outroAdmin).when().delete("/empresa/usuarios/" + idPrincipal)
-                .then().statusCode(400);
-        given().auth().oauth2(outroAdmin).contentType(ContentType.JSON)
-                .body(Map.of("nome", "Principal", "telefone", "63999990000", "role", "USUARIO_EMPRESA"))
-                .when().put("/empresa/usuarios/" + idPrincipal)
-                .then().statusCode(400);
-        given().auth().oauth2(principal).when().patch("/empresa/usuarios/" + idPrincipal + "/desativar")
-                .then().statusCode(400);
-    }
-
-    @Test
-    void soExcluiUsuarioSemHistorico() {
-        String admin = registrarEmpresaCompleta();
-        String comHistorico = logar(criarUsuarioEmpresa(admin, "USUARIO_EMPRESA", List.of("LANCAMENTOS")));
-        criarTransacao(comHistorico, "DESPESA");
-        long idSemHistorico = idDoUsuario(logar(criarUsuarioEmpresa(admin, "USUARIO_EMPRESA", List.of())));
-
-        given().auth().oauth2(admin).when().delete("/empresa/usuarios/" + idDoUsuario(comHistorico))
-                .then().statusCode(400);
-        given().auth().oauth2(admin).when().delete("/empresa/usuarios/" + idSemHistorico)
-                .then().statusCode(204);
-    }
-
-    @Test
-    void adminNaoVeUsuarioDeOutraEmpresa() {
-        String adminA = registrarEmpresaCompleta();
-        String adminB = registrarEmpresaCompleta();
-        long idDeB = idDoUsuario(logar(criarUsuarioEmpresa(adminB, "USUARIO_EMPRESA", List.of())));
-
-        given().auth().oauth2(adminA).when().get("/empresa/usuarios/" + idDeB).then().statusCode(404);
-        given().auth().oauth2(adminA).when().get("/empresa/usuarios")
-                .then().statusCode(200).body("size()", equalTo(1));
     }
 
     // ------------------------------------------------------------------ conta pessoal
@@ -463,10 +301,9 @@ class ApiTest {
         given().auth().oauth2(token).contentType(ContentType.JSON)
                 .body(Map.of("modulos", List.of("CLIENTES")))
                 .when().put("/usuarios/me/modulos")
-                .then().statusCode(400)
-                .body("errors[0].field", equalTo("modulos"));
+                .then().statusCode(400);
 
-        given().auth().oauth2(registrarEmpresaCompleta()).contentType(ContentType.JSON)
+        given().auth().oauth2(logar(ADMIN_EMAIL)).contentType(ContentType.JSON)
                 .body(Map.of("modulos", List.of("DASHBOARD")))
                 .when().put("/usuarios/me/modulos")
                 .then().statusCode(403);
@@ -727,19 +564,6 @@ class ApiTest {
     }
 
     @Test
-    void empresaComecaComCaixaEColaboradorSemModuloContasSoConsulta() {
-        String admin = registrarEmpresaCompleta();
-        given().auth().oauth2(admin).when().get("/contas")
-                .then().statusCode(200).body("nome", contains("Caixa"));
-
-        String colaborador = logar(criarUsuarioEmpresa(admin, "USUARIO_EMPRESA", List.of("LANCAMENTOS")));
-        given().auth().oauth2(colaborador).when().get("/contas").then().statusCode(200).body("size()", equalTo(1));
-        given().auth().oauth2(colaborador).contentType(ContentType.JSON)
-                .body(Map.of("nome", "Banco", "tipo", "CONTA_CORRENTE", "saldoInicial", 0))
-                .when().post("/contas").then().statusCode(403);
-    }
-
-    @Test
     void categoriaGuardaOIcone() {
         String token = registrarELogar();
         given().auth().oauth2(token).contentType(ContentType.JSON)
@@ -764,7 +588,7 @@ class ApiTest {
                 .when().post("/transacoes")
                 .then().statusCode(201)
                 .body("categoria.tipo", equalTo("DESPESA"))
-                .body("escopo", equalTo("PESSOAL"));
+                .body("conta.nome", equalTo("Carteira"));
 
         given().auth().oauth2(tokenA).when().get("/transacoes")
                 .then().statusCode(200).body("totalItems", equalTo(1));
@@ -869,11 +693,7 @@ class ApiTest {
 
     @Test
     void quemNaoESuperAdminNaoAcessaAdmin() {
-        String pessoal = registrarELogar();
-        String adminEmpresa = registrarEmpresaCompleta();
-        for (String token : List.of(pessoal, adminEmpresa)) {
-            given().auth().oauth2(token).when().get("/admin/estatisticas").then().statusCode(403);
-        }
+        given().auth().oauth2(registrarELogar()).when().get("/admin/estatisticas").then().statusCode(403);
     }
 
     @Test
@@ -884,14 +704,12 @@ class ApiTest {
                 .then().statusCode(200)
                 .body("totalAdmins", greaterThanOrEqualTo(1))
                 .body("usuariosAtivos", greaterThanOrEqualTo(2))
-                .body("totalEmpresas", notNullValue())
                 .body("totalRegistros", greaterThan(0))
                 .body("categoriasMaisUtilizadas.size()", greaterThan(0))
                 .body("transacoesPorMes.size()", equalTo(6))
                 .body("transacoesPorMes[5].valor", greaterThan(0f))
                 .body("cadastrosPorMes.size()", equalTo(6))
-                .body("cadastrosPorMes[5].contasPessoais", greaterThanOrEqualTo(1))
-                .body("totalColaboradores", greaterThanOrEqualTo(0));
+                .body("cadastrosPorMes[5].contasPessoais", greaterThanOrEqualTo(1));
     }
 
     @Test
@@ -908,7 +726,7 @@ class ApiTest {
     @Test
     void quemNaoESuperAdminNaoAcessaOPainel() {
         String pessoal = registrarELogar();
-        for (String rota : List.of("/admin/usuarios", "/admin/empresas", "/admin/transacoes",
+        for (String rota : List.of("/admin/usuarios", "/admin/transacoes",
                 "/admin/categorias-padrao", "/admin/categorias/ranking", "/admin/auditoria")) {
             given().auth().oauth2(pessoal).when().get(rota).then().statusCode(403);
         }
@@ -926,11 +744,8 @@ class ApiTest {
     }
 
     @Test
-    void superAdminCriaContaPessoalUsuarioDeEmpresaEOutroAdministrador() {
+    void superAdminCriaContaPessoalEOutroAdministrador() {
         String admin = logar(ADMIN_EMAIL);
-        String adminEmpresa = registrarEmpresaCompleta();
-        long idEmpresa = given().auth().oauth2(adminEmpresa).when().get("/usuarios/me")
-                .then().extract().jsonPath().getLong("empresa.id");
 
         var pessoal = usuarioAdmin(novoEmail(), "PESSOAL");
         pessoal.put("profissao", "Contadora");
@@ -940,17 +755,14 @@ class ApiTest {
         given().auth().oauth2(logar(emailPessoal)).when().get("/categorias")
                 .then().statusCode(200).body("size()", equalTo(6));
 
-        var comum = usuarioAdmin(novoEmail(), "USUARIO_EMPRESA");
-        comum.put("idEmpresa", idEmpresa);
-        comum.put("modulos", List.of("DASHBOARD"));
-        given().auth().oauth2(admin).contentType(ContentType.JSON).body(comum)
-                .when().post("/admin/usuarios").then().statusCode(201)
-                .body("empresa.id", equalTo((int) idEmpresa));
-
-        var semEmpresa = usuarioAdmin(novoEmail(), "USUARIO_EMPRESA");
-        given().auth().oauth2(admin).contentType(ContentType.JSON).body(semEmpresa)
+        var semProfissao = usuarioAdmin(novoEmail(), "PESSOAL");
+        given().auth().oauth2(admin).contentType(ContentType.JSON).body(semProfissao)
                 .when().post("/admin/usuarios").then().statusCode(400)
-                .body("errors[0].field", equalTo("idEmpresa"));
+                .body("errors[0].field", equalTo("profissao"));
+
+        var perfilExtinto = usuarioAdmin(novoEmail(), "ADMIN_EMPRESA");
+        given().auth().oauth2(admin).contentType(ContentType.JSON).body(perfilExtinto)
+                .when().post("/admin/usuarios").then().statusCode(400);
 
         var outroAdmin = usuarioAdmin(novoEmail(), "SUPER_ADMIN");
         given().auth().oauth2(admin).contentType(ContentType.JSON).body(outroAdmin)
@@ -960,15 +772,12 @@ class ApiTest {
     }
 
     @Test
-    void perfilSoAlternaEntreUsuarioEAdministradorDoMesmoTipoDeConta() {
+    void perfilAlternaEntrePessoalEAdministrador() {
         String admin = logar(ADMIN_EMAIL);
         String email = novoEmail();
         registrar(email);
         String tokenAntigo = logar(email);
         long id = idDoUsuario(tokenAntigo);
-
-        given().auth().oauth2(admin).contentType(ContentType.JSON).body(edicaoAdmin("ADMIN_EMPRESA"))
-                .when().put("/admin/usuarios/" + id).then().statusCode(400);
 
         given().auth().oauth2(admin).contentType(ContentType.JSON).body(edicaoAdmin("SUPER_ADMIN"))
                 .when().put("/admin/usuarios/" + id).then().statusCode(200).body("role", equalTo("SUPER_ADMIN"));
@@ -1000,26 +809,6 @@ class ApiTest {
     }
 
     @Test
-    void empresaDesativadaBloqueiaTodosOsUsuariosDela() {
-        String admin = logar(ADMIN_EMAIL);
-        String adminEmpresa = registrarEmpresaCompleta();
-        long idEmpresa = given().auth().oauth2(adminEmpresa).when().get("/usuarios/me")
-                .then().extract().jsonPath().getLong("empresa.id");
-
-        given().auth().oauth2(admin).queryParam("busca", "Empresa Teste").when().get("/admin/empresas")
-                .then().statusCode(200).body("items.totalUsuarios", everyItem(notNullValue()));
-
-        given().auth().oauth2(admin).when().patch("/admin/empresas/" + idEmpresa + "/desativar")
-                .then().statusCode(200).body("ativo", equalTo(false));
-        given().auth().oauth2(adminEmpresa).when().get("/categorias")
-                .then().statusCode(401)
-                .body("detail", equalTo("Empresa desativada. Fale com o suporte do FinControl."));
-
-        given().auth().oauth2(admin).when().patch("/admin/empresas/" + idEmpresa + "/ativar").then().statusCode(200);
-        given().auth().oauth2(adminEmpresa).when().get("/categorias").then().statusCode(200);
-    }
-
-    @Test
     void superAdminVeTransacoesDeTodosComFiltrosEFicaNaAuditoria() {
         String admin = logar(ADMIN_EMAIL);
         String pessoal = registrarELogar();
@@ -1030,8 +819,7 @@ class ApiTest {
                 .when().get("/admin/transacoes")
                 .then().statusCode(200)
                 .body("totalItems", equalTo(1))
-                .body("items[0].usuario.id", equalTo((int) idUsuario))
-                .body("items[0].empresa", equalTo(null));
+                .body("items[0].usuario.id", equalTo((int) idUsuario));
         given().auth().oauth2(admin).queryParam("idUsuario", idUsuario).queryParam("tipo", "RECEITA")
                 .when().get("/admin/transacoes")
                 .then().statusCode(200).body("totalItems", equalTo(0));
@@ -1082,67 +870,12 @@ class ApiTest {
         return "teste-" + UUID.randomUUID().toString().substring(0, 8) + "@teste.local";
     }
 
-    // CNPJ aleatório com dígitos verificadores corretos (cada empresa precisa de um diferente).
-    private static String novoCnpj() {
-        int[] d = new int[14];
-        for (int i = 0; i < 8; i++) {
-            d[i] = ThreadLocalRandom.current().nextInt(10);
-        }
-        d[11] = 1; // filial 0001
-        d[12] = digitoCnpj(d, new int[] { 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2 });
-        d[13] = digitoCnpj(d, new int[] { 6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2 });
-        StringBuilder cnpj = new StringBuilder();
-        for (int digito : d) {
-            cnpj.append(digito);
-        }
-        return cnpj.toString();
-    }
-
-    private static int digitoCnpj(int[] d, int[] pesos) {
-        int soma = 0;
-        for (int i = 0; i < pesos.length; i++) {
-            soma += d[i] * pesos[i];
-        }
-        int resto = soma % 11;
-        return resto < 2 ? 0 : 11 - resto;
-    }
-
     private static Map<String, Object> cadastroPessoal(String email) {
         var corpo = new HashMap<String, Object>();
-        corpo.put("tipoConta", "PESSOAL");
         corpo.put("email", email);
         corpo.put("nome", "Pessoa Teste");
         corpo.put("telefone", "(63) 99999-0000");
         corpo.put("profissao", "Analista");
-        corpo.put("password", SENHA);
-        corpo.put("confirmPassword", SENHA);
-        return corpo;
-    }
-
-    private static Map<String, Object> cadastroEmpresa(String email) {
-        var corpo = cadastroPessoal(email);
-        corpo.put("tipoConta", "EMPRESA");
-        corpo.remove("profissao");
-        return corpo;
-    }
-
-    private static Map<String, Object> empresa(String cnpj) {
-        return Map.of(
-                "razaoSocial", "Empresa Teste LTDA",
-                "nomeFantasia", "Empresa Teste",
-                "cnpj", cnpj,
-                "tipo", "MEI",
-                "telefone", "(63) 3215-0000",
-                "email", "contato@empresa.local");
-    }
-
-    private static Map<String, Object> usuarioEmpresa(String email, String role, List<String> modulos) {
-        var corpo = new HashMap<String, Object>();
-        corpo.put("nome", "Colaborador");
-        corpo.put("email", email);
-        corpo.put("telefone", "63988887777");
-        corpo.put("role", role);
-        corpo.put("modulos", modulos);
         corpo.put("password", SENHA);
         corpo.put("confirmPassword", SENHA);
         return corpo;
@@ -1194,37 +927,6 @@ class ApiTest {
         String email = novoEmail();
         registrar(email);
         return logar(email);
-    }
-
-    // Admin de empresa logado, ainda sem a empresa cadastrada.
-    private static String registrarEmpresaPendente() {
-        String email = novoEmail();
-        given().contentType(ContentType.JSON).body(cadastroEmpresa(email))
-                .when().post("/auth/register").then().statusCode(201);
-        return logar(email);
-    }
-
-    private static void criarEmpresa(String token, String cnpj) {
-        given().auth().oauth2(token).contentType(ContentType.JSON)
-                .body(empresa(cnpj))
-                .when().post("/empresa").then().statusCode(201);
-    }
-
-    // Admin de empresa logado, com a empresa já cadastrada.
-    private static String registrarEmpresaCompleta() {
-        String token = registrarEmpresaPendente();
-        criarEmpresa(token, novoCnpj());
-        return token;
-    }
-
-    // Devolve o e-mail do usuário criado (a senha é SENHA).
-    private static String criarUsuarioEmpresa(String tokenAdmin, String role, List<String> modulos) {
-        String email = novoEmail();
-        given().auth().oauth2(tokenAdmin).contentType(ContentType.JSON)
-                .body(usuarioEmpresa(email, role, modulos))
-                .when().post("/empresa/usuarios")
-                .then().statusCode(201);
-        return email;
     }
 
     private static long idDoUsuario(String token) {
