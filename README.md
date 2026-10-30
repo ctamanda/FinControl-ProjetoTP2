@@ -45,7 +45,7 @@ O FinControl organiza **receitas, despesas, contas a pagar e a receber, contas f
 |---|---|---|
 | **Visitante** | — | Vê a página de apresentação e cria conta |
 | **PESSOAL** | Minhas finanças | Controla as próprias finanças: visão geral do mês, lançamentos, contas a pagar, contas e categorias, nas funcionalidades que escolheu |
-| **SUPER_ADMIN** | Painel do administrador | Administra o FinControl: visão geral do mês com indicadores reais, usuários, transações (só consulta), categorias padrão e auditoria |
+| **SUPER_ADMIN** | Painel do administrador | Administra o FinControl: visão geral do mês com indicadores reais, usuários (com ficha, desbloqueio, encerrar sessões e senha provisória), transações (só consulta), categorias padrão e auditoria |
 
 **Privacidade:** cada conta só enxerga os próprios dados. O SUPER_ADMIN **consulta** as transações de todos sem poder alterá-las, e cada consulta fica registrada na auditoria.
 
@@ -73,7 +73,7 @@ FinControl-ProjetoTP2/
 ├── backend/                 # API REST (Java 25 + Quarkus)
 │   ├── src/main/java/...    # resource, service, repository, model, dto, mapper, security, validation, exception
 │   ├── src/main/resources/  # application.properties, migrations Flyway, chave PÚBLICA JWT
-│   ├── src/test/java/...    # testes de ponta a ponta (55 testes)
+│   ├── src/test/java/...    # testes de ponta a ponta (62 testes)
 │   ├── docker-compose.yml   # PostgreSQL para desenvolvimento
 │   ├── Dockerfile
 │   └── README.md            # documentação completa da API
@@ -254,7 +254,7 @@ Os erros seguem o padrão **RFC 7807** (`application/problem+json`), com a lista
 ## Testes
 
 ```bash
-# Backend: 55 testes de ponta a ponta (H2 em memória, sem Docker)
+# Backend: 62 testes de ponta a ponta (H2 em memória, sem Docker)
 cd backend
 ./mvnw test          # Linux/Mac
 .\mvnw.cmd test      # Windows
@@ -271,7 +271,8 @@ Os testes do backend cobrem:
 - **isolamento entre contas** (ninguém lê, edita ou usa dados de outra pessoa);
 - regras de transações, pagamentos, contas financeiras e categorias;
 - painel do administrador (visão geral do mês, usuários, desativação imediata, transações auditadas,
-  categorias padrão, auditoria com filtros e sem rota para alterar) e acesso restrito a ele.
+  categorias padrão, auditoria com filtros e sem rota para alterar), o suporte ao usuário (desbloqueio, encerrar sessões,
+  senha provisória, ficha sem valores) e o que o admin não pode fazer (alterar dados dos usuários, receber senha ou hash).
 
 ## Site no GitHub Pages
 

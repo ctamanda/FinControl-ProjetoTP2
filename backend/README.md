@@ -167,7 +167,8 @@ de produção nem nos testes (`@IfBuildProfile("dev")`).
 
 O que a carga cria (tudo com e-mail `@fincontrol.demo` e senha **`Demo@123`**):
 
-- **13 contas pessoais** cadastradas ao longo dos últimos 6 meses (2 delas desativadas pelo admin), com módulos variados;
+- **16 contas pessoais** cadastradas ao longo dos últimos 6 meses, com módulos variados: 2 desativadas pelo admin,
+  1 que **parou de usar** (Rafael, sem entrar há 41 dias) e 2 que se cadastraram e **nunca lançaram** (Otávio e Paula);
 - contas financeiras (Carteira, Nubank, Banco Inter, Poupança) e categorias próprias (Pet, Saúde, Assinaturas, Educação, Freelance);
 - **lançamentos de todos os meses** desde o cadastro de cada uma: salário, aluguel, luz, mercado, transporte, lazer...
   Os do resto do mês atual ficam **a pagar/receber** e algumas contas do mês passado ficam **atrasadas**;
@@ -418,23 +419,45 @@ Toda alteração importante fica registrada na **auditoria** (quem, o quê, em q
   "categoriasPadrao": [ { "id": 1, "nome": "Alimentação", "tipo": "DESPESA", "cor": "#FF5733", "icone": "restaurant",
                           "ativo": true, "lancamentos": 43, "usuarios": 14 } ],  // uso no mês, somando as cópias
   "seguranca": { "contasBloqueadasHoje": 2, "senhasTrocadasSemana": 5,
-                 "sessoesEncerradasSemana": 2, "emailsTrocadosSemana": 1 } }  // contados na auditoria
+                 "sessoesEncerradasSemana": 2, "emailsTrocadosSemana": 1 },  // contados na auditoria
+  "engajamento": { "semAcesso30Dias": 1, "nuncaLancaram": 2, "semAcessoRegistrado": 0 } }  // situação de hoje
 ```
 
 Nada no painel é estimado: tudo sai de cadastros, lançamentos e auditoria. "Ligado" é o módulo escolhido
 pela conta; "com dados" é quem já usou de fato (lançou receita/despesa, cadastrou conta além da Carteira
 ou criou categoria própria). A base dos percentuais são as contas pessoais ativas.
 
+`engajamento` olha as contas pessoais ativas **hoje** (não depende do mês): `semAcesso30Dias` conta quem
+tem último login registrado há 30 dias ou mais; `nuncaLancaram`, quem não tem nenhum lançamento.
+Quem ainda não tem login gravado (o último acesso só é gravado desde a V19) vai em `semAcessoRegistrado`
+e não entra em "parou de usar", para não chutar um número.
+
 **Usuários**
 
 | Método | Rota | Corpo | Resposta |
 |---|---|---|---|
-| GET | `/admin/usuarios?busca=&role=&ativo=&page=0&pageSize=20` | — | **200** `PageResponse<UsuarioResponseDTO>` (com `ultimoAcesso`) |
+| GET | `/admin/usuarios?busca=&role=&ativo=&situacao=&page=0&pageSize=20` | — | **200** `PageResponse<UsuarioResponseDTO>` (com `ultimoAcesso`, `bloqueadoAte` e `trocarSenha`) |
 | GET | `/admin/usuarios/{id}` | — | **200** · **404** |
+| GET | `/admin/usuarios/{id}/ficha` | — | **200** `FichaUsuarioDTO`: cadastro, acesso, situação e **quantidades** (lançamentos, contas, categorias), sem valores nem descrições |
+| PATCH | `/admin/usuarios/{id}/desbloquear` | — | **200** zera as senhas erradas e o bloqueio · **400** se a conta não está bloqueada |
+| POST | `/admin/usuarios/{id}/encerrar-sessoes` | — | **200** todos os tokens do usuário deixam de valer · **400** na própria conta (use `/usuarios/me/encerrar-sessoes`) |
+| POST | `/admin/usuarios/{id}/senha-provisoria` | — | **200** `{ "senhaProvisoria": "..." }` (só nesta resposta, `Cache-Control: no-store`) · **400** na própria conta |
 | POST | `/admin/usuarios` | `AdminUsuarioRequestDTO` | **201** |
 | PUT | `/admin/usuarios/{id}` | `AdminUsuarioUpdateDTO` | **200** |
 | PATCH | `/admin/usuarios/{id}/ativar` · `/desativar` | — | **200** · desativar corta o acesso na hora (401 no próximo pedido) |
 | DELETE | `/admin/usuarios/{id}` | — | **204** · **400** se tiver histórico (lançamentos ou ações na auditoria) |
+
+`situacao` aceita `BLOQUEADO` (bloqueada agora por senhas erradas), `SEM_ACESSO_30_DIAS` e `SEM_LANCAMENTO`
+(contas pessoais ativas, os mesmos critérios do painel).
+
+**Senha provisória:** o admin gera uma senha de 10 caracteres que cumpre as regras de senha forte. A senha atual
+deixa de valer, as sessões abertas caem e o bloqueio é tirado. No próximo login a pessoa só consegue ver o
+próprio perfil (`GET /usuarios/me`, com `trocarSenha: true`) e trocar a senha (`PUT /usuarios/me/senha`);
+qualquer outra rota responde **403** até a troca. O banco guarda só o hash, e a auditoria registra o fato
+(`SENHA_PROVISORIA_GERADA`), nunca a senha.
+
+Desbloquear (`CONTA_DESBLOQUEADA`), encerrar sessões (`SESSOES_ENCERRADAS`, autor = admin) e a senha
+provisória ficam na auditoria com o e-mail do admin.
 
 ```jsonc
 // AdminUsuarioRequestDTO
@@ -534,6 +557,8 @@ Os erros da aplicação seguem o padrão **RFC 7807 / 9457** (`application/probl
 | Token de uma conta que não existe mais responde **401** | `AcessoFilter` + `UsuarioService.buscarLogado` |
 | Perfil mudou depois do login (ex.: admin rebaixado): o token antigo responde **401** | `AcessoFilter` |
 | Sempre existe **pelo menos um SUPER_ADMIN ativo**; ninguém altera o próprio perfil nem se desativa/exclui | `AdminUsuarioService` |
+| Ficha do usuário só com quantidades; valores, saldos e descrições ficam de fora | `AdminUsuarioService.ficha` |
+| Senha provisória: aparece uma vez, só o hash é guardado e as outras rotas respondem 403 até a troca | `AdminUsuarioService`, `AcessoFilter` |
 | Exclusão só de quem não tem histórico (lançamentos ou ações na auditoria); as categorias e a conta iniciais vão junto | `AdminUsuarioService.temHistorico` |
 | Admin rebaixado a PESSOAL ganha as categorias padrão e a Carteira, se ainda não tiver | `AdminUsuarioService` |
 | Categorias iniciais das contas novas vêm das **categorias padrão ativas** (com cor e ícone) | `DadosIniciais` + `categoria_padrao` |
@@ -596,8 +621,9 @@ Quem cria e altera tabelas é o **Flyway**; o Hibernate só valida (`database.ge
 | V17 | Remove a tabela `parametro_fiscal` (só existia para os limites do MEI/ME) |
 | V18 | **Remove empresa** (ver abaixo): converte os perfis de empresa em PESSOAL, passa os dados da empresa para o responsável e apaga a tabela `empresa`, as colunas `empresa_id` e `transacao.escopo` |
 | V19 | Último acesso do usuário (`ultimo_acesso`), gravado no login |
+| V20 | Senha provisória (`trocar_senha`, falso para todo mundo que já existe) |
 
-> **Regra do time:** migration que já foi para a `main` **nunca é editada**. Para mudar algo, crie uma nova (`V20__...`).
+> **Regra do time:** migration que já foi para a `main` **nunca é editada**. Para mudar algo, crie uma nova (`V21__...`).
 
 **O que a V18 faz com os dados que já existem** (nada financeiro é apagado):
 
@@ -639,7 +665,7 @@ Testes de ponta a ponta em `src/test/java/.../ApiTest.java` (JUnit 5 + RestAssur
 .\mvnw.cmd test   # Windows
 ```
 
-São **55 testes**, todos passando. Cobrem:
+São **62 testes**, todos passando. Cobrem:
 - cadastro e login (conta pessoal, e-mail sem diferenciar maiúsculas, regras de senha e confirmação, profissão, telefone, senha errada, categorias e conta iniciais);
 - segurança da conta (senha atual para alterar dados, troca de senha/e-mail invalidando os tokens, encerrar sessões, bloqueio depois de 5 senhas erradas);
 - módulos da conta pessoal (Receitas sem Despesas, módulo inexistente recusado);
@@ -649,7 +675,11 @@ São **55 testes**, todos passando. Cobrem:
 - painel administrativo (403 para a conta pessoal, visão geral do mês com mês anterior e mês sem dados, resumo de segurança,
   último acesso, busca e cadastro de usuários e administradores, troca de perfil com token antigo invalidado, desativar cortando o
   acesso na hora, proteção do próprio usuário, exclusão só sem histórico, transações de todos com filtros e auditoria,
-  categorias padrão e ranking, auditoria com filtros de autor, ação e período e sem rota para alterar ou apagar).
+  categorias padrão e ranking, auditoria com filtros de autor, ação e período e sem rota para alterar ou apagar);
+- suporte ao usuário pelo admin (filtro de bloqueados e desbloqueio, encerrar as sessões de alguém, senha provisória
+  com troca obrigatória e sem a senha na auditoria, ficha sem valores, contas que pararam de usar e que nunca lançaram);
+- o que o admin **não pode**: alterar ou apagar lançamentos, categorias e contas de um usuário, e nenhuma resposta
+  da API traz senha ou hash de senha.
 
 > Rodar `mvnw test` com o `quarkus:dev` aberto faz o modo dev reiniciar (as classes são recompiladas). Espere alguns segundos antes da próxima requisição.
 

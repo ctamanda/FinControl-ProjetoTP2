@@ -115,7 +115,7 @@ Abra **http://localhost:4200**.
 
 ### Dados de demonstração
 
-Com o backend rodando em modo dev (`quarkus:dev`), a carga de demonstração cria 13 contas pessoais
+Com o backend rodando em modo dev (`quarkus:dev`), a carga de demonstração cria 16 contas pessoais
 (`nome.sobrenome@fincontrol.demo`, senha **`Demo@123`**) com cadastros, lançamentos e eventos de segurança
 espalhados pelos últimos 6 meses. É o que deixa o painel do administrador cheio para a apresentação.
 Como carregar e zerar: veja **Dados de demonstração** no README do backend.
@@ -183,11 +183,13 @@ public/
 | `/categorias` · `/categorias/nova` · `/categorias/:id` | Categorias com ícone e cor | `CATEGORIAS` |
 | `/perfil` | Meu perfil: identidade, dados pessoais (nome, telefone, profissão), **segurança da conta** (senha, e-mail de acesso, sair dos outros aparelhos) e acesso | Logado |
 | `/configuracoes` | Funcionalidades da conta pessoal | `PESSOAL` |
-| `/admin/painel` | Visão geral do mês (seletor no topo): usuários ativos, novos cadastros, lançamentos e volume com a variação do mês anterior; novos cadastros em 6 meses; tabela de usuários com abas; uso dos módulos; segurança; categorias padrão mais usadas; auditoria recente | `SUPER_ADMIN` |
-| `/admin/usuarios` · `/novo` · `/:id` | Usuários: busca, abas Todos / Ativos / Inativos / Administradores, paginação, último acesso, criar conta pessoal ou administrador (`?perfil=SUPER_ADMIN`), editar, ativar/desativar (corta o acesso na hora), excluir só sem histórico | `SUPER_ADMIN` |
+| `/admin/painel` | Visão geral do mês (seletor no topo): usuários ativos, novos cadastros, lançamentos e volume com a variação do mês anterior; novos cadastros em 6 meses; tabela de usuários com abas; uso dos módulos; **base de usuários** (total, quem parou de usar há 30+ dias e quem nunca lançou, cada um abrindo a lista filtrada); segurança; categorias padrão mais usadas; auditoria recente | `SUPER_ADMIN` |
+| `/admin/usuarios` · `/novo` · `/:id` | Usuários: busca, abas Todos / Ativos / Inativos / Bloqueados / Administradores, filtros vindos do painel (`?filtro=SEM_ACESSO_30_DIAS` ou `SEM_LANCAMENTO`), paginação, último acesso, selos "Bloqueado" e "Senha provisória", criar conta pessoal ou administrador (`?perfil=SUPER_ADMIN`), editar, ativar/desativar (corta o acesso na hora), excluir só sem histórico | `SUPER_ADMIN` |
+| `/admin/usuarios/:id/ficha` | Ficha do usuário para o suporte: cadastro, último acesso, situação e **quantidades** (lançamentos, contas, categorias), sem valores nem descrições. Ações: desbloquear, encerrar sessões, gerar senha provisória (mostrada uma vez, com botão de copiar), desativar/reativar | `SUPER_ADMIN` |
 | `/admin/transacoes` | Transações de todos os usuários (só consulta e auditada) com filtros por período, usuário (`?usuario=ID`), categoria, tipo e descrição | `SUPER_ADMIN` |
 | `/admin/categorias` | Categorias padrão (criar, editar, ativar/desativar, cor e ícone) + ranking de uso | `SUPER_ADMIN` |
-| `/admin/auditoria` | Auditoria só leitura com filtros de autor, ação (`?acao=`) e período | `SUPER_ADMIN` |
+| `/admin/auditoria` | Auditoria só leitura com filtros de autor, ação (`?acao=`), período e texto (`?busca=`) | `SUPER_ADMIN` |
+| `/trocar-senha` | Primeiro acesso com senha provisória: a pessoa cria a própria senha antes de usar o sistema | Logado com senha provisória |
 
 ¹ Quem já está logado é levado direto para a primeira tela que pode abrir (ver `rotaInicial` em `core/acesso.ts`).
 
@@ -234,7 +236,8 @@ esta sessão continua e as outras caem. Depois de 5 senhas erradas seguidas a co
 |---|---|---|
 | `AuthService` | `core/auth/auth.service.ts` | Login, cadastro, logout, `isLoggedIn()`, `isSuperAdmin()`, rota inicial |
 | `authInterceptor` | `core/auth/auth.interceptor.ts` | Anexa o token (exceto em `/auth/*`) e trata 401 |
-| `authGuard` | `core/auth/auth.guard.ts` | Exige usuário logado (com o perfil ainda válido no back) |
+| `authGuard` | `core/auth/auth.guard.ts` | Exige usuário logado (com o perfil ainda válido no back); com senha provisória, manda para `/trocar-senha` |
+| `senhaProvisoriaGuard` | `core/auth/auth.guard.ts` | Só deixa abrir `/trocar-senha` quem ainda tem senha provisória |
 | `moduloGuard(...)` | `core/auth/auth.guard.ts` | Exige pelo menos um dos módulos |
 | `perfilGuard(...)` | `core/auth/auth.guard.ts` | Exige um dos perfis (`SUPER_ADMIN` ou `PESSOAL`) |
 | `visitanteGuard` | `core/auth/auth.guard.ts` | Tira usuários logados das telas de login/cadastro |
@@ -256,7 +259,7 @@ export const API_URL = 'http://localhost:8080';
 | `TransacaoService` | `GET/POST /transacoes`, `GET/PUT/DELETE /transacoes/{id}`, `PATCH /transacoes/{id}/pagar` e `/reabrir` |
 | `ContaService` | `GET/POST /contas`, `GET/PUT/DELETE /contas/{id}`, `PATCH /contas/{id}/arquivar` e `/reativar` |
 | `CategoriaService` | `GET/POST /categorias`, `GET/PUT/DELETE /categorias/{id}` |
-| `AdminService` | `GET /admin/painel?mes=`, `/admin/usuarios`, `/admin/transacoes`, `/admin/categorias-padrao`, `/admin/categorias/ranking`, `/admin/auditoria` |
+| `AdminService` | `GET /admin/painel?mes=`, `/admin/usuarios` (ficha, desbloquear, encerrar sessões, senha provisória), `/admin/transacoes`, `/admin/categorias-padrao`, `/admin/categorias/ranking`, `/admin/auditoria` |
 
 **Erros:** o backend responde no formato RFC 7807. A função `mensagemDeErro()` (em `core/api.ts`) transforma a resposta em uma frase para a tela: usa a lista `errors` (erros de campo) ou o `detail`.
 
