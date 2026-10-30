@@ -53,6 +53,8 @@ const VERBOS: Record<string, string> = {
   EMAIL_ALTERADO: 'trocou o e-mail de acesso de',
   SESSOES_ENCERRADAS: 'encerrou as sessões de',
   CONTA_BLOQUEADA: 'errou a senha várias vezes; bloqueado temporariamente:',
+  CONTA_DESBLOQUEADA: 'desbloqueou',
+  SENHA_PROVISORIA_GERADA: 'gerou uma senha provisória para',
 };
 
 // Quando a própria pessoa fez a ação na conta dela ("ana trocou a própria senha").

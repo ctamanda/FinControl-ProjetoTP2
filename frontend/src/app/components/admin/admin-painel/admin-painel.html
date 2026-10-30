@@ -220,6 +220,43 @@
         <input #termo type="search" placeholder="Buscar usuário por nome ou e-mail" aria-label="Buscar usuário por nome ou e-mail" />
       </form>
 
+      @if (painel(); as p) {
+        <section class="cartao c-base">
+          <div class="cartao-cabeca">
+            <h2>Base de usuários</h2>
+            <a class="link" routerLink="/admin/usuarios">Ver usuários</a>
+          </div>
+          <div class="seguranca">
+            <a class="seg-item largo" routerLink="/admin/usuarios">
+              <mat-icon>groups</mat-icon>
+              <strong>{{ p.totais.usuarios | number }}</strong>
+              <span>
+                usuários no total · {{ p.totais.ativos | number }} ativos · {{ p.totais.inativos | number }} inativos ·
+                {{ p.totais.administradores | number }} {{ p.totais.administradores === 1 ? 'administrador' : 'administradores' }}
+              </span>
+            </a>
+            <a class="seg-item" routerLink="/admin/usuarios" [queryParams]="{ filtro: 'SEM_ACESSO_30_DIAS' }">
+              <mat-icon>bedtime</mat-icon>
+              <strong>{{ p.engajamento.semAcesso30Dias | number }}</strong>
+              <span>Pararam de usar (30+ dias sem entrar)</span>
+            </a>
+            <a class="seg-item" routerLink="/admin/usuarios" [queryParams]="{ filtro: 'SEM_LANCAMENTO' }">
+              <mat-icon>hourglass_empty</mat-icon>
+              <strong>{{ p.engajamento.nuncaLancaram | number }}</strong>
+              <span>Cadastraram e nunca lançaram</span>
+            </a>
+          </div>
+          <p class="nota">
+            Contas pessoais ativas, situação de hoje.
+            @if (p.engajamento.semAcessoRegistrado > 0) {
+              {{ p.engajamento.semAcessoRegistrado | number }}
+              {{ p.engajamento.semAcessoRegistrado === 1 ? 'conta ainda não tem' : 'contas ainda não têm' }}
+              login registrado (o sistema passou a gravar o último acesso há pouco) e ficam fora de "pararam de usar".
+            }
+          </p>
+        </section>
+      }
+
       @if (seguranca().length) {
         <section class="cartao c-seguranca">
           <div class="cartao-cabeca">

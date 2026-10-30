@@ -293,6 +293,10 @@ a.link-linha:hover {
   line-height: 1.3;
 }
 
+.seg-item.largo {
+  grid-column: 1 / -1;
+}
+
 .seg-item.alerta {
   background: #fdecee;
 }
@@ -368,12 +372,13 @@ a.link-linha:hover {
   .cabeca-celular { order: 0; }
   .c-indicadores { order: 1; }
   .c-busca { order: 2; }
-  .c-seguranca { order: 3; }
-  .c-usuarios { order: 4; }
-  .c-cadastros { order: 5; }
-  .c-categorias { order: 6; }
-  .c-modulos { order: 7; }
-  .c-auditoria { order: 8; }
+  .c-base { order: 3; }
+  .c-seguranca { order: 4; }
+  .c-usuarios { order: 5; }
+  .c-cadastros { order: 6; }
+  .c-categorias { order: 7; }
+  .c-modulos { order: 8; }
+  .c-auditoria { order: 9; }
   .vazio.erro { order: 1; }
 
   .busca-admin {
