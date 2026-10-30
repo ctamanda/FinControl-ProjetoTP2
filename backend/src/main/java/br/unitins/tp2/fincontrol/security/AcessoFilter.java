@@ -23,7 +23,8 @@ import jakarta.ws.rs.ext.Provider;
 //  1. o usuário do token ainda existe e está ativo (desativar corta o acesso na hora),
 //     o perfil do token ainda é o atual e a versão da sessão do token ainda é a atual
 //     (troca de senha/e-mail encerra as sessões);
-//  2. se o endpoint tem @RequerModulo, o usuário precisa de pelo menos um daqueles módulos.
+//  2. com senha provisória, só passam os endpoints marcados com @PermiteSenhaProvisoria;
+//  3. se o endpoint tem @RequerModulo, o usuário precisa de pelo menos um daqueles módulos.
 // O perfil (SUPER_ADMIN ou PESSOAL) continua sendo checado pelo @RolesAllowed.
 @Provider
 @Priority(Priorities.AUTHORIZATION + 10)
@@ -75,6 +76,10 @@ public class AcessoFilter implements ContainerRequestFilter {
         Class<?> classe = resourceInfo.getResourceClass();
         if (metodo == null || classe == null) {
             return;
+        }
+
+        if (usuario.isTrocarSenha() && !metodo.isAnnotationPresent(PermiteSenhaProvisoria.class)) {
+            throw new ForbiddenException("Troque a senha provisória antes de continuar.");
         }
 
         RequerModulo requer = metodo.isAnnotationPresent(RequerModulo.class)

@@ -20,7 +20,9 @@ public final class UsuarioResponseMapper {
                 usuario.isAtivo(),
                 Permissoes.efetivos(usuario),
                 usuario.getDataCadastro(),
-                usuario.getUltimoAcesso()
+                usuario.getUltimoAcesso(),
+                usuario.isBloqueado() ? usuario.getBloqueadoAte() : null,
+                usuario.isTrocarSenha()
         );
     }
 }

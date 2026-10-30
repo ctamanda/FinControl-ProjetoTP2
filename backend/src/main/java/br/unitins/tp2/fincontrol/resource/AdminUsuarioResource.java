@@ -6,10 +6,13 @@ import org.eclipse.microprofile.jwt.JsonWebToken;
 
 import br.unitins.tp2.fincontrol.dto.AdminUsuarioRequestDTO;
 import br.unitins.tp2.fincontrol.dto.AdminUsuarioUpdateDTO;
+import br.unitins.tp2.fincontrol.dto.FichaUsuarioDTO;
 import br.unitins.tp2.fincontrol.dto.PageResponse;
+import br.unitins.tp2.fincontrol.dto.SenhaProvisoriaDTO;
 import br.unitins.tp2.fincontrol.dto.UsuarioResponseDTO;
 import br.unitins.tp2.fincontrol.mapper.UsuarioResponseMapper;
 import br.unitins.tp2.fincontrol.model.Role;
+import br.unitins.tp2.fincontrol.model.SituacaoUsuario;
 import br.unitins.tp2.fincontrol.model.Usuario;
 import br.unitins.tp2.fincontrol.service.AdminConsultaService;
 import br.unitins.tp2.fincontrol.service.AdminUsuarioService;
@@ -53,10 +56,11 @@ public class AdminUsuarioResource {
     public PageResponse<UsuarioResponseDTO> listar(@QueryParam("busca") String busca,
             @QueryParam("role") Role role,
             @QueryParam("ativo") Boolean ativo,
+            @QueryParam("situacao") SituacaoUsuario situacao,
             @QueryParam("page") @DefaultValue("0") int page,
             @QueryParam("pageSize") @DefaultValue("20") int pageSize) {
         AdminConsultaService.validarPaginacao(page, pageSize);
-        PanacheQuery<Usuario> query = service.pesquisar(busca, role, ativo);
+        PanacheQuery<Usuario> query = service.pesquisar(busca, role, ativo, situacao);
         List<Usuario> usuarios = query.page(page, pageSize).list();
         return PageResponse.of(usuarios, page, pageSize, query.count(), UsuarioResponseMapper::toResponse);
     }
@@ -65,6 +69,13 @@ public class AdminUsuarioResource {
     @Path("{id}")
     public UsuarioResponseDTO buscar(@PathParam("id") Long id) {
         return UsuarioResponseMapper.toResponse(service.buscar(id));
+    }
+
+    // Cadastro, acesso e quantidades, sem valores nem descrições.
+    @GET
+    @Path("{id}/ficha")
+    public FichaUsuarioDTO ficha(@PathParam("id") Long id) {
+        return service.ficha(id);
     }
 
     @POST
@@ -92,6 +103,29 @@ public class AdminUsuarioResource {
     @Path("{id}/desativar")
     public UsuarioResponseDTO desativar(@PathParam("id") Long id) {
         return UsuarioResponseMapper.toResponse(service.alterarAtivo(id, false, getUsuarioLogado()));
+    }
+
+    @PATCH
+    @Path("{id}/desbloquear")
+    public UsuarioResponseDTO desbloquear(@PathParam("id") Long id) {
+        return UsuarioResponseMapper.toResponse(service.desbloquear(id, getUsuarioLogado()));
+    }
+
+    @POST
+    @Path("{id}/encerrar-sessoes")
+    @Consumes(MediaType.WILDCARD) // sem corpo
+    public UsuarioResponseDTO encerrarSessoes(@PathParam("id") Long id) {
+        return UsuarioResponseMapper.toResponse(service.encerrarSessoes(id, getUsuarioLogado()));
+    }
+
+    // A senha volta só nesta resposta (sem cache); o usuário troca no próximo login.
+    @POST
+    @Path("{id}/senha-provisoria")
+    @Consumes(MediaType.WILDCARD) // sem corpo
+    public Response senhaProvisoria(@PathParam("id") Long id) {
+        return Response.ok(new SenhaProvisoriaDTO(service.gerarSenhaProvisoria(id, getUsuarioLogado())))
+                .header("Cache-Control", "no-store")
+                .build();
     }
 
     @DELETE

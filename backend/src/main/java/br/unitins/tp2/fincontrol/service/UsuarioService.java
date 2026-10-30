@@ -148,6 +148,7 @@ public class UsuarioService {
         }
 
         usuario.setPassword(BcryptUtil.bcryptHash(dto.novaSenha()));
+        usuario.setTrocarSenha(false);
         encerrarSessoes(usuario);
         auditoria.registrar(usuario, "SENHA_ALTERADA", AuditoriaService.alvo(usuario), null);
         return usuario;

@@ -65,6 +65,10 @@ public class Usuario extends DefaultEntity {
     @Column(name = "ultimo_acesso")
     private LocalDateTime ultimoAcesso;
 
+    // Senha provisória gerada pelo admin: até trocar, só vê o próprio perfil e troca a senha.
+    @Column(name = "trocar_senha", nullable = false)
+    private boolean trocarSenha;
+
     public String getEmail() {
         return email;
     }
@@ -159,5 +163,18 @@ public class Usuario extends DefaultEntity {
 
     public void setUltimoAcesso(LocalDateTime ultimoAcesso) {
         this.ultimoAcesso = ultimoAcesso;
+    }
+
+    public boolean isTrocarSenha() {
+        return trocarSenha;
+    }
+
+    public void setTrocarSenha(boolean trocarSenha) {
+        this.trocarSenha = trocarSenha;
+    }
+
+    // Bloqueada agora por senhas erradas seguidas?
+    public boolean isBloqueado() {
+        return bloqueadoAte != null && bloqueadoAte.isAfter(LocalDateTime.now());
     }
 }

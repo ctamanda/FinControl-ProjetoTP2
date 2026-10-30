@@ -10,6 +10,7 @@ import br.unitins.tp2.fincontrol.dto.SenhaUpdateDTO;
 import br.unitins.tp2.fincontrol.dto.UsuarioResponseDTO;
 import br.unitins.tp2.fincontrol.dto.UsuarioUpdateDTO;
 import br.unitins.tp2.fincontrol.mapper.UsuarioResponseMapper;
+import br.unitins.tp2.fincontrol.security.PermiteSenhaProvisoria;
 import br.unitins.tp2.fincontrol.security.Tokens;
 import br.unitins.tp2.fincontrol.service.UsuarioService;
 import jakarta.annotation.security.RolesAllowed;
@@ -42,6 +43,7 @@ public class UsuarioResource {
 
     @GET
     @Path("me")
+    @PermiteSenhaProvisoria
     public UsuarioResponseDTO buscarMeuPerfil() {
         return UsuarioResponseMapper.toResponse(usuarioService.buscarLogado(jwt.getName()));
     }
@@ -63,6 +65,7 @@ public class UsuarioResource {
 
     @PUT
     @Path("me/senha")
+    @PermiteSenhaProvisoria
     public LoginResponseDTO alterarMinhaSenha(@Valid @NotNull(message = CORPO_OBRIGATORIO) SenhaUpdateDTO dto) {
         return Tokens.emitir(usuarioService.alterarSenha(jwt.getName(), dto));
     }
