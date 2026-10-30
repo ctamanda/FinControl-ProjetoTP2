@@ -59,6 +59,11 @@ public class CargaDemonstracao {
     public static final String DOMINIO = "@fincontrol.demo";
     public static final String SENHA = "Demo@123";
 
+    // Contas para os indicadores de engajamento: parou de entrar há mais de 30 dias e
+    // cadastrou-se mas nunca lançou nada.
+    private static final Set<String> PAROU_DE_USAR = Set.of("rafael.moura");
+    private static final Set<String> NUNCA_LANCOU = Set.of("otavio.pires", "paula.teixeira");
+
     @ConfigProperty(name = "fincontrol.demo", defaultValue = "nada")
     String modo;
 
@@ -145,7 +150,10 @@ public class CargaDemonstracao {
                 new Pessoa("João Pedro Silva", "joao.silva", "Vendedor", 1, true, valor(2800), valor(850), semPlanejamento, List.of("Freelance")),
                 new Pessoa("Larissa Freitas", "larissa.freitas", "Contadora", 0, true, valor(5300), valor(1400), todos, List.of("Banco Inter")),
                 new Pessoa("Marcos Ribeiro", "marcos.ribeiro", "Autônomo", 0, false, valor(2400), valor(700), basico, List.of()),
-                new Pessoa("Natália Castro", "natalia.castro", "Psicóloga", 0, true, valor(6400), valor(1600), todos, List.of("Nubank", "Saúde")));
+                new Pessoa("Natália Castro", "natalia.castro", "Psicóloga", 0, true, valor(6400), valor(1600), todos, List.of("Nubank", "Saúde")),
+                new Pessoa("Otávio Pires", "otavio.pires", "Bancário", 1, true, valor(4200), valor(1100), basico, List.of()),
+                new Pessoa("Paula Teixeira", "paula.teixeira", "Fisioterapeuta", 0, true, valor(5000), valor(1200), todos, List.of()),
+                new Pessoa("Rafael Moura", "rafael.moura", "Técnico em eletrônica", 4, true, valor(3900), valor(1000), basico, List.of()));
 
         for (Pessoa p : pessoas) {
             LocalDateTime cadastro = YearMonth.now().minusMonths(p.mesesAtras())
@@ -188,8 +196,10 @@ public class CargaDemonstracao {
             }
 
             // Lançamentos do mês do cadastro até o mês que vem (os futuros ficam a pagar/receber).
-            // Conta desativada parou de lançar há 2 meses.
-            YearMonth fimLancamentos = p.ativo() ? YearMonth.now() : YearMonth.now().minusMonths(2);
+            // Conta desativada (ou que parou de usar) parou de lançar há 2 meses.
+            boolean parou = !p.ativo() || PAROU_DE_USAR.contains(p.email());
+            YearMonth fimLancamentos = NUNCA_LANCOU.contains(p.email()) ? YearMonth.from(cadastro).minusMonths(1)
+                    : parou ? YearMonth.now().minusMonths(2) : YearMonth.now();
             for (YearMonth mes = YearMonth.from(cadastro); !mes.isAfter(fimLancamentos); mes = mes.plusMonths(1)) {
                 int primeiroDia = mes.equals(YearMonth.from(cadastro)) ? cadastro.getDayOfMonth() : 1;
                 lancar(u, principal, categorias.get("Salário"), "Salário", p.salario(), dia(mes, 5, primeiroDia), hoje);
@@ -218,7 +228,7 @@ public class CargaDemonstracao {
                 }
             }
             // Uma conta esquecida no mês passado: aparece como atrasada.
-            if (p.ativo() && p.mesesAtras() > 0 && random.nextBoolean()) {
+            if (!parou && !NUNCA_LANCOU.contains(p.email()) && p.mesesAtras() > 0 && random.nextBoolean()) {
                 Transacao atrasada = lancar(u, principal, categorias.get("Moradia"), "Internet", valor(119),
                         hoje.minusMonths(1).withDayOfMonth(20), hoje);
                 atrasada.setPago(false);
@@ -227,8 +237,8 @@ public class CargaDemonstracao {
             em.flush();
 
             // Datas de cadastro e de acesso "do passado" (as colunas de data não têm setter público).
-            LocalDateTime ultimoAcesso = p.ativo()
-                    ? LocalDateTime.now().minusHours(1 + random.nextInt(24 * 9))
+            LocalDateTime ultimoAcesso = PAROU_DE_USAR.contains(p.email()) ? LocalDateTime.now().minusDays(41)
+                    : p.ativo() ? LocalDateTime.now().minusHours(1 + random.nextInt(24 * 9))
                     : fimLancamentos.atDay(20).atTime(19, 30);
             if (ultimoAcesso.isBefore(cadastro)) {
                 ultimoAcesso = cadastro.plusHours(1);
@@ -253,6 +263,9 @@ public class CargaDemonstracao {
         String alvo = AuditoriaService.alvo(u);
         LocalDateTime agora = LocalDateTime.now();
         evento(u, "DADOS_PESSOAIS_ALTERADOS", alvo, null, cadastro.plusDays(2));
+        if (PAROU_DE_USAR.contains(p.email()) || NUNCA_LANCOU.contains(p.email())) {
+            return;
+        }
         if (random.nextInt(3) == 0 || p.email().startsWith("bruno") || p.email().startsWith("diego")) {
             evento(u, "SENHA_ALTERADA", alvo, null, agora.minusDays(random.nextInt(6)).minusHours(random.nextInt(5)));
         }
