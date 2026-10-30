@@ -12,6 +12,8 @@ import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashMap;
 import java.util.List;
@@ -949,6 +951,228 @@ class ApiTest {
         given().auth().oauth2(admin).when().delete("/admin/auditoria").then().statusCode(405);
         given().auth().oauth2(admin).contentType(ContentType.JSON).body(Map.of())
                 .when().put("/admin/auditoria").then().statusCode(405);
+    }
+
+    // ------------------------------------------------------------------ painel do admin: suporte ao usuário
+
+    @Test
+    void filtroBloqueadosEDesbloquearZeraAsTentativas() {
+        String admin = logar(ADMIN_EMAIL);
+        String email = novoEmail();
+        registrar(email);
+        long id = idDoUsuario(logar(email));
+        for (int i = 0; i < 5; i++) {
+            given().contentType(ContentType.JSON).body(Map.of("email", email, "password", "Errada@123"))
+                    .when().post("/auth/login").then().statusCode(401);
+        }
+
+        given().auth().oauth2(admin).queryParam("situacao", "BLOQUEADO").queryParam("busca", email)
+                .when().get("/admin/usuarios")
+                .then().statusCode(200)
+                .body("totalItems", equalTo(1))
+                .body("items[0].bloqueadoAte", notNullValue());
+        given().auth().oauth2(admin).when().get("/admin/usuarios/" + id + "/ficha")
+                .then().statusCode(200).body("bloqueadoAte", notNullValue());
+
+        given().auth().oauth2(admin).when().patch("/admin/usuarios/" + id + "/desbloquear")
+                .then().statusCode(200).body("bloqueadoAte", equalTo(null));
+        logar(email);
+        given().auth().oauth2(admin).when().patch("/admin/usuarios/" + id + "/desbloquear").then().statusCode(400);
+        given().auth().oauth2(admin).queryParam("situacao", "BLOQUEADO").queryParam("busca", email)
+                .when().get("/admin/usuarios")
+                .then().statusCode(200).body("totalItems", equalTo(0));
+
+        given().auth().oauth2(admin).queryParam("acao", "CONTA_DESBLOQUEADA").queryParam("busca", email)
+                .when().get("/admin/auditoria")
+                .then().statusCode(200)
+                .body("totalItems", equalTo(1))
+                .body("items[0].autorEmail", equalTo(ADMIN_EMAIL));
+    }
+
+    @Test
+    void adminEncerraTodasAsSessoesDeUmUsuario() {
+        String admin = logar(ADMIN_EMAIL);
+        String email = novoEmail();
+        registrar(email);
+        String celular = logar(email);
+        String computador = logar(email);
+        long id = idDoUsuario(celular);
+
+        given().auth().oauth2(admin).when().post("/admin/usuarios/" + id + "/encerrar-sessoes").then().statusCode(200);
+        given().auth().oauth2(celular).when().get("/usuarios/me").then().statusCode(401);
+        given().auth().oauth2(computador).when().get("/usuarios/me").then().statusCode(401);
+        logar(email);
+
+        given().auth().oauth2(admin).when().post("/admin/usuarios/" + idDoUsuario(admin) + "/encerrar-sessoes")
+                .then().statusCode(400);
+        given().auth().oauth2(admin).queryParam("acao", "SESSOES_ENCERRADAS").queryParam("busca", email)
+                .when().get("/admin/auditoria")
+                .then().statusCode(200)
+                .body("totalItems", equalTo(1))
+                .body("items[0].autorEmail", equalTo(ADMIN_EMAIL));
+        given().auth().oauth2(registrarELogar()).when().post("/admin/usuarios/" + id + "/encerrar-sessoes")
+                .then().statusCode(403);
+    }
+
+    @Test
+    void senhaProvisoriaObrigaATrocaNoProximoLogin() {
+        String admin = logar(ADMIN_EMAIL);
+        String email = novoEmail();
+        registrar(email);
+        String antigo = logar(email);
+        long id = idDoUsuario(antigo);
+
+        String provisoria = given().auth().oauth2(admin).when().post("/admin/usuarios/" + id + "/senha-provisoria")
+                .then().statusCode(200)
+                .header("Cache-Control", "no-store")
+                .extract().path("senhaProvisoria");
+        assertTrue(provisoria.matches("(?=.*\\p{Lu})(?=.*\\p{Ll})(?=.*\\d)(?=.*[^\\p{L}\\d]).{10}"), provisoria);
+
+        // A sessão aberta cai e a senha antiga deixa de valer.
+        given().auth().oauth2(antigo).when().get("/usuarios/me").then().statusCode(401);
+        given().contentType(ContentType.JSON).body(Map.of("email", email, "password", SENHA))
+                .when().post("/auth/login").then().statusCode(401);
+
+        String token = given().contentType(ContentType.JSON).body(Map.of("email", email, "password", provisoria))
+                .when().post("/auth/login").then().statusCode(200).extract().path("token");
+        given().auth().oauth2(token).when().get("/usuarios/me")
+                .then().statusCode(200).body("trocarSenha", equalTo(true));
+        // Até trocar, nada além do próprio perfil e da troca de senha.
+        given().auth().oauth2(token).when().get("/categorias")
+                .then().statusCode(403).body("detail", containsString("senha provisória"));
+
+        String novo = given().auth().oauth2(token).contentType(ContentType.JSON)
+                .body(Map.of("senhaAtual", provisoria, "novaSenha", "Minha@Nova1", "confirmacaoSenha", "Minha@Nova1"))
+                .when().put("/usuarios/me/senha")
+                .then().statusCode(200).extract().path("token");
+        given().auth().oauth2(novo).when().get("/categorias").then().statusCode(200);
+        given().auth().oauth2(novo).when().get("/usuarios/me").then().statusCode(200).body("trocarSenha", equalTo(false));
+
+        // A auditoria registra o fato, nunca a senha.
+        String auditoria = given().auth().oauth2(admin)
+                .queryParam("acao", "SENHA_PROVISORIA_GERADA").queryParam("busca", email)
+                .when().get("/admin/auditoria")
+                .then().statusCode(200)
+                .body("totalItems", equalTo(1))
+                .extract().asString();
+        assertFalse(auditoria.contains(provisoria));
+        given().auth().oauth2(admin).when().post("/admin/usuarios/" + idDoUsuario(admin) + "/senha-provisoria")
+                .then().statusCode(400);
+    }
+
+    @Test
+    void fichaTrazQuantidadesSemValoresNemDescricoes() {
+        String admin = logar(ADMIN_EMAIL);
+        String pessoal = registrarELogar();
+        long id = idDoUsuario(pessoal);
+        lancar(pessoal, transacao("Consulta particular", "DESPESA", categoria(pessoal, "DESPESA")));
+
+        String ficha = given().auth().oauth2(admin).when().get("/admin/usuarios/" + id + "/ficha")
+                .then().statusCode(200)
+                .body("id", equalTo((int) id))
+                .body("telefone", equalTo("63999990000"))
+                .body("ativo", equalTo(true))
+                .body("dataCadastro", notNullValue())
+                .body("ultimoAcesso", notNullValue())
+                .body("lancamentos", equalTo(1))
+                .body("contas", equalTo(1))
+                .body("categorias", equalTo(PADRAO.size()))
+                .extract().asString();
+        for (String proibido : List.of("valor", "saldo", "descricao", "Consulta particular", "10.5")) {
+            assertFalse(ficha.contains(proibido), proibido);
+        }
+        given().auth().oauth2(pessoal).when().get("/admin/usuarios/" + id + "/ficha").then().statusCode(403);
+        given().auth().oauth2(admin).when().get("/admin/usuarios/999999/ficha").then().statusCode(404);
+    }
+
+    @Test
+    void painelMostraQuemParouDeUsarEQuemNuncaLancou() {
+        String admin = logar(ADMIN_EMAIL);
+        Map<String, Integer> antes = given().auth().oauth2(admin).when().get("/admin/painel")
+                .then().statusCode(200).extract().path("engajamento");
+
+        String email = novoEmail();
+        registrar(email);
+        String token = logar(email);
+        long id = idDoUsuario(token);
+        QuarkusTransaction.requiringNew().run(() -> usuarioRepository.findById(id)
+                .setUltimoAcesso(java.time.LocalDateTime.now().minusDays(40)));
+
+        given().auth().oauth2(admin).when().get("/admin/painel")
+                .then().statusCode(200)
+                .body("engajamento.semAcesso30Dias", equalTo(antes.get("semAcesso30Dias") + 1))
+                .body("engajamento.nuncaLancaram", equalTo(antes.get("nuncaLancaram") + 1));
+        for (String situacao : List.of("SEM_ACESSO_30_DIAS", "SEM_LANCAMENTO")) {
+            given().auth().oauth2(admin).queryParam("situacao", situacao).queryParam("busca", email)
+                    .when().get("/admin/usuarios")
+                    .then().statusCode(200).body("totalItems", equalTo(1));
+        }
+
+        criarTransacao(token, "RECEITA");
+        given().auth().oauth2(admin).queryParam("situacao", "SEM_LANCAMENTO").queryParam("busca", email)
+                .when().get("/admin/usuarios")
+                .then().statusCode(200).body("totalItems", equalTo(0));
+        given().auth().oauth2(admin).when().get("/admin/painel")
+                .then().statusCode(200)
+                .body("engajamento.nuncaLancaram", equalTo(antes.get("nuncaLancaram")));
+    }
+
+    // ------------------------------------------------------------------ o que o admin não pode fazer
+
+    @Test
+    void adminNaoAlteraLancamentosContasNemCategoriasDosUsuarios() {
+        String admin = logar(ADMIN_EMAIL);
+        String pessoal = registrarELogar();
+        long idCategoria = categoria(pessoal, "DESPESA");
+        long idTransacao = criarTransacao(pessoal, "DESPESA");
+        long idConta = idConta(pessoal, "Carteira");
+
+        // Lançamentos e categorias são sempre do dono: o id de outra pessoa não existe para o admin.
+        given().auth().oauth2(admin).contentType(ContentType.JSON).body(transacao("Alterado", "DESPESA", idCategoria))
+                .when().put("/transacoes/" + idTransacao).then().statusCode(404);
+        given().auth().oauth2(admin).when().patch("/transacoes/" + idTransacao + "/reabrir").then().statusCode(404);
+        given().auth().oauth2(admin).when().delete("/transacoes/" + idTransacao).then().statusCode(404);
+        given().auth().oauth2(admin).contentType(ContentType.JSON).body(Map.of("nome", "Alterada", "tipo", "DESPESA"))
+                .when().put("/categorias/" + idCategoria).then().statusCode(404);
+        given().auth().oauth2(admin).when().delete("/categorias/" + idCategoria).then().statusCode(404);
+        // Contas financeiras são só da conta pessoal.
+        given().auth().oauth2(admin).when().get("/contas").then().statusCode(403);
+        given().auth().oauth2(admin).when().delete("/contas/" + idConta).then().statusCode(403);
+        // A consulta do admin é só leitura.
+        given().auth().oauth2(admin).contentType(ContentType.JSON).body(Map.of())
+                .when().put("/admin/transacoes").then().statusCode(405);
+        given().auth().oauth2(admin).when().delete("/admin/transacoes").then().statusCode(405);
+
+        given().auth().oauth2(pessoal).when().get("/transacoes/" + idTransacao)
+                .then().statusCode(200).body("descricao", equalTo("Teste"));
+        given().auth().oauth2(pessoal).when().get("/categorias/" + idCategoria).then().statusCode(200);
+    }
+
+    @Test
+    void nenhumaRespostaTrazSenhaNemHash() {
+        String admin = logar(ADMIN_EMAIL);
+        String email = novoEmail();
+        String cadastro = given().contentType(ContentType.JSON).body(cadastroPessoal(email))
+                .when().post("/auth/register").then().statusCode(201).extract().asString();
+        String token = logar(email);
+        long id = idDoUsuario(token);
+        String criado = given().auth().oauth2(admin).contentType(ContentType.JSON)
+                .body(usuarioAdmin(novoEmail(), "SUPER_ADMIN"))
+                .when().post("/admin/usuarios").then().statusCode(201).extract().asString();
+
+        List<String> respostas = List.of(
+                cadastro,
+                criado,
+                given().auth().oauth2(token).when().get("/usuarios/me").then().statusCode(200).extract().asString(),
+                given().auth().oauth2(admin).when().get("/admin/usuarios").then().statusCode(200).extract().asString(),
+                given().auth().oauth2(admin).when().get("/admin/usuarios/" + id).then().statusCode(200).extract().asString(),
+                given().auth().oauth2(admin).when().get("/admin/usuarios/" + id + "/ficha").then().statusCode(200).extract().asString(),
+                given().auth().oauth2(admin).when().get("/admin/auditoria").then().statusCode(200).extract().asString());
+        for (String corpo : respostas) {
+            assertFalse(corpo.contains("password"), corpo);
+            assertFalse(corpo.contains("$2a$"), corpo);
+            assertFalse(corpo.contains(SENHA), corpo);
+        }
     }
 
     // ------------------------------------------------------------------ apoio
