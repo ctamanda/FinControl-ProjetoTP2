@@ -8,10 +8,12 @@ import {
   AdminUsuarioUpdate,
   CategoriaPadrao,
   CategoriaRanking,
+  FichaUsuario,
   FiltroAuditoria,
   FiltroTransacoes,
   PainelAdmin,
   RegistroAuditoria,
+  SituacaoUsuario,
 } from '../models/admin.model';
 import { PageResponse } from '../models/page-response.model';
 import { Role, Usuario } from '../models/usuario.model';
@@ -31,7 +33,7 @@ export class AdminService {
   // ---------------------------------------------------------- usuários
 
   listarUsuarios(
-    filtro: { busca?: string; role?: Role | ''; ativo?: boolean | null },
+    filtro: { busca?: string; role?: Role | ''; ativo?: boolean | null; situacao?: SituacaoUsuario | '' },
     page = 0,
     pageSize = 20,
   ): Observable<PageResponse<Usuario>> {
@@ -58,6 +60,26 @@ export class AdminService {
 
   excluirUsuario(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/usuarios/${id}`);
+  }
+
+  // Cadastro, acesso e quantidades (sem valores nem descrições).
+  fichaUsuario(id: number | string): Observable<FichaUsuario> {
+    return this.http.get<FichaUsuario>(`${this.apiUrl}/usuarios/${id}/ficha`);
+  }
+
+  // Zera as senhas erradas e tira o bloqueio.
+  desbloquearUsuario(id: number): Observable<Usuario> {
+    return this.http.patch<Usuario>(`${this.apiUrl}/usuarios/${id}/desbloquear`, null);
+  }
+
+  // Derruba todas as sessões abertas do usuário.
+  encerrarSessoesUsuario(id: number): Observable<Usuario> {
+    return this.http.post<Usuario>(`${this.apiUrl}/usuarios/${id}/encerrar-sessoes`, null);
+  }
+
+  // A senha vem só nesta resposta; o usuário troca no próximo login.
+  gerarSenhaProvisoria(id: number): Observable<{ senhaProvisoria: string }> {
+    return this.http.post<{ senhaProvisoria: string }>(`${this.apiUrl}/usuarios/${id}/senha-provisoria`, null);
   }
 
   // ---------------------------------------------------------- transações (só leitura)

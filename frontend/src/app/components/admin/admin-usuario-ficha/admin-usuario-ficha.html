@@ -1,0 +1,91 @@
+<div class="page-header">
+  <div>
+    <h1>Ficha do usuário</h1>
+    <p>Administração · <a class="link" routerLink="/admin/usuarios">Usuários</a></p>
+  </div>
+</div>
+
+@if (carregando() || ocupado()) {
+  <mat-progress-bar mode="indeterminate" class="barra" />
+}
+
+@if (erro()) {
+  <section class="fc-card estado-vazio">
+    <mat-icon>person_off</mat-icon>
+    <p>{{ erro() }}</p>
+  </section>
+}
+
+@if (ficha(); as f) {
+  <div class="ficha">
+    <section class="fc-card identidade">
+      <span class="sigla">{{ iniciais(f.nome) }}</span>
+      <div class="quem">
+        <h2>{{ f.nome }}</h2>
+        <span class="meta">{{ f.email }}</span>
+        <div class="chips">
+          <span class="chip" [class.purple]="f.role === 'SUPER_ADMIN'" [class.green]="f.role === 'PESSOAL'">{{ rotulosRole[f.role] }}</span>
+          <span class="chip" [class.green]="f.ativo" [class.red]="!f.ativo">{{ f.ativo ? 'Ativo' : 'Inativo' }}</span>
+          @if (f.bloqueadoAte) {
+            <span class="chip orange"><mat-icon>lock_clock</mat-icon> Bloqueado até {{ f.bloqueadoAte | date: 'HH:mm' }}</span>
+          }
+          @if (f.trocarSenha) {
+            <span class="chip blue">Senha provisória pendente</span>
+          }
+        </div>
+      </div>
+    </section>
+
+    <section class="fc-card">
+      <h2 class="fc-card-title"><mat-icon>badge</mat-icon> Cadastro e acesso</h2>
+      <dl class="dados">
+        <div><dt>Telefone</dt><dd>{{ f.telefone || '—' }}</dd></div>
+        <div><dt>Profissão</dt><dd>{{ f.profissao || '—' }}</dd></div>
+        <div><dt>Cadastro</dt><dd>{{ f.dataCadastro | date: 'dd/MM/yyyy HH:mm' }}</dd></div>
+        <div><dt>Último acesso</dt><dd>{{ f.ultimoAcesso ? (f.ultimoAcesso | date: 'dd/MM/yyyy HH:mm') : 'Ainda não entrou' }}</dd></div>
+        <div>
+          <dt>Senhas erradas seguidas</dt>
+          <!-- Ao bloquear, o back zera a contagem: aí o que importa é o bloqueio. -->
+          <dd>{{ f.bloqueadoAte ? 'Conta bloqueada' : f.tentativasErradas }}</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="fc-card">
+      <h2 class="fc-card-title"><mat-icon>insights</mat-icon> Uso</h2>
+      <div class="numeros">
+        <div><strong>{{ f.lancamentos | number }}</strong><span>lançamentos</span></div>
+        <div><strong>{{ f.contas | number }}</strong><span>contas</span></div>
+        <div><strong>{{ f.categorias | number }}</strong><span>categorias</span></div>
+      </div>
+      <p class="nota">Só quantidades: valores, saldos e descrições dos lançamentos não aparecem aqui.</p>
+    </section>
+
+    <section class="fc-card suporte">
+      <h2 class="fc-card-title"><mat-icon>support_agent</mat-icon> Suporte</h2>
+      @if (souEu()) {
+        <p class="nota">Esta é a sua conta. Para trocar a senha ou sair dos outros dispositivos, use <a class="link" routerLink="/perfil">Meu perfil</a>.</p>
+      } @else {
+        <div class="acoes">
+          <button mat-stroked-button type="button" [disabled]="ocupado() || (!f.bloqueadoAte && f.tentativasErradas === 0)" (click)="desbloquear(f)">
+            <mat-icon>lock_open</mat-icon> Desbloquear conta
+          </button>
+          <button mat-stroked-button type="button" [disabled]="ocupado()" (click)="encerrarSessoes(f)">
+            <mat-icon>devices_off</mat-icon> Encerrar sessões
+          </button>
+          <button mat-stroked-button type="button" [disabled]="ocupado()" (click)="gerarSenha(f)">
+            <mat-icon>key</mat-icon> Gerar senha provisória
+          </button>
+          <button mat-stroked-button type="button" [class.perigo]="f.ativo" [disabled]="ocupado()" (click)="alterarAtivo(f)">
+            <mat-icon>{{ f.ativo ? 'person_off' : 'person_check' }}</mat-icon> {{ f.ativo ? 'Desativar' : 'Reativar' }}
+          </button>
+        </div>
+        <p class="nota">Cada ação fica registrada na auditoria com o seu e-mail.</p>
+      }
+      <div class="links">
+        <a mat-button [routerLink]="['/admin/usuarios', f.id]"><mat-icon>edit</mat-icon> Editar dados</a>
+        <a mat-button routerLink="/admin/auditoria" [queryParams]="{ busca: f.email }"><mat-icon>history</mat-icon> Ver na auditoria</a>
+      </div>
+    </section>
+  </div>
+}

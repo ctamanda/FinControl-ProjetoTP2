@@ -34,6 +34,34 @@ export interface PainelAdmin {
     sessoesEncerradasSemana: number;
     emailsTrocadosSemana: number;
   };
+  // Situação de hoje das contas pessoais ativas (não depende do mês).
+  engajamento: {
+    semAcesso30Dias: number; // último login há 30 dias ou mais
+    nuncaLancaram: number;
+    semAcessoRegistrado: number; // sem login gravado ainda (o último acesso é gravado desde a V19)
+  };
+}
+
+// Filtros de situação da lista de usuários (GET /admin/usuarios?situacao=).
+export type SituacaoUsuario = 'BLOQUEADO' | 'SEM_ACESSO_30_DIAS' | 'SEM_LANCAMENTO';
+
+// GET /admin/usuarios/{id}/ficha: cadastro, acesso e quantidades; nenhum valor ou descrição.
+export interface FichaUsuario {
+  id: number;
+  nome: string;
+  email: string;
+  telefone: string | null;
+  profissao: string | null;
+  role: Role;
+  ativo: boolean;
+  dataCadastro: string;
+  ultimoAcesso: string | null;
+  bloqueadoAte: string | null;
+  tentativasErradas: number;
+  trocarSenha: boolean;
+  lancamentos: number;
+  contas: number;
+  categorias: number;
 }
 
 export interface UsoCategoriaPadrao {

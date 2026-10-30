@@ -23,6 +23,14 @@
     </div>
   </div>
 
+  @if (filtrosDoPainel[filtro()]; as descricao) {
+    <p class="filtro-painel">
+      <mat-icon>filter_alt</mat-icon>
+      <span>Mostrando {{ descricao }}.</span>
+      <button type="button" class="link" (click)="filtrar('TODOS')">Ver todos</button>
+    </p>
+  }
+
   <div class="barra-espaco">
     @if (carregando()) {
       <mat-progress-bar mode="indeterminate" />
@@ -35,7 +43,7 @@
         <th mat-header-cell *matHeaderCellDef>Usuário</th>
         <td mat-cell *matCellDef="let u">
           <div class="pessoa" [class.inativo]="!u.ativo">
-            <strong>{{ u.nome }}</strong>
+            <a class="nome-link" [routerLink]="['/admin/usuarios', u.id, 'ficha']"><strong>{{ u.nome }}</strong></a>
             @if (u.id === eu()?.id) {
               <span class="voce">você</span>
             }
@@ -56,6 +64,14 @@
         <th mat-header-cell *matHeaderCellDef>Situação</th>
         <td mat-cell *matCellDef="let u">
           <span class="chip" [class.green]="u.ativo" [class.red]="!u.ativo">{{ u.ativo ? 'Ativo' : 'Inativo' }}</span>
+          @if (bloqueado(u)) {
+            <span class="chip orange" [matTooltip]="'Bloqueado por senhas erradas até ' + (u.bloqueadoAte | date: 'HH:mm')">
+              <mat-icon>lock_clock</mat-icon> Bloqueado
+            </span>
+          }
+          @if (u.trocarSenha) {
+            <span class="chip blue" matTooltip="Ainda não trocou a senha provisória">Senha provisória</span>
+          }
         </td>
       </ng-container>
 
@@ -74,14 +90,17 @@
       <ng-container matColumnDef="acoes">
         <th mat-header-cell *matHeaderCellDef class="col-acoes"></th>
         <td mat-cell *matCellDef="let u" class="col-acoes">
-          <a mat-icon-button [routerLink]="['/admin/usuarios', u.id]" matTooltip="Editar">
+          <a mat-icon-button [routerLink]="['/admin/usuarios', u.id, 'ficha']" matTooltip="Ficha e suporte" aria-label="Ficha e suporte">
+            <mat-icon>badge</mat-icon>
+          </a>
+          <a mat-icon-button [routerLink]="['/admin/usuarios', u.id]" matTooltip="Editar" aria-label="Editar">
             <mat-icon>edit</mat-icon>
           </a>
           @if (u.id !== eu()?.id) {
-            <button mat-icon-button (click)="alterarAtivo(u)" [matTooltip]="u.ativo ? 'Desativar' : 'Reativar'">
+            <button mat-icon-button (click)="alterarAtivo(u)" [matTooltip]="u.ativo ? 'Desativar' : 'Reativar'" [attr.aria-label]="u.ativo ? 'Desativar' : 'Reativar'">
               <mat-icon>{{ u.ativo ? 'person_off' : 'person_check' }}</mat-icon>
             </button>
-            <button mat-icon-button (click)="excluir(u)" matTooltip="Excluir">
+            <button mat-icon-button (click)="excluir(u)" matTooltip="Excluir" aria-label="Excluir">
               <mat-icon>delete_outline</mat-icon>
             </button>
           }

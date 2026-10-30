@@ -32,6 +32,8 @@ const ACOES: Record<string, string> = {
   EMAIL_ALTERADO: 'E-mail de acesso alterado',
   SESSOES_ENCERRADAS: 'Sessões encerradas',
   CONTA_BLOQUEADA: 'Conta bloqueada (senhas erradas)',
+  CONTA_DESBLOQUEADA: 'Conta desbloqueada',
+  SENHA_PROVISORIA_GERADA: 'Senha provisória gerada',
 };
 
 // Ações de antes da saída de empresa e parâmetros fiscais: não são mais gravadas, mas o
@@ -66,11 +68,12 @@ export class AdminAuditoria implements OnInit {
   protected readonly tamanho = signal(20);
   protected readonly carregando = signal(false);
 
-  // Autor, ação e período; a ação pode vir do painel (?acao=SENHA_ALTERADA).
+  // Autor, ação e período; a ação pode vir do painel (?acao=SENHA_ALTERADA) e a busca da ficha (?busca=e-mail).
+  private readonly params = inject(ActivatedRoute).snapshot.queryParamMap;
   protected filtro: FiltroAuditoria = {
-    busca: '',
+    busca: this.params.get('busca') ?? '',
     autor: '',
-    acao: inject(ActivatedRoute).snapshot.queryParamMap.get('acao') ?? '',
+    acao: this.params.get('acao') ?? '',
     inicio: '',
     fim: '',
   };

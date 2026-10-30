@@ -15,8 +15,16 @@ import { mensagemDeErro } from '../../../core/api';
 import { UsuarioService } from '../../../core/usuario/usuario.service';
 import { ROTULOS_ROLE, Role, Usuario } from '../../../models/usuario.model';
 
-type Filtro = 'TODOS' | 'ATIVOS' | 'INATIVOS' | 'ADMINS';
+import { SituacaoUsuario } from '../../../models/admin.model';
 import { AdminService } from '../../../services/admin.service';
+
+// As abas, mais os dois filtros que só chegam pelo painel (?filtro=SEM_ACESSO_30_DIAS).
+type Filtro = 'TODOS' | 'ATIVOS' | 'INATIVOS' | 'BLOQUEADOS' | 'ADMINS' | 'SEM_ACESSO_30_DIAS' | 'SEM_LANCAMENTO';
+
+const FILTROS_DO_PAINEL: Partial<Record<Filtro, string>> = {
+  SEM_ACESSO_30_DIAS: 'contas pessoais ativas sem entrar há 30 dias ou mais',
+  SEM_LANCAMENTO: 'contas pessoais ativas que nunca fizeram um lançamento',
+};
 import { confirmar } from '../../shared/confirm-dialog/confirm-dialog';
 
 @Component({
@@ -46,8 +54,10 @@ export class AdminUsuarioList implements OnInit {
     { valor: 'TODOS', rotulo: 'Todos' },
     { valor: 'ATIVOS', rotulo: 'Ativos' },
     { valor: 'INATIVOS', rotulo: 'Inativos' },
+    { valor: 'BLOQUEADOS', rotulo: 'Bloqueados' },
     { valor: 'ADMINS', rotulo: 'Administradores' },
   ];
+  protected readonly filtrosDoPainel = FILTROS_DO_PAINEL;
 
   protected readonly usuarios = signal<Usuario[]>([]);
   protected readonly total = signal(0);
@@ -80,6 +90,7 @@ export class AdminUsuarioList implements OnInit {
           busca: this.busca,
           role: this.filtro() === 'ADMINS' ? 'SUPER_ADMIN' : '',
           ativo: this.filtro() === 'ATIVOS' ? true : this.filtro() === 'INATIVOS' ? false : null,
+          situacao: situacaoDo(this.filtro()),
         },
         this.pagina(),
         this.tamanho(),
@@ -111,6 +122,11 @@ export class AdminUsuarioList implements OnInit {
     this.pagina.set(event.pageIndex);
     this.tamanho.set(event.pageSize);
     this.carregar();
+  }
+
+  // Bloqueio por senhas erradas ainda valendo (o back só manda a data enquanto vale).
+  protected bloqueado(u: Usuario): boolean {
+    return !!u.bloqueadoAte;
   }
 
   protected corPerfil(role: Role): string {
@@ -156,4 +172,10 @@ export class AdminUsuarioList implements OnInit {
   private avisar(mensagem: string): void {
     this.snack.open(mensagem, 'Ok', { duration: 4000, verticalPosition: 'top' });
   }
+}
+
+function situacaoDo(filtro: Filtro): SituacaoUsuario | '' {
+  if (filtro === 'BLOQUEADOS') return 'BLOQUEADO';
+  if (filtro === 'SEM_ACESSO_30_DIAS' || filtro === 'SEM_LANCAMENTO') return filtro;
+  return '';
 }

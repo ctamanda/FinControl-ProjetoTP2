@@ -1,0 +1,165 @@
+.barra {
+  margin-bottom: 12px;
+}
+
+.ficha {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  max-width: 980px;
+}
+
+.ficha .fc-card + .fc-card {
+  margin-top: 0;
+}
+
+.identidade,
+.suporte {
+  grid-column: 1 / -1;
+}
+
+.identidade {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.sigla {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: var(--fc-roxo-claro);
+  color: var(--fc-roxo);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.quem {
+  min-width: 0;
+}
+
+.quem h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.meta {
+  font-size: 13px;
+  color: var(--fc-muted);
+  overflow-wrap: anywhere;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.dados {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.dados div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--fc-border);
+  padding-bottom: 10px;
+}
+
+.dados div:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.dados dt {
+  color: var(--fc-muted);
+  font-size: 13px;
+}
+
+.dados dd {
+  margin: 0;
+  font-size: 14px;
+  text-align: right;
+}
+
+.numeros {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.numeros div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 6px;
+  border-radius: var(--fc-radius-campo);
+  background: var(--fc-campo);
+}
+
+.numeros strong {
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--fc-roxo);
+  font-variant-numeric: tabular-nums;
+}
+
+.numeros span {
+  font-size: 12px;
+  color: var(--fc-muted);
+}
+
+.nota {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--fc-muted);
+}
+
+.acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.acoes button {
+  min-height: 44px;
+}
+
+.acoes .perigo:not(:disabled) {
+  color: var(--fc-danger);
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.links a {
+  min-height: 44px;
+}
+
+.link {
+  color: var(--fc-primary);
+  text-decoration: none;
+}
+
+@media (max-width: 720px) {
+  .ficha {
+    grid-template-columns: 1fr;
+  }
+
+  .acoes button {
+    flex: 1 1 100%;
+    justify-content: flex-start;
+  }
+}

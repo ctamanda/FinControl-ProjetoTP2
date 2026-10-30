@@ -55,6 +55,8 @@ export interface Usuario {
   modulos: Modulo[]; // módulos que pode usar de fato
   dataCadastro?: string;
   ultimoAcesso?: string | null; // último login (nulo se ainda não entrou)
+  bloqueadoAte?: string | null; // preenchido só enquanto está bloqueado por senhas erradas
+  trocarSenha?: boolean; // senha provisória ainda não trocada
 }
 
 // Alterar os próprios dados exige a senha atual (o back confere).
