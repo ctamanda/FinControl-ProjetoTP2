@@ -1,0 +1,69 @@
+<app-fundo-auth />
+
+<main class="centro">
+  <app-logo />
+
+  <div class="card">
+    <div class="cabecalho">
+      <span class="icone-topo"><mat-icon>lock_reset</mat-icon></span>
+      <h1>Crie a sua senha</h1>
+      <p class="subtitulo">Você entrou com uma senha provisória. Para continuar, escolha uma senha só sua.</p>
+    </div>
+
+    @if (erro()) {
+      <div class="aviso erro" role="alert"><mat-icon>error_outline</mat-icon> {{ erro() }}</div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="salvar()" novalidate>
+      <div class="campo" [class.invalido]="invalido('senhaAtual')">
+        <label for="senhaAtual">Senha provisória</label>
+        <div class="caixa-input">
+          <mat-icon>key</mat-icon>
+          <input id="senhaAtual" [type]="mostrarSenha() ? 'text' : 'password'" formControlName="senhaAtual" autocomplete="current-password" />
+        </div>
+        @if (invalido('senhaAtual')) {
+          <span class="erro">Informe a senha provisória que você recebeu.</span>
+        }
+      </div>
+
+      <div class="campo" [class.invalido]="invalido('novaSenha')">
+        <label for="novaSenha">Nova senha</label>
+        <div class="caixa-input">
+          <mat-icon>lock_outline</mat-icon>
+          <input id="novaSenha" [type]="mostrarSenha() ? 'text' : 'password'" formControlName="novaSenha" autocomplete="new-password" />
+          <button
+            type="button"
+            class="btn-olho"
+            (click)="mostrarSenha.set(!mostrarSenha())"
+            [attr.aria-label]="mostrarSenha() ? 'Ocultar senhas' : 'Mostrar senhas'"
+          >
+            <mat-icon>{{ mostrarSenha() ? 'visibility' : 'visibility_off' }}</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="campo" [class.invalido]="invalido('confirmacaoSenha')">
+        <label for="confirmacaoSenha">Confirme a nova senha</label>
+        <div class="caixa-input">
+          <mat-icon>lock_outline</mat-icon>
+          <input id="confirmacaoSenha" [type]="mostrarSenha() ? 'text' : 'password'" formControlName="confirmacaoSenha" autocomplete="new-password" />
+        </div>
+        @if (invalido('confirmacaoSenha')) {
+          <span class="erro">A confirmação deve ser igual à nova senha.</span>
+        }
+      </div>
+
+      <app-requisitos-senha [senha]="novaSenha()" [confirmacao]="confirmacao()" />
+
+      <button mat-flat-button class="btn-principal" type="submit" [disabled]="carregando()">
+        @if (carregando()) {
+          <mat-spinner diameter="20" />
+        } @else {
+          <span class="conteudo-btn"><mat-icon>check</mat-icon> Salvar e entrar</span>
+        }
+      </button>
+    </form>
+  </div>
+
+  <button type="button" class="voltar-inicio sair" (click)="sair()"><mat-icon>logout</mat-icon> Sair</button>
+</main>

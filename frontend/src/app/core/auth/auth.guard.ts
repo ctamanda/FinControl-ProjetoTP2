@@ -21,6 +21,7 @@ function comPerfil(decidir: (u: Usuario, router: Router) => boolean | UrlTree): 
 }
 
 // Exige usuário logado (e com o perfil ainda válido no back).
+// Com senha provisória, só a tela de troca de senha.
 export const authGuard: CanActivateFn = (_route, state) => {
   const auth = inject(AuthService);
   const router = inject(Router);
@@ -28,7 +29,15 @@ export const authGuard: CanActivateFn = (_route, state) => {
   if (!auth.isLoggedIn()) {
     return router.createUrlTree(['/login'], { queryParams: { voltar: state.url } });
   }
-  return comPerfil(() => true);
+  return comPerfil((u, r) => (u.trocarSenha ? r.createUrlTree(['/trocar-senha']) : true));
+};
+
+// Tela de troca da senha provisória: só para quem está logado e ainda precisa trocar.
+export const senhaProvisoriaGuard: CanActivateFn = () => {
+  if (!inject(AuthService).isLoggedIn()) {
+    return inject(Router).createUrlTree(['/login']);
+  }
+  return comPerfil((u, r) => (u.trocarSenha ? true : r.createUrlTree([rotaInicial(u)])));
 };
 
 // Exige pelo menos um dos módulos; sem acesso, vai para a primeira tela permitida.

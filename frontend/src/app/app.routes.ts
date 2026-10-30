@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { Shell } from './components/layout/shell/shell';
 import { MODULOS_TRANSACOES } from './core/acesso';
-import { authGuard, moduloGuard, perfilGuard, visitanteGuard } from './core/auth/auth.guard';
+import { authGuard, moduloGuard, perfilGuard, senhaProvisoriaGuard, visitanteGuard } from './core/auth/auth.guard';
 
 // Cada tela é carregada sob demanda (loadComponent) para manter o bundle inicial pequeno.
 // Telas de Estados/Municípios saíram do menu: o back atual não tem esses endpoints.
@@ -26,6 +26,13 @@ export const routes: Routes = [
         loadComponent: () => import('./components/auth/register/register').then((m) => m.Register),
         title: 'Criar conta · FinControl',
         canActivate: [visitanteGuard],
+    },
+    {
+        // Primeiro acesso com a senha provisória gerada pelo admin.
+        path: 'trocar-senha',
+        loadComponent: () => import('./components/auth/trocar-senha/trocar-senha').then((m) => m.TrocarSenha),
+        title: 'Crie a sua senha · FinControl',
+        canActivate: [senhaProvisoriaGuard],
     },
     {
         // Configuração inicial, logo depois do cadastro.
@@ -146,6 +153,12 @@ export const routes: Routes = [
                         loadComponent: () =>
                             import('./components/admin/admin-usuario-form/admin-usuario-form').then((m) => m.AdminUsuarioForm),
                         title: 'Novo usuário · FinControl',
+                    },
+                    {
+                        path: 'usuarios/:id/ficha',
+                        loadComponent: () =>
+                            import('./components/admin/admin-usuario-ficha/admin-usuario-ficha').then((m) => m.AdminUsuarioFicha),
+                        title: 'Ficha do usuário · FinControl',
                     },
                     {
                         path: 'usuarios/:id',

@@ -25,6 +25,7 @@ export const MODULOS_LER_CATEGORIAS: Modulo[] = ['CATEGORIAS', 'DASHBOARD', ...M
 // Primeira tela que o usuário pode abrir.
 export function rotaInicial(usuario: Usuario | null): string {
   if (!usuario) return '/login';
+  if (usuario.trocarSenha) return '/trocar-senha';
   if (usuario.role === 'SUPER_ADMIN') return '/admin/painel';
   if (temModulo(usuario, 'DASHBOARD')) return '/dashboard';
   if (temModulo(usuario, ...MODULOS_TRANSACOES)) return '/transacoes';
