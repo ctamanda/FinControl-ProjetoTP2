@@ -11,6 +11,7 @@ import java.util.Map;
 
 import br.unitins.tp2.fincontrol.dto.PainelAdminDTO;
 import br.unitins.tp2.fincontrol.dto.PainelAdminDTO.CadastrosMes;
+import br.unitins.tp2.fincontrol.dto.PainelAdminDTO.Engajamento;
 import br.unitins.tp2.fincontrol.dto.PainelAdminDTO.Indicador;
 import br.unitins.tp2.fincontrol.dto.PainelAdminDTO.IndicadorValor;
 import br.unitins.tp2.fincontrol.dto.PainelAdminDTO.Seguranca;
@@ -59,7 +60,8 @@ public class PainelAdminService {
                 cadastrosPorMes(mes),
                 usoDosModulos(),
                 usoDasCategoriasPadrao(mes),
-                seguranca());
+                seguranca(),
+                engajamento());
     }
 
     private long usuariosComLancamento(YearMonth mes) {
@@ -183,6 +185,19 @@ public class PainelAdminService {
         }
         resultado.sort((a, b) -> Long.compare(b.lancamentos(), a.lancamentos()));
         return resultado;
+    }
+
+    private Engajamento engajamento() {
+        return new Engajamento(
+                usuarioRepository.count("role = ?1 and ativo = true and ultimoAcesso < ?2",
+                        Role.PESSOAL, LocalDateTime.now().minusDays(AdminUsuarioService.DIAS_SEM_ACESSO)),
+                entityManager.createQuery("""
+                        select count(u) from Usuario u where u.role = :role and u.ativo = true
+                          and not exists (select t.id from Transacao t where t.usuario = u)
+                        """, Long.class)
+                        .setParameter("role", Role.PESSOAL)
+                        .getSingleResult(),
+                usuarioRepository.count("role = ?1 and ativo = true and ultimoAcesso is null", Role.PESSOAL));
     }
 
     private Seguranca seguranca() {

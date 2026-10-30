@@ -21,7 +21,8 @@ public record PainelAdminDTO(
         List<CadastrosMes> cadastrosPorMes,
         List<UsoModulo> modulos,
         List<UsoCategoriaPadrao> categoriasPadrao,
-        Seguranca seguranca
+        Seguranca seguranca,
+        Engajamento engajamento
 ) {
 
     public record Indicador(long atual, long anterior) {
@@ -47,6 +48,14 @@ public record PainelAdminDTO(
     // Uso de cada categoria padrão no mês, somando as cópias de todas as contas (mesmo nome e tipo).
     public record UsoCategoriaPadrao(Long id, String nome, TipoCategoria tipo, String cor, String icone,
             boolean ativo, long lancamentos, long usuarios) {
+    }
+
+    // Situação de hoje das contas pessoais ativas (não depende do mês escolhido):
+    //  - semAcesso30Dias: último login registrado há 30 dias ou mais;
+    //  - nuncaLancaram: nenhum lançamento desde o cadastro;
+    //  - semAcessoRegistrado: ainda sem login gravado (o último acesso é gravado desde a V19),
+    //    por isso fica fora de "semAcesso30Dias".
+    public record Engajamento(long semAcesso30Dias, long nuncaLancaram, long semAcessoRegistrado) {
     }
 
     // Eventos de segurança registrados na auditoria.
