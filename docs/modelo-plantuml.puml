@@ -1,0 +1,158 @@
+@startuml modelo_fincontrol
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam roundCorner 8
+skinparam shadowing false
+skinparam linetype ortho
+
+' =====================================================================
+' Entidade Base (Superclasse JPA)
+' =====================================================================
+abstract class DefaultEntity <<MappedSuperclass>> {
+    # id: Long
+    # dataCadastro: LocalDateTime
+    # dataAlteracao: LocalDateTime
+}
+
+' =====================================================================
+' Entidades do Domínio
+' =====================================================================
+class Usuario {
+    + email: String
+    + nome: String
+    + password: String
+    + telefone: String
+    + profissao: String
+    + role: Role
+    + ativo: boolean
+    + modulos: Set<Modulo>
+    + tentativasLogin: int
+    + bloqueadoAte: LocalDateTime
+    + versaoSessao: int
+    + ultimoAcesso: LocalDateTime
+    + trocarSenha: boolean
+}
+
+class ContaFinanceira {
+    + nome: String
+    + tipo: TipoContaFinanceira
+    + saldoInicial: BigDecimal
+    + cor: String
+    + ativa: boolean
+}
+
+class Categoria {
+    + nome: String
+    + tipo: TipoCategoria
+    + cor: String
+    + icone: String
+}
+
+class Transacao {
+    + descricao: String
+    + valor: BigDecimal
+    + data: LocalDate
+    + pago: boolean
+    + dataPagamento: LocalDate
+    + tipo: TipoTransacao
+    + getStatus(): StatusPagamento
+}
+
+class RegistroAuditoria {
+    + autorId: Long
+    + autorEmail: String
+    + acao: String
+    + alvo: String
+    + detalhe: String
+}
+
+class CategoriaPadrao {
+    + nome: String
+    + tipo: TipoCategoria
+    + cor: String
+    + icone: String
+    + ativo: boolean
+}
+
+' =====================================================================
+' Enumerações
+' =====================================================================
+enum Role {
+    SUPER_ADMIN
+    PESSOAL
+}
+
+enum TipoContaFinanceira {
+    CONTA_CORRENTE
+    POUPANCA
+    CARTEIRA
+    INVESTIMENTO
+    OUTRA
+}
+
+enum TipoCategoria {
+    RECEITA
+    DESPESA
+}
+
+enum TipoTransacao {
+    RECEITA
+    DESPESA
+}
+
+enum StatusPagamento {
+    PAGO
+    PENDENTE
+    ATRASADO
+}
+
+enum Modulo {
+    DASHBOARD
+    CONTAS
+    RECEITAS
+    DESPESAS
+    LANCAMENTOS
+    RECORRENTES
+    CARTOES
+    CATEGORIAS
+    TAGS
+    ORCAMENTOS
+    RELATORIOS
+    IMPORTACAO
+    EXPORTACAO
+}
+
+' =====================================================================
+' Herança da Superclasse Base
+' =====================================================================
+DefaultEntity <|-- Usuario
+DefaultEntity <|-- ContaFinanceira
+DefaultEntity <|-- Categoria
+DefaultEntity <|-- Transacao
+DefaultEntity <|-- RegistroAuditoria
+DefaultEntity <|-- CategoriaPadrao
+
+' =====================================================================
+' Relacionamentos e Cardinalidades
+' =====================================================================
+Usuario "1" <-- "*" ContaFinanceira : usuario_id (possui)
+Usuario "1" <-- "*" Categoria : usuario_id (possui)
+Usuario "1" <-- "*" Transacao : usuario_id (pertence a)
+
+ContaFinanceira "1" <-- "*" Transacao : conta_id (alocada em)
+Categoria "1" <-- "*" Transacao : id_categoria (classificada em)
+
+' Associação fraca/lógica de auditoria (sem FK intencional para manter integridade histórica)
+Usuario "0..1" ..> "*" RegistroAuditoria : autorId (audita ações)
+
+' Tipagens com Enums
+Usuario --> Role
+Usuario --> Modulo
+ContaFinanceira --> TipoContaFinanceira
+Categoria --> TipoCategoria
+CategoriaPadrao --> TipoCategoria
+Transacao --> TipoTransacao
+Transacao ..> StatusPagamento : calcula status dinamicamente
+
+@enduml
+
