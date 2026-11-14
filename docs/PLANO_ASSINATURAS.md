@@ -66,7 +66,7 @@ flowchart TD
 ---
 
 ### Fase 3: Gating de Recursos (Limites do Plano Free)
-**Status:** `[Pendente]` ⚪
+**Status:** `[Concluída] ✅`
 
 - **Gating de Lançamentos (`TransacaoService`):**
   - Antes de persistir uma nova transação (`create`), o serviço valida o total de lançamentos do usuário no mês de competência.
@@ -80,7 +80,7 @@ flowchart TD
 ---
 
 ### Fase 4: Frontend (Paywall e Fluxo de Upgrade)
-**Status:** `[Pendente]` ⚪
+**Status:** `[Concluída] ✅`
 
 - **Interface de Planos (`components/planos`):**
   - Tela comparativa de planos (cards de preço e benefícios do Free vs Pro).
@@ -93,7 +93,7 @@ flowchart TD
 ---
 
 ### Fase 5: Dashboard do Administrador (Métricas SaaS & MRR)
-**Status:** `[Pendente]` ⚪
+**Status:** `[Concluída] ✅`
 
 - **Novos Endpoints em `AdminResource` e `PainelAdminService`:**
   - `GET /admin/metricas-saas`:
