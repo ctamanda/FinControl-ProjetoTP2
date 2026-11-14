@@ -47,9 +47,13 @@ public class TransacaoServiceImpl implements TransacaoService {
     @Inject
     ContaFinanceiraService contaService;
 
+    @Inject
+    AssinaturaService assinaturaService;
+
     @Override
     @Transactional
     public Transacao create(TransacaoRequestDTO transacao, Usuario usuario) {
+        assinaturaService.validarLimiteTransacoes(usuario);
         exigirTipoEditavel(transacao.tipo(), usuario);
 
         Transacao novaTransacao = new Transacao();

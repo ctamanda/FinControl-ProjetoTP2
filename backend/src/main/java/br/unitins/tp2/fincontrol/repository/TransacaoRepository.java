@@ -53,4 +53,9 @@ public class TransacaoRepository implements PanacheRepository<Transacao> {
         return find(Dono.filtro(usuario) + " and tipo in :tipos and id = :id",
                 Dono.parametros(usuario).and("tipos", tipos).and("id", id)).firstResult();
     }
+
+    public long contarPorUsuarioENoMes(Usuario usuario, LocalDate inicio, LocalDate fim) {
+        return count(Dono.filtro(usuario) + " and data between :inicio and :fim",
+                Dono.parametros(usuario).and("inicio", inicio).and("fim", fim));
+    }
 }

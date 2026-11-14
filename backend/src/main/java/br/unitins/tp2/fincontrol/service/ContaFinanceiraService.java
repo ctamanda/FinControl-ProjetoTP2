@@ -35,8 +35,12 @@ public class ContaFinanceiraService {
     @Inject
     EntityManager entityManager;
 
+    @Inject
+    AssinaturaService assinaturaService;
+
     @Transactional
     public ContaFinanceira criar(ContaFinanceiraRequestDTO dto, Usuario usuario) {
+        assinaturaService.validarLimiteContas(usuario);
         ContaFinanceira conta = new ContaFinanceira();
         conta.setUsuario(usuario);
         aplicarDados(conta, dto, usuario);
