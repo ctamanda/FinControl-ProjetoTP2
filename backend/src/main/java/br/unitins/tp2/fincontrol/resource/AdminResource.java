@@ -12,6 +12,7 @@ import br.unitins.tp2.fincontrol.dto.CategoriaPadraoResponseDTO;
 import br.unitins.tp2.fincontrol.dto.CategoriaRankingDTO;
 import br.unitins.tp2.fincontrol.dto.CategoriaRequestDTO;
 import br.unitins.tp2.fincontrol.dto.EstatisticaResponseDTO;
+import br.unitins.tp2.fincontrol.dto.MetricasSaasResponseDTO;
 import br.unitins.tp2.fincontrol.dto.PageResponse;
 import br.unitins.tp2.fincontrol.dto.PainelAdminDTO;
 import br.unitins.tp2.fincontrol.mapper.AdminMapper;
@@ -24,6 +25,7 @@ import br.unitins.tp2.fincontrol.service.AdminConsultaService.FiltroTransacoes;
 import br.unitins.tp2.fincontrol.service.CategoriaPadraoService;
 import br.unitins.tp2.fincontrol.exception.ValidationException;
 import br.unitins.tp2.fincontrol.service.EstatisticaService;
+import br.unitins.tp2.fincontrol.service.MetricasSaasService;
 import br.unitins.tp2.fincontrol.service.PainelAdminService;
 import br.unitins.tp2.fincontrol.service.UsuarioService;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
@@ -72,6 +74,16 @@ public class AdminResource {
 
     @Inject
     JsonWebToken jwt;
+
+    @Inject
+    MetricasSaasService metricasSaasService;
+
+    @GET
+    @Path("metricas-saas")
+    @RolesAllowed("SUPER_ADMIN")
+    public MetricasSaasResponseDTO metricasSaas() {
+        return metricasSaasService.calcularMetricas();
+    }
 
     @GET
     @Path("estatisticas")

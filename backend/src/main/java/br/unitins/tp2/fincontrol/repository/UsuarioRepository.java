@@ -14,4 +14,8 @@ public class UsuarioRepository implements PanacheRepository<Usuario> {
         }
         return find("lower(email) = ?1", email.trim().toLowerCase()).firstResult();
     }
+
+    public long countTotalUsuarios() {
+        return count();
+    }
 }
