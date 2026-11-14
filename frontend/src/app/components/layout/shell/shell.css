@@ -39,6 +39,54 @@
   gap: 10px;
 }
 
+.badge-plano {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+  color: #fff;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.badge-plano:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.badge-plano mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.badge-plano.pro {
+  background: linear-gradient(135deg, rgba(250, 204, 21, 0.25), rgba(250, 204, 21, 0.1));
+  border-color: var(--fc-amarelo);
+  color: var(--fc-amarelo);
+}
+
+.badge-plano.pro mat-icon {
+  color: var(--fc-amarelo);
+}
+
+@media (max-width: 640px) {
+  .badge-plano .nome-plano-badge {
+    display: none;
+  }
+  .badge-plano {
+    padding: 6px 8px;
+  }
+}
+
 .btn-redondo {
   width: 40px;
   height: 40px;

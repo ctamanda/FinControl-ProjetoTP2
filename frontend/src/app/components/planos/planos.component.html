@@ -1,0 +1,139 @@
+<div class="container-planos">
+  <div class="cabecalho">
+    <h1>Planos de Assinatura</h1>
+    <p class="subtitulo">
+      Escolha o plano ideal para gerenciar suas finanças com máxima flexibilidade.
+    </p>
+  </div>
+
+  <!-- 1. Estado de Carregamento (Loading) -->
+  @if (carregando()) {
+    <div class="estado-carregando" role="status" aria-live="polite">
+      <mat-spinner diameter="48"></mat-spinner>
+      <span>Carregando planos disponíveis...</span>
+    </div>
+  }
+
+  <!-- 2. Estado de Erro (Error) -->
+  @else if (erro()) {
+    <div class="estado-erro" role="alert">
+      <mat-icon class="icone-alerta">error_outline</mat-icon>
+      <p class="mensagem-erro">{{ erro() }}</p>
+      <button mat-flat-button class="btn-tentar-novamente" (click)="carregarDados()">
+        <mat-icon>refresh</mat-icon>
+        Tentar novamente
+      </button>
+    </div>
+  }
+
+  <!-- 3. Estado Vazio (Empty) -->
+  @else if (planos().length === 0) {
+    <div class="estado-vazio">
+      <mat-icon class="icone-vazio">sentiment_dissatisfied</mat-icon>
+      <h2>Nenhum plano disponível</h2>
+      <p>Nenhum plano foi encontrado no momento. Tente novamente mais tarde.</p>
+      <button mat-stroked-button (click)="carregarDados()">
+        <mat-icon>refresh</mat-icon>
+        Recarregar
+      </button>
+    </div>
+  }
+
+  <!-- 4. Estado de Sucesso (Renderização dos Cards) -->
+  @else {
+    <div class="grade-planos">
+      @for (plano of planos(); track plano.id) {
+        <mat-card
+          class="card-plano"
+          [class.card-destaque]="plano.nome.toLowerCase() === 'pro'"
+          [class.card-ativo]="ehPlanoAtual(plano)"
+        >
+          @if (ehPlanoAtual(plano)) {
+            <div class="faixa-atual">
+              <mat-icon>check_circle</mat-icon>
+              <span>Seu Plano Atual</span>
+            </div>
+          } @else if (plano.nome.toLowerCase() === 'pro') {
+            <div class="faixa-recomendado">
+              <mat-icon>star</mat-icon>
+              <span>Recomendado</span>
+            </div>
+          }
+
+          <mat-card-header>
+            <mat-card-title class="nome-plano">{{ plano.nome }}</mat-card-title>
+            <mat-card-subtitle class="descricao-plano">{{ plano.descricao }}</mat-card-subtitle>
+          </mat-card-header>
+
+          <mat-card-content>
+            <div class="preco-container">
+              <span class="cifrao">R$</span>
+              <span class="valor">{{ plano.valorMensal | number: '1.2-2' }}</span>
+              <span class="periodo">/mês</span>
+            </div>
+
+            <ul class="lista-beneficios">
+              <li>
+                <mat-icon class="check">check</mat-icon>
+                <span>
+                  <strong>{{ plano.limiteContas ? plano.limiteContas + ' contas' : 'Contas ilimitadas' }}</strong>
+                  ativas simultâneas
+                </span>
+              </li>
+              <li>
+                <mat-icon class="check">check</mat-icon>
+                <span>
+                  <strong>{{ plano.limiteTransacoesMes ? plano.limiteTransacoesMes + ' transações' : 'Transações ilimitadas' }}</strong>
+                  por mês
+                </span>
+              </li>
+              @if (plano.nome.toLowerCase() === 'pro') {
+                <li>
+                  <mat-icon class="check">check</mat-icon>
+                  <span>Suporte prioritário e relatórios avançados</span>
+                </li>
+                <li>
+                  <mat-icon class="check">check</mat-icon>
+                  <span>Exportação e filtros completos</span>
+                </li>
+              } @else {
+                <li class="beneficio-muted">
+                  <mat-icon class="icone-neutro">info_outline</mat-icon>
+                  <span>Ideal para controle pessoal básico</span>
+                </li>
+              }
+            </ul>
+          </mat-card-content>
+
+          <mat-card-actions class="card-acoes">
+            @if (ehPlanoAtual(plano)) {
+              <button mat-stroked-button class="btn-plano btn-ativo" disabled>
+                <mat-icon>verified</mat-icon>
+                Plano Ativo
+              </button>
+            } @else {
+              <!-- 5. Prevenção de Duplo Clique (Prevent Double Click) -->
+              <button
+                mat-flat-button
+                class="btn-plano btn-upgrade"
+                [class.btn-pro]="plano.nome.toLowerCase() === 'pro'"
+                [disabled]="fazendoUpgrade()"
+                (click)="realizarUpgrade(plano)"
+              >
+                @if (fazendoUpgrade()) {
+                  <mat-spinner diameter="20" class="spinner-inline"></mat-spinner>
+                  <span>Processando...</span>
+                } @else {
+                  <span class="btn-conteudo">
+                    <mat-icon>{{ plano.nome.toLowerCase() === 'pro' ? 'workspace_premium' : 'arrow_forward' }}</mat-icon>
+                    <span>Fazer Upgrade para {{ plano.nome }}</span>
+                  </span>
+                }
+              </button>
+            }
+          </mat-card-actions>
+        </mat-card>
+      }
+    </div>
+  }
+</div>

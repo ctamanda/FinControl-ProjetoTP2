@@ -19,6 +19,17 @@
   </div>
 
   <div class="acoes">
+    <a
+      class="badge-plano"
+      routerLink="/planos"
+      [class.pro]="planoAtual().toLowerCase() === 'pro'"
+      [matTooltip]="'Plano ' + planoAtual() + ' · Clique para gerenciar'"
+      matTooltipPosition="below"
+      aria-label="Plano de assinatura"
+    >
+      <mat-icon>{{ planoAtual().toLowerCase() === 'pro' ? 'workspace_premium' : 'star_outline' }}</mat-icon>
+      <span class="nome-plano-badge">{{ planoAtual() }}</span>
+    </a>
     @if (acoesRapidas().length) {
       <button class="btn-redondo amarelo so-computador" type="button" [matMenuTriggerFor]="menuMais" aria-label="Adicionar">
         <mat-icon>add</mat-icon>

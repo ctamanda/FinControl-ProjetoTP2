@@ -123,6 +123,11 @@ export const routes: Routes = [
                 title: 'Meu perfil · FinControl',
             },
             {
+                path: 'planos',
+                loadComponent: () => import('./components/planos/planos.component').then((m) => m.PlanosComponent),
+                title: 'Planos de Assinatura · FinControl',
+            },
+            {
                 path: 'configuracoes',
                 loadComponent: () => import('./components/configuracoes/configuracoes').then((m) => m.Configuracoes),
                 title: 'Funcionalidades · FinControl',

@@ -17,6 +17,7 @@ import { MODULOS_TRANSACOES, temModulo, tiposEditaveis } from '../../../core/ace
 import { AuthService } from '../../../core/auth/auth.service';
 import { MesService } from '../../../core/mes.service';
 import { UsuarioService } from '../../../core/usuario/usuario.service';
+import { AssinaturaService } from '../../../services/assinatura.service';
 import { MODULOS, ROTULOS_ROLE, Usuario } from '../../../models/usuario.model';
 import { Logo } from '../../shared/logo/logo';
 
@@ -54,6 +55,7 @@ export class Shell implements OnInit {
   protected readonly auth = inject(AuthService);
   protected readonly mes = inject(MesService);
   private readonly usuarioService = inject(UsuarioService);
+  private readonly assinaturaService = inject(AssinaturaService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -63,6 +65,7 @@ export class Shell implements OnInit {
   protected readonly perfil = this.usuarioService.perfil;
   protected readonly rotulosRole = ROTULOS_ROLE;
 
+  protected readonly planoAtual = computed(() => this.assinaturaService.assinaturaAtual()?.plano?.nome || 'Free');
   protected readonly nome = computed(() => this.perfil()?.nome || this.auth.email());
   protected readonly iniciais = computed(() => iniciais(this.nome()));
 
@@ -85,6 +88,7 @@ export class Shell implements OnInit {
 
     const conta: ItemMenu[] = [
       { rota: '/perfil', icone: 'person_outline', rotulo: 'Meu perfil' },
+      { rota: '/planos', icone: 'card_membership', rotulo: 'Planos & Assinatura' },
       { rota: '/configuracoes', icone: 'tune', rotulo: 'Funcionalidades' },
     ];
     secoes.push({ titulo: 'Conta', itens: conta });
@@ -130,6 +134,7 @@ export class Shell implements OnInit {
 
   ngOnInit(): void {
     this.usuarioService.carregarPerfil().subscribe({ error: () => {} });
+    this.assinaturaService.buscarMinhaAssinatura().subscribe({ error: () => {} });
     this.atualizarRota();
 
     this.router.events

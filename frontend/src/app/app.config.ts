@@ -6,6 +6,7 @@ import { MatPaginatorIntl } from '@angular/material/paginator';
 import { routes } from './app.routes';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { authInterceptor } from './core/auth/auth.interceptor';
+import { paywallInterceptor } from './core/interceptors/paywall.interceptor';
 
 // Datas, moeda (R$) e números no formato brasileiro.
 registerLocaleData(localePt);
@@ -36,7 +37,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-    provideHttpClient(withInterceptors([authInterceptor])),
+    provideHttpClient(withInterceptors([authInterceptor, paywallInterceptor])),
     { provide: LOCALE_ID, useValue: 'pt-BR' },
     { provide: MatPaginatorIntl, useFactory: getPtBrPaginatorIntl }
   ]
