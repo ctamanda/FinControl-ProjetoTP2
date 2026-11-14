@@ -20,6 +20,12 @@ import jakarta.transaction.Transactional;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotAuthorizedException;
+import br.unitins.tp2.fincontrol.model.Assinatura;
+import br.unitins.tp2.fincontrol.model.Plano;
+import br.unitins.tp2.fincontrol.model.StatusAssinatura;
+import br.unitins.tp2.fincontrol.repository.AssinaturaRepository;
+import br.unitins.tp2.fincontrol.repository.PlanoRepository;
+
 
 @ApplicationScoped
 public class UsuarioService {
@@ -35,6 +41,12 @@ public class UsuarioService {
 
     @Inject
     AuditoriaService auditoria;
+
+    @Inject
+    PlanoRepository planoRepository;
+
+    @Inject
+    AssinaturaRepository assinaturaRepository;
 
     // A conta pessoal já sai pronta para usar: todos os módulos, as categorias padrão e a Carteira.
     @Transactional
@@ -57,6 +69,15 @@ public class UsuarioService {
 
         repository.persist(usuario);
         dadosIniciais.criar(usuario);
+        // Auto-assign plano Free ao criar usuário
+        Plano planoFree = planoRepository.find("lower(nome) = ?1", "free").firstResult();
+        if (planoFree != null) {
+            Assinatura assinatura = new Assinatura();
+            assinatura.setUsuario(usuario);
+            assinatura.setPlano(planoFree);
+            assinatura.setStatus(StatusAssinatura.ATIVA);
+            assinaturaRepository.persist(assinatura);
+        }
 
         return usuario;
     }
