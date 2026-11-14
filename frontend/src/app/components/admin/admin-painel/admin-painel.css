@@ -367,12 +367,51 @@ a.link-linha:hover {
   }
 }
 
-/* ---------- Seções do painel ---------- */
-.secao-visao-geral,
-.secao-saas,
-.secao-usuarios,
+/* =====================================================================
+   ESTILOS DE SEÇÕES E TÍTULOS DO PAINEL ADMIN
+   ===================================================================== */
+
+/* Respiro global para todos os títulos de seção: evita sobreposição com cards */
+.titulo-secao {
+  margin: 0 0 16px 0 !important;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--fc-roxo);
+  display: block;
+}
+
+/* Seção 1 (Topo): margem superior para afastar da navbar e não cortar o título */
+.secao-visao-geral {
+  margin-top: 16px;
+  margin-bottom: 24px;
+}
+
+.secao-visao-geral .titulo-secao {
+  margin: 0 0 16px 0 !important;
+}
+
+.secao-visao-geral .c-indicadores {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* Seção 2: SaaS */
+.secao-saas {
+  margin-bottom: 24px;
+}
+
+/* Seção 3: Usuários */
+.secao-usuarios {
+  margin-bottom: 24px;
+}
+
+/* Seção 4: Transações com espaçamento acima para separar do gráfico anterior e do card abaixo */
 .secao-transacoes {
-  margin-bottom: 8px;
+  margin-top: 32px;
+  margin-bottom: 24px;
+}
+
+.secao-transacoes .titulo-secao {
+  margin: 0 0 16px 0 !important;
 }
 
 /* ---------- Cards SaaS (MRR, Conversão, Churn) ---------- */
@@ -387,16 +426,6 @@ a.link-linha:hover {
   box-shadow: var(--fc-shadow) !important;
   overflow: hidden;
   background: #ffffff !important;
-}
-
-/* Seção 1: 3 colunas fixas (Usuários + MRR + Volume) */
-.secao-visao-geral .c-indicadores {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-/* Título da Seção 1 não pode ter margem negativa no topo */
-.secao-visao-geral .titulo-secao {
-  margin-top: 0;
 }
 
 .card-saas mat-card-header {

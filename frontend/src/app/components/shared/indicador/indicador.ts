@@ -2,7 +2,7 @@ import { DecimalPipe } from '@angular/common';
 import { Component, computed, input } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 
-export type CorIndicador = 'roxo' | 'verde' | 'vermelho' | 'amarelo' | 'azul';
+export type CorIndicador = 'roxo' | 'verde' | 'vermelho' | 'amarelo' | 'azul' | 'cinza';
 
 // Card de indicador: ícone redondo colorido, valor grande, rótulo e um detalhe opcional
 // (variação "↗ 6,2% vs. mês anterior" ou um texto livre).
@@ -107,6 +107,7 @@ export type CorIndicador = 'roxo' | 'verde' | 'vermelho' | 'amarelo' | 'azul';
     .amarelo { --cor: var(--fc-amarelo); --cor-texto: var(--fc-text); }
     .amarelo .icone { color: var(--fc-roxo-escuro); }
     .azul { --cor: #2563c9; }
+    .cinza { --cor: var(--fc-muted); --cor-texto: var(--fc-text); }
 
     /* Card cheio (roxo), como "Usuários ativos" no painel do administrador */
     .destaque {

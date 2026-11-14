@@ -24,7 +24,7 @@
             @if (metricasSaas(); as saas) {
               <app-indicador icone="attach_money" cor="roxo" [valor]="(saas.mrr | currency:'BRL':'symbol':'1.2-2') ?? ''" rotulo="Receita SaaS (MRR)" detalhe="planos Pro ativos" />
             }
-            <app-indicador icone="trending_up" cor="azul" [valor]="i.volume.valor" rotulo="Volume Total" [variacao]="i.volume.variacao" detalhe="receitas + despesas dos clientes" />
+            <app-indicador icone="trending_up" cor="cinza" [valor]="i.volume.valor" rotulo="Volume Total" [variacao]="i.volume.variacao" detalhe="receitas + despesas dos clientes" />
           </div>
         }
       </section>
@@ -126,14 +126,14 @@
               <div class="assinante-linha">
                 <span class="assinante-rotulo">Pro</span>
                 <span class="mod-trilha assinante-trilha">
-                  <span class="mod-barra ligado" [style.width.%]="(m.totalUsuariosPro / (m.totalUsuariosPro + m.totalUsuariosFree || 1)) * 100"></span>
+                  <span class="mod-barra ligado" [style.width.%]="(m.totalUsuariosPro / ((m.totalUsuariosPro + m.totalUsuariosFree) || 1)) * 100"></span>
                 </span>
                 <span class="assinante-valor">{{ m.totalUsuariosPro | number }}</span>
               </div>
               <div class="assinante-linha">
                 <span class="assinante-rotulo">Free</span>
                 <span class="mod-trilha assinante-trilha">
-                  <span class="mod-barra" style="background: #b9a8e6" [style.width.%]="(m.totalUsuariosFree / (m.totalUsuariosPro + m.totalUsuariosFree || 1)) * 100"></span>
+                  <span class="mod-barra" style="background: #b9a8e6" [style.width.%]="(m.totalUsuariosFree / ((m.totalUsuariosPro + m.totalUsuariosFree) || 1)) * 100"></span>
                 </span>
                 <span class="assinante-valor">{{ m.totalUsuariosFree | number }}</span>
               </div>
@@ -148,7 +148,7 @@
         @if (indicadores(); as i) {
           <div class="indicadores c-indicadores-transacoes">
             <app-indicador icone="swap_vert" cor="azul" [valor]="(i.lancamentos.valor | number) ?? ''" [rotulo]="'Lançamentos em ' + i.mes" [variacao]="i.lancamentos.variacao" detalhe="sem lançamentos no mês anterior" />
-            <app-indicador icone="trending_up" cor="azul" [valor]="i.volume.valor" rotulo="Volume Total" [variacao]="i.volume.variacao" detalhe="receitas + despesas dos clientes" />
+            <app-indicador icone="trending_up" cor="cinza" [valor]="i.volume.valor" rotulo="Volume Total" [variacao]="i.volume.variacao" detalhe="receitas + despesas dos clientes" />
           </div>
         }
       </section>
