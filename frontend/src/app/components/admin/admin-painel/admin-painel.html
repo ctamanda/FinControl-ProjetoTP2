@@ -21,6 +21,9 @@
         @if (indicadores(); as i) {
           <div class="indicadores c-indicadores">
             <app-indicador icone="person_outline" cor="amarelo" [destaque]="true" [valor]="(i.ativos.valor | number) ?? ''" rotulo="Usuários ativos no mês" [variacao]="i.ativos.variacao" detalhe="com lançamento no mês" />
+            @if (metricasSaas(); as saas) {
+              <app-indicador icone="attach_money" cor="roxo" [valor]="(saas.mrr | currency:'BRL':'symbol':'1.2-2') ?? ''" rotulo="Receita SaaS (MRR)" detalhe="planos Pro ativos" />
+            }
             <app-indicador icone="trending_up" cor="azul" [valor]="i.volume.valor" rotulo="Volume Total" [variacao]="i.volume.variacao" detalhe="receitas + despesas dos clientes" />
           </div>
         }

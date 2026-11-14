@@ -386,6 +386,17 @@ a.link-linha:hover {
   border-radius: 18px !important;
   box-shadow: var(--fc-shadow) !important;
   overflow: hidden;
+  background: #ffffff !important;
+}
+
+/* Seção 1: 3 colunas fixas (Usuários + MRR + Volume) */
+.secao-visao-geral .c-indicadores {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* Título da Seção 1 não pode ter margem negativa no topo */
+.secao-visao-geral .titulo-secao {
+  margin-top: 0;
 }
 
 .card-saas mat-card-header {
