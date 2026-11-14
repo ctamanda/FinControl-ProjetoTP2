@@ -84,6 +84,10 @@ A segurança e autorização da aplicação operam em múltiplos níveis:
 
 ## 5. Pendências e Próximos Passos
 
+- **Migração do Armazenamento de Token JWT:**
+  - Migrar o armazenamento de credenciais de acesso do `localStorage` do navegador para Cookies com flags `HttpOnly`, `Secure` e `SameSite=Strict`, implementando proteção contra CSRF via padrão *Double Submit Cookie* (com validação do cabeçalho `X-XSRF-TOKEN`) para mitigar vulnerabilidades a ataques XSS.
+- **Migração para Keycloak (OIDC):**
+  - Migrar da autenticação JWT nativa (SmallRye JWT gerado internamente) para um servidor de identidade centralizado (Keycloak / OIDC), suportando Single Sign-On (SSO), gestão centralizada de usuários/credenciais e autenticação multifator (MFA).
 - **Implementação de Assinatura (Planos Free / Pro):**
   - Atualmente existe uma seleção preliminar de módulos por usuário (`usuario_modulo`), porém não há regras de tarifação, limites operacionais por plano ou controle de vigência de planos SaaS (Free/Pro).
 - **Gateway de Pagamento:**
