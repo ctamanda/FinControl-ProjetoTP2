@@ -18,6 +18,7 @@ import {
 import { PageResponse } from '../models/page-response.model';
 import { Role, Usuario } from '../models/usuario.model';
 import { TipoCategoria } from '../models/categoria.model';
+import { MetricasSaas } from '../models/metricas-saas.model';
 
 // Endpoints exclusivos do administrador do FinControl (@RolesAllowed("SUPER_ADMIN") no back).
 @Injectable({ providedIn: 'root' })
@@ -28,6 +29,11 @@ export class AdminService {
   // Visão geral do mês (aaaa-mm), já com o mês anterior para a variação.
   painel(mes: string): Observable<PainelAdmin> {
     return this.http.get<PainelAdmin>(`${this.apiUrl}/painel`, { params: { mes } });
+  }
+
+  // Métricas SaaS (MRR, churn, conversão) — apenas SUPER_ADMIN.
+  buscarMetricasSaas(): Observable<MetricasSaas> {
+    return this.http.get<MetricasSaas>(`${this.apiUrl}/metricas-saas`);
   }
 
   // ---------------------------------------------------------- usuários

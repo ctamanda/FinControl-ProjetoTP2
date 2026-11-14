@@ -14,80 +14,143 @@
 
   <div class="painel">
     <div class="col-principal">
-      <h2 class="titulo-secao so-computador">Visão geral do sistema</h2>
-
-      @if (indicadores(); as i) {
-        <div class="indicadores c-indicadores">
-          <app-indicador
-            icone="person_outline"
-            cor="amarelo"
-            [destaque]="true"
-            [valor]="(i.ativos.valor | number) ?? ''"
-            rotulo="Usuários ativos no mês"
-            [variacao]="i.ativos.variacao"
-            detalhe="com lançamento no mês"
-          />
-          <app-indicador
-            icone="person_add"
-            cor="roxo"
-            [valor]="(i.novos.valor | number) ?? ''"
-            [rotulo]="'Novos cadastros em ' + i.mes"
-            [variacao]="i.novos.variacao"
-            detalhe="sem cadastros no mês anterior"
-          />
-          <app-indicador
-            icone="swap_vert"
-            cor="azul"
-            [valor]="(i.lancamentos.valor | number) ?? ''"
-            [rotulo]="'Lançamentos em ' + i.mes"
-            [variacao]="i.lancamentos.variacao"
-            detalhe="sem lançamentos no mês anterior"
-          />
-          <app-indicador
-            icone="trending_up"
-            cor="verde"
-            [valor]="i.volume.valor"
-            rotulo="Volume registrado"
-            [variacao]="i.volume.variacao"
-            detalhe="receitas + despesas do mês"
-          />
-        </div>
-      }
-
-      <section class="cartao c-cadastros">
-        <div class="cartao-cabeca">
-          <h2>Novos cadastros</h2>
-          <div class="legenda">
-            <span><span class="bolinha" style="background: #3b1478"></span>Contas pessoais por mês</span>
+      
+      <!-- SEÇÃO 1: VISÃO GERAL -->
+      <section class="secao-visao-geral">
+        <h2 class="titulo-secao">Visão geral do sistema</h2>
+        @if (indicadores(); as i) {
+          <div class="indicadores c-indicadores">
+            <app-indicador icone="person_outline" cor="amarelo" [destaque]="true" [valor]="(i.ativos.valor | number) ?? ''" rotulo="Usuários ativos no mês" [variacao]="i.ativos.variacao" detalhe="com lançamento no mês" />
+            <app-indicador icone="trending_up" cor="azul" [valor]="i.volume.valor" rotulo="Volume Total" [variacao]="i.volume.variacao" detalhe="receitas + despesas dos clientes" />
           </div>
-        </div>
-        <div class="grafico" role="img" aria-label="Novos cadastros de contas pessoais nos últimos 6 meses">
-          <div class="eixo-y">
-            <span>{{ cadastros().maior | number }}</span>
-            <span>{{ cadastros().maior / 2 | number }}</span>
-            <span>0</span>
-          </div>
-          <div class="area">
-            @for (m of cadastros().meses; track m.mes) {
-              <div class="mes-col">
-                <span class="valor-col">{{ m.contasPessoais }}</span>
-                <span
-                  class="col larga"
-                  [style.--cor]="m.atual ? '#3b1478' : '#b9a8e6'"
-                  [style.height.%]="m.altura"
-                  [title]="m.contasPessoais + ' contas pessoais'"
-                ></span>
-              </div>
-            }
-          </div>
-          <div class="rotulos-x">
-            @for (m of cadastros().meses; track m.mes) {
-              <span [class.atual]="m.atual">{{ m.rotulo }}</span>
-            }
-          </div>
-        </div>
+        }
       </section>
 
+      <!-- SEÇÃO 2: MÉTRICAS SAAS -->
+      <section class="secao-saas c-saas">
+        <h2 class="titulo-secao">Métricas de Receita (SaaS)</h2>
+
+        @if (carregandoMetricas()) {
+          <div class="loading-saas cartao"><mat-spinner diameter="36" /><span>Carregando métricas de receita (SaaS)...</span></div>
+        } @else if (erroMetricas()) {
+          <div class="erro-saas">
+            <div class="msg-container"><mat-icon>error_outline</mat-icon><span>{{ erroMetricas() }}</span></div>
+            <button type="button" class="btn-tentar-novamente" (click)="carregarMetricasSaas()">Tentar novamente</button>
+          </div>
+        } @else if (metricasSaas(); as m) {
+          <div class="cards-saas">
+            <mat-card class="card-saas card-mrr">
+              <mat-card-header>
+                <div mat-card-avatar class="icone-avatar mrr"><mat-icon>attach_money</mat-icon></div>
+                <mat-card-subtitle>Receita Recorrente Mensal</mat-card-subtitle>
+                <mat-card-title>MRR</mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="valor-metrica">{{ m.mrr | currency: 'BRL' : 'symbol' : '1.2-2' }}</div>
+                <p class="detalhe-metrica">Receita recorrente dos planos Pro ativos</p>
+              </mat-card-content>
+            </mat-card>
+
+            <mat-card class="card-saas card-conversao">
+              <mat-card-header>
+                <div mat-card-avatar class="icone-avatar conversao"><mat-icon>trending_up</mat-icon></div>
+                <mat-card-subtitle>Conversão da Base</mat-card-subtitle>
+                <mat-card-title>Taxa de Conversão</mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="valor-metrica">{{ m.taxaConversao | number: '1.1-2' }}%</div>
+                <p class="detalhe-metrica">{{ m.totalUsuariosPro }} Pro de {{ m.totalUsuariosPro + m.totalUsuariosFree }} usuários</p>
+              </mat-card-content>
+            </mat-card>
+
+            <mat-card class="card-saas card-churn">
+              <mat-card-header>
+                <div mat-card-avatar class="icone-avatar churn"><mat-icon>person_remove</mat-icon></div>
+                <mat-card-subtitle>Cancelamentos no Mês</mat-card-subtitle>
+                <mat-card-title>Churn</mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="valor-metrica">{{ m.churn | number }}</div>
+                <p class="detalhe-metrica">{{ m.churn === 1 ? '1 cancelamento' : m.churn + ' cancelamentos' }} neste mês</p>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        }
+      </section>
+
+      <!-- SEÇÃO 3: MÉTRICAS DE USUÁRIOS -->
+      <section class="secao-usuarios">
+        <h2 class="titulo-secao">Métricas de Usuários</h2>
+        <section class="cartao c-cadastros">
+          <div class="cartao-cabeca">
+            <h2>Novos cadastros</h2>
+            <div class="legenda">
+              <span><span class="bolinha" style="background: #3b1478"></span>Contas pessoais por mês</span>
+            </div>
+          </div>
+          <div class="grafico" role="img" aria-label="Novos cadastros de contas pessoais nos últimos 6 meses">
+            <div class="eixo-y">
+              <span>{{ cadastros().maior | number }}</span>
+              <span>{{ cadastros().maior / 2 | number }}</span>
+              <span>0</span>
+            </div>
+            <div class="area">
+              @for (m of cadastros().meses; track m.mes) {
+                <div class="mes-col">
+                  <span class="valor-col">{{ m.contasPessoais }}</span>
+                  <span class="col larga" [style.--cor]="m.atual ? '#3b1478' : '#b9a8e6'" [style.height.%]="m.altura" [title]="m.contasPessoais + ' contas pessoais'"></span>
+                </div>
+              }
+            </div>
+            <div class="rotulos-x">
+              @for (m of cadastros().meses; track m.mes) {
+                <span [class.atual]="m.atual">{{ m.rotulo }}</span>
+              }
+            </div>
+          </div>
+        </section>
+
+        @if (metricasSaas(); as m) {
+          <section class="cartao c-assinantes" aria-label="Comparativo de assinantes Free vs Pro">
+            <div class="cartao-cabeca">
+              <h2>Assinantes Free vs Pro</h2>
+              <div class="legenda">
+                <span><span class="bolinha" style="background: #3b1478"></span>Pro</span>
+                <span><span class="bolinha" style="background: #b9a8e6"></span>Free</span>
+              </div>
+            </div>
+            <div class="assinantes-barras">
+              <div class="assinante-linha">
+                <span class="assinante-rotulo">Pro</span>
+                <span class="mod-trilha assinante-trilha">
+                  <span class="mod-barra ligado" [style.width.%]="(m.totalUsuariosPro / (m.totalUsuariosPro + m.totalUsuariosFree || 1)) * 100"></span>
+                </span>
+                <span class="assinante-valor">{{ m.totalUsuariosPro | number }}</span>
+              </div>
+              <div class="assinante-linha">
+                <span class="assinante-rotulo">Free</span>
+                <span class="mod-trilha assinante-trilha">
+                  <span class="mod-barra" style="background: #b9a8e6" [style.width.%]="(m.totalUsuariosFree / (m.totalUsuariosPro + m.totalUsuariosFree || 1)) * 100"></span>
+                </span>
+                <span class="assinante-valor">{{ m.totalUsuariosFree | number }}</span>
+              </div>
+            </div>
+          </section>
+        }
+      </section>
+
+      <!-- SEÇÃO 4: MÉTRICAS DE TRANSAÇÕES -->
+      <section class="secao-transacoes">
+        <h2 class="titulo-secao">Métricas de Transações</h2>
+        @if (indicadores(); as i) {
+          <div class="indicadores c-indicadores-transacoes">
+            <app-indicador icone="swap_vert" cor="azul" [valor]="(i.lancamentos.valor | number) ?? ''" [rotulo]="'Lançamentos em ' + i.mes" [variacao]="i.lancamentos.variacao" detalhe="sem lançamentos no mês anterior" />
+            <app-indicador icone="trending_up" cor="azul" [valor]="i.volume.valor" rotulo="Volume Total" [variacao]="i.volume.variacao" detalhe="receitas + despesas dos clientes" />
+          </div>
+        }
+      </section>
+
+      <!-- SEÇÃO 5: USUÁRIOS E MÓDULOS -->
       <section class="cartao c-usuarios">
         <div class="cartao-cabeca">
           <h2>Usuários</h2>
@@ -128,22 +191,14 @@
                     <td class="cinza">{{ quando(u.dataCadastro) }}</td>
                     <td>
                       <div class="toggle">
-                        <mat-slide-toggle
-                          #t
-                          [checked]="u.ativo"
-                          [disabled]="u.id === eu()?.id"
-                          (change)="alterarAtivo(u, t)"
-                          [attr.aria-label]="(u.ativo ? 'Desativar ' : 'Reativar ') + u.nome"
-                        />
+                        <mat-slide-toggle #t [checked]="u.ativo" [disabled]="u.id === eu()?.id" (change)="alterarAtivo(u, t)" [attr.aria-label]="(u.ativo ? 'Desativar ' : 'Reativar ') + u.nome" />
                         <span>{{ u.ativo ? 'Ativo' : 'Inativo' }}</span>
                       </div>
                     </td>
                     <td class="num">
                       <a class="acao-icone" [routerLink]="['/admin/usuarios', u.id]" matTooltip="Editar" aria-label="Editar"><mat-icon>edit</mat-icon></a>
                       @if (u.role === 'PESSOAL') {
-                        <a class="acao-icone" routerLink="/admin/transacoes" [queryParams]="{ usuario: u.id }" matTooltip="Ver lançamentos (fica na auditoria)" aria-label="Ver lançamentos">
-                          <mat-icon>receipt_long</mat-icon>
-                        </a>
+                        <a class="acao-icone" routerLink="/admin/transacoes" [queryParams]="{ usuario: u.id }" matTooltip="Ver lançamentos (fica na auditoria)" aria-label="Ver lançamentos"><mat-icon>receipt_long</mat-icon></a>
                       }
                       @if (u.id !== eu()?.id) {
                         <button class="acao-icone" type="button" (click)="excluir(u)" matTooltip="Excluir" aria-label="Excluir"><mat-icon>delete_outline</mat-icon></button>
@@ -206,14 +261,12 @@
               </li>
             }
           </ul>
-          <p class="nota">
-            "Já tem dados" conta quem lançou receitas/despesas, cadastrou conta além da Carteira ou criou categoria própria.
-            Dashboard e os módulos "em breve" não guardam dados para contar.
-          </p>
+          <p class="nota">"Já tem dados" conta quem lançou receitas/despesas, cadastrou conta além da Carteira ou criou categoria própria. Dashboard e os módulos "em breve" não guardam dados para contar.</p>
         </section>
       }
     </div>
 
+    <!-- COLUNA LATERAL -->
     <div class="col-lateral">
       <form class="cartao busca-admin c-busca" (submit)="$event.preventDefault(); buscar(termo.value)">
         <mat-icon>search</mat-icon>
@@ -230,10 +283,7 @@
             <a class="seg-item largo" routerLink="/admin/usuarios">
               <mat-icon>groups</mat-icon>
               <strong>{{ p.totais.usuarios | number }}</strong>
-              <span>
-                usuários no total · {{ p.totais.ativos | number }} ativos · {{ p.totais.inativos | number }} inativos ·
-                {{ p.totais.administradores | number }} {{ p.totais.administradores === 1 ? 'administrador' : 'administradores' }}
-              </span>
+              <span>usuários no total · {{ p.totais.ativos | number }} ativos · {{ p.totais.inativos | number }} inativos · {{ p.totais.administradores | number }} {{ p.totais.administradores === 1 ? 'administrador' : 'administradores' }}</span>
             </a>
             <a class="seg-item" routerLink="/admin/usuarios" [queryParams]="{ filtro: 'SEM_ACESSO_30_DIAS' }">
               <mat-icon>bedtime</mat-icon>
@@ -246,8 +296,7 @@
               <span>Cadastraram e nunca lançaram</span>
             </a>
           </div>
-          <p class="nota">
-            Contas pessoais ativas, situação de hoje.
+          <p class="nota">Contas pessoais ativas, situação de hoje.
             @if (p.engajamento.semAcessoRegistrado > 0) {
               {{ p.engajamento.semAcessoRegistrado | number }}
               {{ p.engajamento.semAcessoRegistrado === 1 ? 'conta ainda não tem' : 'contas ainda não têm' }}

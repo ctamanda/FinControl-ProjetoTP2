@@ -367,6 +367,162 @@ a.link-linha:hover {
   }
 }
 
+/* ---------- Seções do painel ---------- */
+.secao-visao-geral,
+.secao-saas,
+.secao-usuarios,
+.secao-transacoes {
+  margin-bottom: 8px;
+}
+
+/* ---------- Cards SaaS (MRR, Conversão, Churn) ---------- */
+.cards-saas {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.card-saas {
+  border-radius: 18px !important;
+  box-shadow: var(--fc-shadow) !important;
+  overflow: hidden;
+}
+
+.card-saas mat-card-header {
+  padding: 20px 20px 0;
+}
+
+.card-saas mat-card-content {
+  padding: 12px 20px 20px;
+}
+
+.icone-avatar {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  display: grid !important;
+  place-items: center !important;
+  color: #fff !important;
+}
+
+.icone-avatar.mrr        { background: #15803d; }
+.icone-avatar.conversao  { background: #2563c9; }
+.icone-avatar.churn      { background: #d0343f; }
+
+.icone-avatar mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.valor-metrica {
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--fc-text);
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 4px;
+}
+
+.detalhe-metrica {
+  font-size: 13px;
+  color: var(--fc-muted);
+  margin: 0;
+}
+
+/* Estados loading e erro da seção SaaS */
+.loading-saas {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 24px;
+  font-size: 14px;
+  color: var(--fc-muted);
+}
+
+.erro-saas {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  background: #fdecee;
+  border-radius: 14px;
+  font-size: 14px;
+  color: #d0343f;
+}
+
+.erro-saas .msg-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-tentar-novamente {
+  align-self: flex-start;
+  padding: 6px 16px;
+  border: 1px solid #d0343f;
+  border-radius: 8px;
+  background: none;
+  color: #d0343f;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn-tentar-novamente:hover {
+  background: #d0343f;
+  color: #fff;
+}
+
+@media (max-width: 900px) {
+  .cards-saas {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .cards-saas {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Gráfico Free vs Pro ---------- */
+.assinantes-barras {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 4px;
+}
+
+.assinante-linha {
+  display: grid;
+  grid-template-columns: 36px 1fr 36px;
+  align-items: center;
+  gap: 12px;
+}
+
+.assinante-rotulo {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fc-text);
+}
+
+.assinante-trilha {
+  position: relative;
+  height: 12px;
+  border-radius: 6px;
+  background: #f1eef8;
+  overflow: hidden;
+}
+
+.assinante-valor {
+  font-size: 13px;
+  font-weight: 600;
+  text-align: right;
+  color: var(--fc-muted);
+  font-variant-numeric: tabular-nums;
+}
+
 /* Celular: a ordem dos blocos segue o desenho (indicadores, busca, segurança, usuários...) */
 @media (max-width: 760px) {
   .cabeca-celular { order: 0; }

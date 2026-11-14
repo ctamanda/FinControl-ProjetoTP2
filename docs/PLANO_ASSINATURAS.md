@@ -27,10 +27,11 @@ Transformar o FinControl em uma plataforma SaaS escalável e sustentável, viabi
 
 ```mermaid
 flowchart TD
-    F1["Fase 1: Banco e Modelagem\n[Concluída]"] --> F2["Fase 2: Cadastro e API\n[Em andamento]"]
-    F2 --> F3["Fase 3: Gating de Recursos\n[Pendente]"]
-    F3 --> F4["Fase 4: Frontend (Paywall & Upgrade)\n[Pendente]"]
-    F4 --> F5["Fase 5: Dashboard Admin (MRR)\n[Pendente]"]
+    F1["Fase 1: Banco e Modelagem\n[Concluída] ✅"] --> F2["Fase 2: Cadastro e API\n[Concluída] ✅"]
+    F2 --> F3["Fase 3: Gating de Recursos\n[Concluída] ✅"]
+    F3 --> F4["Fase 4: Frontend (Paywall & Upgrade)\n[Concluída] ✅"]
+    F4 --> F5["Fase 5: Dashboard Admin (MRR)\n[Concluída] ✅"]
+    F5 --> F6["Fase 6: Refinamento do Dashboard Admin\n[Concluída] ✅"]
 ```
 
 ---
@@ -104,6 +105,22 @@ flowchart TD
 - **Componentes Visuais no Angular:**
   - Novos cards de métricas financeiras de negócio no painel do administrador (`/admin/dashboard`).
   - Gráfico de pizza/rosca demonstrando a distribuição da base de usuários por plano.
+
+---
+
+### Fase 6: Refinamento do Dashboard Admin
+**Status:** `[Concluída] ✅`
+
+- **Reorganização visual do painel em seções claras:**
+  - **Visão Geral:** Cards de Usuários Ativos e Volume Total (receitas + despesas dos clientes).
+  - **Métricas de Receita (SaaS):** Cards de MRR, Taxa de Conversão e Churn com estados de loading e erro.
+  - **Métricas de Usuários:** Gráfico de Novos Cadastros (barras mensais) + novo gráfico de proporção Free vs Pro (barras horizontais, sem bibliotecas externas).
+  - **Métricas de Transações:** Cards de Lançamentos e Volume Total do mês.
+- **Correções técnicas:**
+  - `MatCardModule`, `MatProgressSpinnerModule` e `CurrencyPipe` adicionados ao `imports[]` do `@Component`.
+  - Signals `metricasSaas`, `carregandoMetricas`, `erroMetricas` e método `carregarMetricasSaas()` implementados no `AdminPainel`.
+  - Método `buscarMetricasSaas()` adicionado ao `AdminService`.
+  - `CorIndicador` inválida (`'cinza'`) corrigida para `'azul'` nos cards de Volume.
 
 ---
 

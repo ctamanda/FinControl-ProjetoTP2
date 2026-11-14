@@ -1,9 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { DecimalPipe } from '@angular/common';
+import { CurrencyPipe, DecimalPipe } from '@angular/common';
 import { Component, computed, effect, inject, OnDestroy, signal } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
+import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSlideToggle, MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -15,6 +17,7 @@ import { UsuarioService } from '../../../core/usuario/usuario.service';
 import { hojeIso, PainelAdmin, RegistroAuditoria } from '../../../models/admin.model';
 import { MODULOS, ROTULOS_ROLE, Role, Usuario } from '../../../models/usuario.model';
 import { AdminService } from '../../../services/admin.service';
+import { MetricasSaas } from '../../../models/metricas-saas.model';
 import { escalaDoGrafico, variacao } from '../../dashboard/resumo';
 import { iniciais } from '../../layout/shell/shell';
 import { confirmar } from '../../shared/confirm-dialog/confirm-dialog';
@@ -71,9 +74,12 @@ const VERBOS_PROPRIOS: Record<string, string> = {
 @Component({
   imports: [
     RouterLink,
+    CurrencyPipe,
     DecimalPipe,
+    MatCardModule,
     MatIconModule,
     MatProgressBarModule,
+    MatProgressSpinnerModule,
     MatSlideToggleModule,
     MatTooltipModule,
     Indicador,
@@ -102,6 +108,9 @@ export class AdminPainel implements OnDestroy {
   protected readonly aba = signal<Aba>('TODOS');
   protected readonly carregando = signal(true);
   protected readonly erro = signal('');
+  protected readonly metricasSaas = signal<MetricasSaas | null>(null);
+  protected readonly carregandoMetricas = signal(false);
+  protected readonly erroMetricas = signal('');
   private consulta?: Subscription;
 
   constructor() {
@@ -113,6 +122,7 @@ export class AdminPainel implements OnDestroy {
     effect(() => this.carregarPainel(this.mes.chave()));
     effect(() => this.carregarUsuarios(this.aba()));
     this.recarregarAuditoria();
+    this.carregarMetricasSaas();
   }
 
   ngOnDestroy(): void {
@@ -215,6 +225,21 @@ export class AdminPainel implements OnDestroy {
 
   private recarregarAuditoria(): void {
     this.adminService.listarAuditoria({}, 0, 5).subscribe({ next: (r) => this.auditoria.set(r.items), error: () => {} });
+  }
+
+  carregarMetricasSaas(): void {
+    this.carregandoMetricas.set(true);
+    this.erroMetricas.set('');
+    this.adminService.buscarMetricasSaas().subscribe({
+      next: (m) => {
+        this.metricasSaas.set(m);
+        this.carregandoMetricas.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.erroMetricas.set(mensagemDeErro(err, 'Erro ao carregar métricas SaaS.'));
+        this.carregandoMetricas.set(false);
+      },
+    });
   }
 
   // ---------------------------------------------------------- ações
