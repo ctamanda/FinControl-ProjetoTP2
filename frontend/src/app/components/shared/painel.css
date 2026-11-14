@@ -7,19 +7,38 @@
   display: block;
 }
 
+.conteudo-celular {
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
 .painel {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 440px);
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
   gap: 24px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   align-items: start;
 }
 
-.col-principal,
+.col-principal {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .col-lateral {
   display: flex;
   flex-direction: column;
   gap: 24px;
   min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .linha-topo {

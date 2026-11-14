@@ -10,6 +10,10 @@ public final class UsuarioResponseMapper {
     }
 
     public static UsuarioResponseDTO toResponse(Usuario usuario) {
+        return toResponse(usuario, null);
+    }
+
+    public static UsuarioResponseDTO toResponse(Usuario usuario, String plano) {
         return new UsuarioResponseDTO(
                 usuario.getId(),
                 usuario.getEmail(),
@@ -22,7 +26,8 @@ public final class UsuarioResponseMapper {
                 usuario.getDataCadastro(),
                 usuario.getUltimoAcesso(),
                 usuario.isBloqueado() ? usuario.getBloqueadoAte() : null,
-                usuario.isTrocarSenha()
+                usuario.isTrocarSenha(),
+                plano
         );
     }
 }

@@ -21,6 +21,7 @@ public record UsuarioResponseDTO(
         LocalDateTime dataCadastro,
         LocalDateTime ultimoAcesso,
         LocalDateTime bloqueadoAte,
-        boolean trocarSenha
+        boolean trocarSenha,
+        String plano
 ) {
 }

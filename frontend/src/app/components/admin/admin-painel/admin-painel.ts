@@ -22,19 +22,19 @@ import { escalaDoGrafico, variacao } from '../../dashboard/resumo';
 import { iniciais } from '../../layout/shell/shell';
 import { confirmar } from '../../shared/confirm-dialog/confirm-dialog';
 import { IconeCategoria } from '../../shared/icone-categoria/icone-categoria';
-import { Indicador } from '../../shared/indicador/indicador';
 
 const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
 // Até quantos meses para trás o seletor do topo vai (o back calcula qualquer mês).
 const MESES_ANTERIORES = 23;
 
-type Aba = 'TODOS' | 'ATIVOS' | 'INATIVOS' | 'ADMINS';
+type Aba = 'TODOS' | 'ATIVOS' | 'INATIVOS' | 'PRO' | 'ADMINS';
 
 const ABAS: { id: Aba; rotulo: string }[] = [
   { id: 'TODOS', rotulo: 'Todos' },
   { id: 'ATIVOS', rotulo: 'Ativos' },
   { id: 'INATIVOS', rotulo: 'Inativos' },
+  { id: 'PRO', rotulo: 'Pro' },
   { id: 'ADMINS', rotulo: 'Administradores' },
 ];
 
@@ -82,7 +82,6 @@ const VERBOS_PROPRIOS: Record<string, string> = {
     MatProgressSpinnerModule,
     MatSlideToggleModule,
     MatTooltipModule,
-    Indicador,
     IconeCategoria,
   ],
   selector: 'app-admin-painel',
@@ -111,6 +110,7 @@ export class AdminPainel implements OnDestroy {
   protected readonly metricasSaas = signal<MetricasSaas | null>(null);
   protected readonly carregandoMetricas = signal(false);
   protected readonly erroMetricas = signal('');
+  protected readonly diaAtual = signal(new Date().getDate());
   private consulta?: Subscription;
 
   constructor() {
@@ -129,20 +129,77 @@ export class AdminPainel implements OnDestroy {
     this.mes.mesesAnteriores.set(null);
   }
 
+  // ---------------------------------------------------------- períodos e títulos
+
+  protected readonly isMesAtual = computed(() => {
+    return this.mes.chave() === chaveMes(new Date());
+  });
+
+  protected readonly textoPeriodoComparativo = computed(() => {
+    const hoje = new Date();
+    if (this.isMesAtual()) {
+      const mesAnterior = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+      const nomeMesAnt = MESES[mesAnterior.getMonth()].toLowerCase();
+      return `vs. 1 a ${hoje.getDate()} de ${nomeMesAnt}`;
+    }
+    return 'vs. mês anterior';
+  });
+
+  protected readonly subtituloPagina = computed(() => {
+    const hoje = new Date();
+    if (this.isMesAtual()) {
+      const dia = String(hoje.getDate()).padStart(2, '0');
+      const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+      const ano = hoje.getFullYear();
+      return `Dados até ${dia}/${mes}/${ano} · comparações com o mesmo período do mês anterior`;
+    }
+    return `Dados consolidados de ${this.mes.rotulo()} · comparações com o mês anterior`;
+  });
+
   // ---------------------------------------------------------- indicadores
 
   protected readonly indicadores = computed(() => {
     const p = this.painel();
     if (!p) return null;
     const mes = this.mes.nome().toLowerCase();
+    const volumeAtual = Number(p.volume.atual);
+    const volumeAnterior = Number(p.volume.anterior);
+    const volumeCustosAtual = Number(p.volumeCustos?.atual ?? 0);
+    const volumeCustosAnterior = Number(p.volumeCustos?.anterior ?? 0);
+    const volumeReceitasAtual = Number(p.volumeReceitas?.atual ?? 0);
+    const volumeReceitasAnterior = Number(p.volumeReceitas?.anterior ?? 0);
+
+    const ativosAtual = p.usuariosAtivos.atual;
+    const ativosAnterior = p.usuariosAtivos.anterior;
+    const baseAtiva = p.totais.contasPessoaisAtivas || 1;
+    const pctAtivos = (ativosAtual / baseAtiva) * 100;
+
     return {
-      ativos: { valor: p.usuariosAtivos.atual, variacao: variacao(p.usuariosAtivos.atual, p.usuariosAtivos.anterior) },
+      ativos: {
+        valor: ativosAtual,
+        variacao: variacao(ativosAtual, ativosAnterior),
+        pctAtivos,
+        baseAtiva: p.totais.contasPessoaisAtivas,
+      },
       novos: { valor: p.novosCadastros.atual, variacao: variacao(p.novosCadastros.atual, p.novosCadastros.anterior) },
       lancamentos: { valor: p.lancamentos.atual, variacao: variacao(p.lancamentos.atual, p.lancamentos.anterior) },
       volume: {
-        valor: formatarVolume(Number(p.volume.atual)),
-        variacao: variacao(Number(p.volume.atual), Number(p.volume.anterior)),
+        valor: formatarVolume(volumeAtual),
+        valorCompleto: volumeAtual,
+        variacao: variacao(volumeAtual, volumeAnterior),
       },
+      volumeCustos: {
+        valor: formatarVolume(volumeCustosAtual),
+        valorCompleto: volumeCustosAtual,
+        variacao: variacao(volumeCustosAtual, volumeCustosAnterior),
+      },
+      volumeReceitas: {
+        valor: formatarVolume(volumeReceitasAtual),
+        valorCompleto: volumeReceitasAtual,
+        variacao: variacao(volumeReceitasAtual, volumeReceitasAnterior),
+      },
+      custos: { valor: p.custos?.atual ?? 0, variacao: variacao(p.custos?.atual ?? 0, p.custos?.anterior ?? 0) },
+      receitas: { valor: p.receitas?.atual ?? 0, variacao: variacao(p.receitas?.atual ?? 0, p.receitas?.anterior ?? 0) },
       mes,
     };
   });
@@ -151,14 +208,37 @@ export class AdminPainel implements OnDestroy {
   protected readonly cadastros = computed(() => {
     const serie = this.painel()?.cadastrosPorMes ?? [];
     const maior = escalaDoGrafico(Math.max(0, ...serie.map((m) => m.contasPessoais)));
+    const chaveAtual = chaveMes(new Date());
     return {
       maior,
       meses: serie.map((m) => ({
         ...m,
         rotulo: MESES[Number(m.mes.slice(5, 7)) - 1],
-        altura: (m.contasPessoais / maior) * 100,
+        altura: maior > 0 ? (m.contasPessoais / maior) * 100 : 0,
         atual: m.mes === this.mes.chave(),
+        ehMesAtualHoje: m.mes === chaveAtual,
       })),
+    };
+  });
+
+  // Dados para o Donut Chart de distribuição Free vs Pro
+  protected readonly donutData = computed(() => {
+    const m = this.metricasSaas();
+    if (!m) return null;
+    const pro = m.totalUsuariosPro;
+    const free = m.totalUsuariosFree;
+    const total = pro + free || 1;
+    const pctPro = (pro / total) * 100;
+    const pctFree = (free / total) * 100;
+    const circumference = 326.73; // 2 * PI * 52 (r=52)
+    const dashArrayPro = Math.round((pctPro / 100) * circumference);
+    return {
+      pro,
+      free,
+      total: pro + free,
+      pctPro,
+      pctFree,
+      dashArrayPro,
     };
   });
 
@@ -214,10 +294,14 @@ export class AdminPainel implements OnDestroy {
   private carregarUsuarios(aba: Aba): void {
     const filtro: { role?: Role; ativo?: boolean } =
       aba === 'ADMINS' ? { role: 'SUPER_ADMIN' } : aba === 'ATIVOS' ? { ativo: true } : aba === 'INATIVOS' ? { ativo: false } : {};
-    this.adminService.listarUsuarios(filtro, 0, 5).subscribe({
+    this.adminService.listarUsuarios(filtro, 0, 20).subscribe({
       next: (r) => {
-        this.usuarios.set(r.items);
-        this.totalUsuarios.set(r.totalItems);
+        let items = r.items;
+        if (aba === 'PRO') {
+          items = items.filter((u) => u.plano === 'Pro');
+        }
+        this.usuarios.set(items.slice(0, 5));
+        this.totalUsuarios.set(aba === 'PRO' ? items.length : r.totalItems);
       },
       error: () => this.usuarios.set([]),
     });
@@ -298,6 +382,13 @@ export class AdminPainel implements OnDestroy {
   }
 
   // ---------------------------------------------------------- apresentação
+
+  protected formatarVariacao(v: number | null | undefined): string {
+    if (v === null || v === undefined) return '';
+    const seta = v > 0 ? '↗' : v < 0 ? '↘' : '';
+    const num = Math.abs(v).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    return `${seta} ${num}%`;
+  }
 
   protected frase(r: RegistroAuditoria): string {
     if (VERBOS_PROPRIOS[r.acao] && r.alvo?.includes(`(${r.autorEmail})`)) {

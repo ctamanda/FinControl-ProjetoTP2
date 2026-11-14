@@ -354,7 +354,10 @@
 .pagina {
   margin-left: var(--trilho);
   padding: calc(var(--topo) + 28px) 32px 48px;
-  max-width: 1480px;
+  width: calc(100% - var(--trilho));
+  max-width: calc(100% - var(--trilho));
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .barra-inferior {

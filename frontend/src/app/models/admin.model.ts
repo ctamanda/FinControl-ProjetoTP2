@@ -24,6 +24,10 @@ export interface PainelAdmin {
   novosCadastros: Indicador;
   lancamentos: Indicador;
   volume: Indicador; // soma de receitas + despesas do mês
+  volumeCustos?: Indicador;
+  volumeReceitas?: Indicador;
+  custos?: Indicador;
+  receitas?: Indicador;
   totais: { usuarios: number; ativos: number; inativos: number; administradores: number; contasPessoaisAtivas: number };
   cadastrosPorMes: { mes: string; contasPessoais: number }[]; // 6 meses até o escolhido
   modulos: { modulo: Modulo; ligados: number; comDados: number | null }[];

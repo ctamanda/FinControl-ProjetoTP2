@@ -7,5 +7,9 @@ public record MetricasSaasResponseDTO(
     double taxaConversao,
     long churn,
     long totalUsuariosPro,
-    long totalUsuariosFree
+    long totalUsuariosFree,
+    double taxaChurn,
+    long assinantesInicioMes,
+    long novasAssinaturasMes,
+    BigDecimal ticketMedio
 ) {}

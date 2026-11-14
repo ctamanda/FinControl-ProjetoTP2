@@ -57,6 +57,7 @@ export interface Usuario {
   ultimoAcesso?: string | null; // último login (nulo se ainda não entrou)
   bloqueadoAte?: string | null; // preenchido só enquanto está bloqueado por senhas erradas
   trocarSenha?: boolean; // senha provisória ainda não trocada
+  plano?: 'Free' | 'Pro' | string | null;
 }
 
 // Alterar os próprios dados exige a senha atual (o back confere).

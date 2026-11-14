@@ -3,9 +3,18 @@
 }
 
 <div class="conteudo-celular">
+  <!-- CABEÇALHO DA PÁGINA (Computador) -->
+  <div class="cabecalho-pagina so-computador">
+    <div class="titulos-cabecalho">
+      <h1 class="titulo-pagina">Visão geral do sistema</h1>
+      <p class="subtitulo-pagina">{{ subtituloPagina() }}</p>
+    </div>
+  </div>
+
+  <!-- CABEÇALHO DA PÁGINA (Celular) -->
   <div class="cabeca-celular so-celular">
     <p class="sobre">Administração · {{ mes.rotulo() }}</p>
-    <h1>Visão geral do sistema</h1>
+    <h1>Visão geral da plataforma</h1>
   </div>
 
   @if (erro()) {
@@ -15,23 +24,60 @@
   <div class="painel">
     <div class="col-principal">
       
-      <!-- SEÇÃO 1: VISÃO GERAL -->
+      <!-- SEÇÃO 1: VISÃO GERAL (3 Hero Cards) -->
       <section class="secao-visao-geral">
-        <h2 class="titulo-secao">Visão geral do sistema</h2>
+        <h2 class="titulo-secao">Visão geral</h2>
         @if (indicadores(); as i) {
-          <div class="indicadores c-indicadores">
-            <app-indicador icone="person_outline" cor="amarelo" [destaque]="true" [valor]="(i.ativos.valor | number) ?? ''" rotulo="Usuários ativos no mês" [variacao]="i.ativos.variacao" detalhe="com lançamento no mês" />
+          <div class="grid-visao-geral c-indicadores">
+            <!-- Card 1: Usuários ativos no mês (Amarelo / Destaque) -->
+            <div class="card-hero amarelo destaque">
+              <div class="card-hero-topo">
+                <span class="card-hero-icone">
+                  <mat-icon>person_outline</mat-icon>
+                </span>
+                <span class="card-hero-rotulo">Usuários ativos no mês</span>
+              </div>
+              <span class="card-hero-valor">{{ i.ativos.valor | number }}</span>
+              <span class="card-hero-sub">{{ i.ativos.pctAtivos | number:'1.1-1' }}% das {{ i.ativos.baseAtiva | number }} contas ativas acessaram em {{ i.mes }}</span>
+              <span class="card-hero-variacao">{{ formatarVariacao(i.ativos.variacao) }} {{ textoPeriodoComparativo() }}</span>
+            </div>
+
+            <!-- Card 2: Receita SaaS / MRR (Branco) -->
             @if (metricasSaas(); as saas) {
-              <app-indicador icone="attach_money" cor="roxo" [valor]="(saas.mrr | currency:'BRL':'symbol':'1.2-2') ?? ''" rotulo="Receita SaaS (MRR)" detalhe="planos Pro ativos" />
+              <div class="card-hero branco">
+                <div class="card-hero-topo">
+                  <span class="card-hero-icone roxo">
+                    <mat-icon>attach_money</mat-icon>
+                  </span>
+                  <span class="card-hero-rotulo">Receita SaaS (MRR)</span>
+                </div>
+                <span class="card-hero-valor">{{ saas.mrr | currency:'BRL':'symbol':'1.2-2' }}</span>
+                <span class="card-hero-sub">{{ saas.totalUsuariosPro }} assinantes Pro × R$ 29,90</span>
+                <span class="card-hero-variacao">{{ formatarVariacao(i.ativos.variacao) }} {{ textoPeriodoComparativo() }}</span>
+              </div>
             }
-            <app-indicador icone="trending_up" cor="cinza" [valor]="i.volume.valor" rotulo="Volume Total" [variacao]="i.volume.variacao" detalhe="receitas + despesas dos clientes" />
+
+            <!-- Card 3: Volume de transações (Branco) -->
+            <div class="card-hero branco">
+              <div class="card-hero-topo">
+                <span class="card-hero-icone cinza">
+                  <mat-icon>swap_vert</mat-icon>
+                </span>
+                <span class="card-hero-rotulo">Volume de transações</span>
+              </div>
+              <span class="card-hero-valor">{{ i.volume.valor }}</span>
+              <span class="card-hero-sub">Movimentado pelos clientes, não é receita da plataforma</span>
+              <span class="card-hero-variacao">{{ formatarVariacao(i.volume.variacao) }} {{ textoPeriodoComparativo() }}</span>
+            </div>
           </div>
         }
       </section>
 
-      <!-- SEÇÃO 2: MÉTRICAS SAAS -->
+      <!-- SEÇÃO 2: MÉTRICAS DE RECEITA (SAAS) -->
       <section class="secao-saas c-saas">
-        <h2 class="titulo-secao">Métricas de Receita (SaaS)</h2>
+        <div class="header-com-badge">
+          <h2 class="titulo-secao">Métricas de Receita (SaaS)</h2>
+        </div>
 
         @if (carregandoMetricas()) {
           <div class="loading-saas cartao"><mat-spinner diameter="36" /><span>Carregando métricas de receita (SaaS)...</span></div>
@@ -41,42 +87,44 @@
             <button type="button" class="btn-tentar-novamente" (click)="carregarMetricasSaas()">Tentar novamente</button>
           </div>
         } @else if (metricasSaas(); as m) {
-          <div class="cards-saas">
-            <mat-card class="card-saas card-mrr">
-              <mat-card-header>
-                <div mat-card-avatar class="icone-avatar mrr"><mat-icon>attach_money</mat-icon></div>
-                <mat-card-subtitle>Receita Recorrente Mensal</mat-card-subtitle>
-                <mat-card-title>MRR</mat-card-title>
-              </mat-card-header>
-              <mat-card-content>
-                <div class="valor-metrica">{{ m.mrr | currency: 'BRL' : 'symbol' : '1.2-2' }}</div>
-                <p class="detalhe-metrica">Receita recorrente dos planos Pro ativos</p>
-              </mat-card-content>
-            </mat-card>
+          <div class="grid-saas">
+            <!-- MRR -->
+            <div class="card-metrica-branca">
+              <div class="card-metrica-topo">
+                <span class="icone-avatar mrr"><mat-icon>attach_money</mat-icon></span>
+                <span class="card-metrica-sub">MRR · Receita Recorrente Mensal</span>
+              </div>
+              <span class="card-metrica-valor">{{ m.mrr | currency:'BRL':'symbol':'1.2-2' }}</span>
+              <div class="card-mrr-footer">
+                <span>Assinantes Pro <strong>{{ m.totalUsuariosPro }}</strong></span>
+                <span>Ticket médio <strong>{{ m.ticketMedio | currency:'BRL':'symbol':'1.2-2' }}</strong></span>
+                <span>Novas no mês <strong class="texto-sucesso">+{{ m.novasAssinaturasMes }}</strong></span>
+              </div>
+            </div>
 
-            <mat-card class="card-saas card-conversao">
-              <mat-card-header>
-                <div mat-card-avatar class="icone-avatar conversao"><mat-icon>trending_up</mat-icon></div>
-                <mat-card-subtitle>Conversão da Base</mat-card-subtitle>
-                <mat-card-title>Taxa de Conversão</mat-card-title>
-              </mat-card-header>
-              <mat-card-content>
-                <div class="valor-metrica">{{ m.taxaConversao | number: '1.1-2' }}%</div>
-                <p class="detalhe-metrica">{{ m.totalUsuariosPro }} Pro de {{ m.totalUsuariosPro + m.totalUsuariosFree }} usuários</p>
-              </mat-card-content>
-            </mat-card>
+            <!-- Taxa de conversão -->
+            <div class="card-metrica-branca">
+              <div class="card-metrica-topo">
+                <span class="icone-avatar conversao"><mat-icon>trending_up</mat-icon></span>
+                <span class="card-metrica-sub">Taxa de conversão (Pro vs Free)</span>
+              </div>
+              <span class="card-metrica-valor">{{ m.taxaConversao | number:'1.1-2' }}%</span>
+              <div class="barra-conversao-trilha">
+                <div class="barra-conversao-fill" [style.width.%]="m.taxaConversao"></div>
+              </div>
+              <span class="card-metrica-detalhe">{{ m.totalUsuariosPro }} Pro de {{ m.totalUsuariosPro + m.totalUsuariosFree }} contas pessoais ativas</span>
+            </div>
 
-            <mat-card class="card-saas card-churn">
-              <mat-card-header>
-                <div mat-card-avatar class="icone-avatar churn"><mat-icon>person_remove</mat-icon></div>
-                <mat-card-subtitle>Cancelamentos no Mês</mat-card-subtitle>
-                <mat-card-title>Churn</mat-card-title>
-              </mat-card-header>
-              <mat-card-content>
-                <div class="valor-metrica">{{ m.churn | number }}</div>
-                <p class="detalhe-metrica">{{ m.churn === 1 ? '1 cancelamento' : m.churn + ' cancelamentos' }} neste mês</p>
-              </mat-card-content>
-            </mat-card>
+            <!-- Churn -->
+            <div class="card-metrica-branca">
+              <div class="card-metrica-topo">
+                <span class="icone-avatar churn"><mat-icon>person_remove</mat-icon></span>
+                <span class="card-metrica-sub">Churn · cancelamentos no mês</span>
+              </div>
+              <span class="card-metrica-valor">{{ m.taxaChurn | number:'1.1-2' }}%</span>
+              <span class="card-metrica-detalhe">{{ m.churn }} {{ m.churn === 1 ? 'cancelamento' : 'cancelamentos' }} de {{ m.assinantesInicioMes }} {{ m.assinantesInicioMes === 1 ? 'assinante' : 'assinantes' }} no início do mês</span>
+              <span class="card-metrica-variacao texto-sucesso">Calculado sobre a base Pro inicial</span>
+            </div>
           </div>
         }
       </section>
@@ -84,71 +132,117 @@
       <!-- SEÇÃO 3: MÉTRICAS DE USUÁRIOS -->
       <section class="secao-usuarios">
         <h2 class="titulo-secao">Métricas de Usuários</h2>
-        <section class="cartao c-cadastros">
-          <div class="cartao-cabeca">
-            <h2>Novos cadastros</h2>
-            <div class="legenda">
-              <span><span class="bolinha" style="background: #3b1478"></span>Contas pessoais por mês</span>
-            </div>
-          </div>
-          <div class="grafico" role="img" aria-label="Novos cadastros de contas pessoais nos últimos 6 meses">
-            <div class="eixo-y">
-              <span>{{ cadastros().maior | number }}</span>
-              <span>{{ cadastros().maior / 2 | number }}</span>
-              <span>0</span>
-            </div>
-            <div class="area">
-              @for (m of cadastros().meses; track m.mes) {
-                <div class="mes-col">
-                  <span class="valor-col">{{ m.contasPessoais }}</span>
-                  <span class="col larga" [style.--cor]="m.atual ? '#3b1478' : '#b9a8e6'" [style.height.%]="m.altura" [title]="m.contasPessoais + ' contas pessoais'"></span>
-                </div>
-              }
-            </div>
-            <div class="rotulos-x">
-              @for (m of cadastros().meses; track m.mes) {
-                <span [class.atual]="m.atual">{{ m.rotulo }}</span>
-              }
-            </div>
-          </div>
-        </section>
-
-        @if (metricasSaas(); as m) {
-          <section class="cartao c-assinantes" aria-label="Comparativo de assinantes Free vs Pro">
+        <div class="grid-usuarios-metricas">
+          
+          <!-- Gráfico 1: Novos cadastros -->
+          <section class="cartao c-cadastros">
             <div class="cartao-cabeca">
-              <h2>Assinantes Free vs Pro</h2>
-              <div class="legenda">
-                <span><span class="bolinha" style="background: #3b1478"></span>Pro</span>
-                <span><span class="bolinha" style="background: #b9a8e6"></span>Free</span>
+              <h2>Novos cadastros por mês</h2>
+              <span class="discreto">Últimos 6 meses</span>
+            </div>
+            <div class="grafico" role="img" aria-label="Novos cadastros de contas pessoais nos últimos 6 meses">
+              <div class="eixo-y">
+                <span>{{ cadastros().maior | number }}</span>
+                <span>{{ cadastros().maior / 2 | number }}</span>
+                <span>0</span>
+              </div>
+              <div class="area">
+                @for (m of cadastros().meses; track m.mes) {
+                  <div class="mes-col">
+                    <span class="valor-col">{{ m.contasPessoais }}</span>
+                    <span class="col larga" [style.--cor]="m.ehMesAtualHoje ? '#F6C21C' : '#3B1478'" [style.height.%]="m.altura" [title]="m.contasPessoais + ' contas pessoais'"></span>
+                  </div>
+                }
+              </div>
+              <div class="rotulos-x">
+                @for (m of cadastros().meses; track m.mes) {
+                  <span [class.atual]="m.atual">{{ m.rotulo }}</span>
+                }
               </div>
             </div>
-            <div class="assinantes-barras">
-              <div class="assinante-linha">
-                <span class="assinante-rotulo">Pro</span>
-                <span class="mod-trilha assinante-trilha">
-                  <span class="mod-barra ligado" [style.width.%]="(m.totalUsuariosPro / ((m.totalUsuariosPro + m.totalUsuariosFree) || 1)) * 100"></span>
-                </span>
-                <span class="assinante-valor">{{ m.totalUsuariosPro | number }}</span>
-              </div>
-              <div class="assinante-linha">
-                <span class="assinante-rotulo">Free</span>
-                <span class="mod-trilha assinante-trilha">
-                  <span class="mod-barra" style="background: #b9a8e6" [style.width.%]="(m.totalUsuariosFree / ((m.totalUsuariosPro + m.totalUsuariosFree) || 1)) * 100"></span>
-                </span>
-                <span class="assinante-valor">{{ m.totalUsuariosFree | number }}</span>
-              </div>
-            </div>
+            @if (isMesAtual()) {
+              <span class="legenda-parcial">{{ mes.nome() }} parcial, até dia {{ diaAtual() }}</span>
+            }
           </section>
-        }
+
+          <!-- Gráfico 2: Distribuição Free vs Pro (Donut Chart) -->
+          @if (donutData(); as donut) {
+            <section class="cartao c-assinantes" aria-label="Distribuição da base de usuários">
+              <div class="cartao-cabeca">
+                <h2>Distribuição da base</h2>
+                <span class="discreto">Contas pessoais ativas</span>
+              </div>
+              <div class="grafico-donut-container">
+                <svg width="180" height="180" viewBox="0 0 140 140" role="img" [attr.aria-label]="'Free ' + donut.free + ' contas; Pro ' + donut.pro + ' contas'">
+                  <g transform="rotate(-90 70 70)" fill="none" stroke-width="18">
+                    <circle cx="70" cy="70" r="52" stroke="#D5CBEF" />
+                    <circle cx="70" cy="70" r="52" stroke="#3B1478" [attr.stroke-dasharray]="donut.dashArrayPro + ' 326.73'" />
+                  </g>
+                  <text x="70" y="66" text-anchor="middle" font-family="Roboto, system-ui, sans-serif" font-size="18" font-weight="700" fill="#26213A">{{ donut.total }}</text>
+                  <text x="70" y="82" text-anchor="middle" font-family="Roboto, system-ui, sans-serif" font-size="10" fill="#6E6882">contas ativas</text>
+                </svg>
+                <div class="donut-legenda">
+                  <div class="donut-legenda-item">
+                    <span class="donut-legenda-cor" style="background: #3B1478"></span>
+                    <div class="donut-legenda-info">
+                      <span class="donut-legenda-titulo">Pro</span>
+                      <span class="donut-legenda-sub">{{ donut.pro }} {{ donut.pro === 1 ? 'conta' : 'contas' }} · {{ donut.pctPro | number:'1.1-1' }}%</span>
+                    </div>
+                  </div>
+                  <div class="donut-legenda-item">
+                    <span class="donut-legenda-cor" style="background: #D5CBEF"></span>
+                    <div class="donut-legenda-info">
+                      <span class="donut-legenda-titulo">Free</span>
+                      <span class="donut-legenda-sub">{{ donut.free }} {{ donut.free === 1 ? 'conta' : 'contas' }} · {{ donut.pctFree | number:'1.1-1' }}%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          }
+        </div>
       </section>
 
-      <!-- SEÇÃO 4: MÉTRICAS DE TRANSAÇÕES -->
+      <!-- SEÇÃO 4: MÉTRICAS DE TRANSAÇÕES (3 colunas) -->
       <section class="secao-transacoes">
-        <h2 class="titulo-secao">Métricas de Transações</h2>
+        <div class="header-transacoes">
+          <h2 class="titulo-secao">Métricas de Transações</h2>
+          <span class="subtitulo-secao">Somados de todos os clientes em {{ mes.nome().toLowerCase() }}</span>
+        </div>
         @if (indicadores(); as i) {
-          <div class="indicadores c-indicadores-transacoes">
-            <app-indicador icone="swap_vert" cor="azul" [valor]="(i.lancamentos.valor | number) ?? ''" [rotulo]="'Lançamentos em ' + i.mes" [variacao]="i.lancamentos.variacao" detalhe="sem lançamentos no mês anterior" />
-            <app-indicador icone="trending_up" cor="cinza" [valor]="i.volume.valor" rotulo="Volume Total" [variacao]="i.volume.variacao" detalhe="receitas + despesas dos clientes" />
+          <div class="grid-transacoes c-indicadores-transacoes">
+            <!-- Card 1: Volume de custos -->
+            <div class="card-transacao">
+              <span class="card-transacao-icone custos"><mat-icon>remove</mat-icon></span>
+              <div class="card-transacao-conteudo">
+                <span class="card-transacao-rotulo">Volume de custos</span>
+                <span class="card-transacao-valor custos">{{ i.volumeCustos.valorCompleto | currency:'BRL':'symbol':'1.2-2' }}</span>
+                <span class="card-transacao-detalhe">{{ i.custos.valor | number }} despesas registradas</span>
+                <span class="card-transacao-detalhe">{{ formatarVariacao(i.volumeCustos.variacao) }} {{ textoPeriodoComparativo() }}</span>
+              </div>
+            </div>
+
+            <!-- Card 2: Volume de receitas -->
+            <div class="card-transacao">
+              <span class="card-transacao-icone receitas"><mat-icon>add</mat-icon></span>
+              <div class="card-transacao-conteudo">
+                <span class="card-transacao-rotulo">Volume de receitas</span>
+                <span class="card-transacao-valor receitas">{{ i.volumeReceitas.valorCompleto | currency:'BRL':'symbol':'1.2-2' }}</span>
+                <span class="card-transacao-detalhe">{{ i.receitas.valor | number }} receitas registradas</span>
+                <span class="card-transacao-detalhe">{{ formatarVariacao(i.volumeReceitas.variacao) }} {{ textoPeriodoComparativo() }}</span>
+              </div>
+            </div>
+
+            <!-- Card 3: Volume total -->
+            <div class="card-transacao">
+              <span class="card-transacao-icone total"><mat-icon>swap_vert</mat-icon></span>
+              <div class="card-transacao-conteudo">
+                <span class="card-transacao-rotulo">Volume total</span>
+                <span class="card-transacao-valor total">{{ i.volume.valorCompleto | currency:'BRL':'symbol':'1.2-2' }}</span>
+                <span class="card-transacao-detalhe">{{ i.lancamentos.valor | number }} lançamentos no mês</span>
+                <span class="card-transacao-detalhe">{{ formatarVariacao(i.volume.variacao) }} {{ textoPeriodoComparativo() }}</span>
+              </div>
+            </div>
           </div>
         }
       </section>
@@ -173,6 +267,7 @@
               <thead>
                 <tr>
                   <th>Usuário</th>
+                  <th>Plano</th>
                   <th>Perfil</th>
                   <th>Último acesso</th>
                   <th>Cadastro</th>
@@ -188,6 +283,15 @@
                         <span class="sigla cinza">{{ iniciais(u.nome) }}</span>
                         <div class="quem">{{ u.nome }}<span class="sub">{{ u.email }}</span></div>
                       </div>
+                    </td>
+                    <td>
+                      @if (u.role === 'SUPER_ADMIN') {
+                        <span class="badge-plano-tab admin">Admin</span>
+                      } @else if (u.plano === 'Pro') {
+                        <span class="badge-plano-tab pro">Pro</span>
+                      } @else {
+                        <span class="badge-plano-tab free">Free</span>
+                      }
                     </td>
                     <td class="perfil"><span class="bolinha" [style.background]="corPerfil(u.role)"></span>{{ rotulosRole[u.role] }}</td>
                     <td class="cinza">{{ u.ultimoAcesso ? quando(u.ultimoAcesso) : 'Ainda não entrou' }}</td>
@@ -219,7 +323,7 @@
                 <span class="sigla grande">{{ iniciais(u.nome) }}</span>
                 <a class="info link-linha" [routerLink]="['/admin/usuarios', u.id]">
                   <strong>{{ u.nome }}</strong>
-                  <span><span class="bolinha" [style.background]="corPerfil(u.role)"></span> {{ u.ultimoAcesso ? 'Acesso: ' + quando(u.ultimoAcesso) : 'Ainda não entrou' }}</span>
+                  <span><span class="bolinha" [style.background]="corPerfil(u.role)"></span> {{ u.plano ?? 'Free' }} · {{ u.ultimoAcesso ? 'Acesso: ' + quando(u.ultimoAcesso) : 'Ainda não entrou' }}</span>
                 </a>
                 <mat-slide-toggle #tc [checked]="u.ativo" [disabled]="u.id === eu()?.id" (change)="alterarAtivo(u, tc)" [attr.aria-label]="(u.ativo ? 'Desativar ' : 'Reativar ') + u.nome" />
               </li>
@@ -282,84 +386,79 @@
             <h2>Base de usuários</h2>
             <a class="link" routerLink="/admin/usuarios">Ver usuários</a>
           </div>
-          <div class="seguranca">
-            <a class="seg-item largo" routerLink="/admin/usuarios">
-              <mat-icon>groups</mat-icon>
-              <strong>{{ p.totais.usuarios | number }}</strong>
-              <span>usuários no total · {{ p.totais.ativos | number }} ativos · {{ p.totais.inativos | number }} inativos · {{ p.totais.administradores | number }} {{ p.totais.administradores === 1 ? 'administrador' : 'administradores' }}</span>
-            </a>
-            <a class="seg-item" routerLink="/admin/usuarios" [queryParams]="{ filtro: 'SEM_ACESSO_30_DIAS' }">
-              <mat-icon>bedtime</mat-icon>
-              <strong>{{ p.engajamento.semAcesso30Dias | number }}</strong>
-              <span>Pararam de usar (30+ dias sem entrar)</span>
-            </a>
-            <a class="seg-item" routerLink="/admin/usuarios" [queryParams]="{ filtro: 'SEM_LANCAMENTO' }">
-              <mat-icon>hourglass_empty</mat-icon>
-              <strong>{{ p.engajamento.nuncaLancaram | number }}</strong>
-              <span>Cadastraram e nunca lançaram</span>
+          <!-- Bloco Refeito com layout à prova de falhas -->
+          <div style="margin-bottom: 12px;">
+            <a class="seg-item largo" routerLink="/admin/usuarios" style="display: flex; align-items: center; gap: 12px; padding: 16px; border-radius: 12px; background: #f7f5fc;">
+              <mat-icon style="color: var(--fc-roxo);">groups</mat-icon>
+              <div>
+                <strong style="font-size: 24px; display: block; line-height: 1.1;">{{ p.totais.usuarios | number }}</strong>
+                <span style="font-size: 13px; color: var(--fc-muted);">usuários no total · {{ p.totais.ativos | number }} ativos · {{ p.totais.inativos | number }} inativos</span>
+              </div>
             </a>
           </div>
-          <p class="nota">Contas pessoais ativas, situação de hoje.
-            @if (p.engajamento.semAcessoRegistrado > 0) {
-              {{ p.engajamento.semAcessoRegistrado | number }}
-              {{ p.engajamento.semAcessoRegistrado === 1 ? 'conta ainda não tem' : 'contas ainda não têm' }}
-              login registrado (o sistema passou a gravar o último acesso há pouco) e ficam fora de "pararam de usar".
-            }
-          </p>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+            <a class="seg-item" routerLink="/admin/usuarios" [queryParams]="{ filtro: 'SEM_ACESSO_30_DIAS' }" style="display: flex; flex-direction: column; padding: 16px; border-radius: 12px; background: #f7f5fc;">
+              <mat-icon style="color: var(--fc-roxo); margin-bottom: 4px;">bedtime</mat-icon>
+              <strong style="font-size: 24px; line-height: 1.1;">{{ p.engajamento.semAcesso30Dias | number }}</strong>
+              <span style="font-size: 12px; color: var(--fc-muted); margin-top: 4px; line-height: 1.3;">Pararam de usar (30+ dias sem entrar)</span>
+            </a>
+            <a class="seg-item" routerLink="/admin/usuarios" [queryParams]="{ filtro: 'SEM_LANCAMENTO' }" style="display: flex; flex-direction: column; padding: 16px; border-radius: 12px; background: #f7f5fc;">
+              <mat-icon style="color: var(--fc-roxo); margin-bottom: 4px;">hourglass_empty</mat-icon>
+              <strong style="font-size: 24px; line-height: 1.1;">{{ p.engajamento.nuncaLancaram | number }}</strong>
+              <span style="font-size: 12px; color: var(--fc-muted); margin-top: 4px; line-height: 1.3;">Cadastraram e nunca lançaram</span>
+            </a>
+          </div>
+          <p class="sub-cartao" style="font-size: 12px; color: var(--fc-muted);">Contas pessoais ativas, situação de hoje.</p>
         </section>
-      }
 
-      @if (seguranca().length) {
         <section class="cartao c-seguranca">
           <div class="cartao-cabeca">
             <h2>Segurança</h2>
             <a class="link" routerLink="/admin/auditoria">Ver auditoria</a>
           </div>
-          <div class="seguranca">
-            @for (s of seguranca(); track s.acao) {
-              <a class="seg-item" [class.alerta]="s.alerta && s.valor > 0" routerLink="/admin/auditoria" [queryParams]="{ acao: s.acao }">
-                <mat-icon>{{ s.icone }}</mat-icon>
-                <strong>{{ s.valor | number }}</strong>
-                <span>{{ s.rotulo }}</span>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            @for (s of seguranca(); track s.rotulo) {
+              <a class="seg-item" [class.alerta]="s.alerta && s.valor > 0" routerLink="/admin/auditoria" [queryParams]="{ acao: s.acao }" style="display: flex; flex-direction: column; padding: 16px; border-radius: 12px; background: #f7f5fc;">
+                <mat-icon style="color: var(--fc-roxo); margin-bottom: 4px;">{{ s.icone }}</mat-icon>
+                <strong style="font-size: 24px; line-height: 1.1;">{{ s.valor | number }}</strong>
+                <span style="font-size: 12px; color: var(--fc-muted); margin-top: 4px; line-height: 1.3;">{{ s.rotulo }}</span>
               </a>
             }
           </div>
         </section>
+
+        @if (categorias().length) {
+          <section class="cartao c-categorias">
+            <div class="cartao-cabeca">
+              <h2>Categorias padrão mais usadas</h2>
+              <a class="link" routerLink="/admin/categorias-padrao">Gerenciar</a>
+            </div>
+            <p class="discreto sub-cartao">Lançamentos em {{ mes.nome().toLowerCase() }}, somando as cópias de todas as contas.</p>
+            <ul class="categorias-uso">
+              @for (c of categorias(); track c.id) {
+                <li>
+                  <app-icone-categoria [categoria]="c" [tamanho]="34" />
+                  <div class="cat-info">
+                    <div class="cat-linha">
+                      <span class="cat-nome">{{ c.nome }}@if (!c.ativo) { <span class="selo">inativa</span> }</span>
+                      <strong>{{ c.lancamentos | number }}</strong>
+                    </div>
+                    <span class="cat-trilha"><span class="cat-barra" [style.width.%]="c.pct" [style.background]="c.cor || '#3b1478'"></span></span>
+                    <span class="cat-sub">{{ c.usuarios }} {{ c.usuarios === 1 ? 'usuário' : 'usuários' }}</span>
+                  </div>
+                </li>
+              }
+            </ul>
+          </section>
+        }
       }
 
-      <section class="cartao c-categorias">
-        <div class="cartao-cabeca">
-          <h2>Categorias padrão mais usadas</h2>
-          <a class="link" routerLink="/admin/categorias">Gerenciar</a>
-        </div>
-        <p class="discreto sub-cartao">Lançamentos em {{ mes.nome().toLowerCase() }}, somando as cópias de todas as contas.</p>
-        @if (categorias().length) {
-          <ul class="categorias-uso">
-            @for (c of categorias(); track c.id) {
-              <li>
-                <app-icone-categoria [categoria]="c" [tamanho]="34" />
-                <div class="cat-info">
-                  <div class="cat-linha">
-                    <span class="cat-nome">{{ c.nome }}@if (!c.ativo) { <span class="selo">inativa</span> }</span>
-                    <strong>{{ c.lancamentos | number }}</strong>
-                  </div>
-                  <span class="cat-trilha"><span class="cat-barra" [style.width.%]="c.pct" [style.background]="c.cor || '#3b1478'"></span></span>
-                  <span class="cat-sub">{{ c.usuarios }} {{ c.usuarios === 1 ? 'usuário' : 'usuários' }}</span>
-                </div>
-              </li>
-            }
-          </ul>
-        } @else {
-          <p class="vazio">Nenhuma categoria padrão cadastrada.</p>
-        }
-      </section>
-
-      <section class="cartao c-auditoria">
-        <div class="cartao-cabeca">
-          <h2>Auditoria recente</h2>
-          <a class="link" routerLink="/admin/auditoria">Ver log</a>
-        </div>
-        @if (auditoria().length) {
+      @if (auditoria().length) {
+        <section class="cartao c-auditoria">
+          <div class="cartao-cabeca">
+            <h2>Últimas ações no sistema</h2>
+            <a class="link" routerLink="/admin/auditoria">Ver todas</a>
+          </div>
           <ul class="auditoria">
             @for (r of auditoria(); track r.id) {
               <li>
@@ -371,10 +470,8 @@
               </li>
             }
           </ul>
-        } @else {
-          <p class="vazio">Nenhuma ação registrada ainda.</p>
-        }
-      </section>
+        </section>
+      }
     </div>
   </div>
 </div>

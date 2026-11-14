@@ -50,12 +50,24 @@ public class PainelAdminService {
 
     public PainelAdminDTO montar(YearMonth mes) {
         YearMonth anterior = mes.minusMonths(1);
+        LocalDate inicioMes = mes.atDay(1);
+        LocalDate fimMes = mes.atEndOfMonth();
+
+        LocalDate inicioAnterior = anterior.atDay(1);
+        LocalDate fimAnterior = mes.equals(YearMonth.now())
+                ? anterior.atDay(Math.min(LocalDate.now().getDayOfMonth(), anterior.lengthOfMonth()))
+                : anterior.atEndOfMonth();
+
         return new PainelAdminDTO(
                 mes.toString(),
-                new Indicador(usuariosComLancamento(mes), usuariosComLancamento(anterior)),
+                new Indicador(usuariosComLancamento(inicioMes, fimMes), usuariosComLancamento(inicioAnterior, fimAnterior)),
                 new Indicador(novosCadastros(mes), novosCadastros(anterior)),
-                new Indicador(lancamentos(mes), lancamentos(anterior)),
-                new IndicadorValor(volume(mes), volume(anterior)),
+                new Indicador(lancamentos(inicioMes, fimMes, null), lancamentos(inicioAnterior, fimAnterior, null)),
+                new IndicadorValor(volume(inicioMes, fimMes, null), volume(inicioAnterior, fimAnterior, null)),
+                new IndicadorValor(volume(inicioMes, fimMes, TipoTransacao.DESPESA), volume(inicioAnterior, fimAnterior, TipoTransacao.DESPESA)),
+                new IndicadorValor(volume(inicioMes, fimMes, TipoTransacao.RECEITA), volume(inicioAnterior, fimAnterior, TipoTransacao.RECEITA)),
+                new Indicador(lancamentos(inicioMes, fimMes, TipoTransacao.DESPESA), lancamentos(inicioAnterior, fimAnterior, TipoTransacao.DESPESA)),
+                new Indicador(lancamentos(inicioMes, fimMes, TipoTransacao.RECEITA), lancamentos(inicioAnterior, fimAnterior, TipoTransacao.RECEITA)),
                 totais(),
                 cadastrosPorMes(mes),
                 usoDosModulos(),
@@ -64,14 +76,14 @@ public class PainelAdminService {
                 engajamento());
     }
 
-    private long usuariosComLancamento(YearMonth mes) {
+    private long usuariosComLancamento(LocalDate inicio, LocalDate fim) {
         return entityManager.createQuery("""
                 select count(distinct t.usuario.id) from Transacao t
                 where t.usuario.role = :role and t.data between :inicio and :fim
                 """, Long.class)
                 .setParameter("role", Role.PESSOAL)
-                .setParameter("inicio", mes.atDay(1))
-                .setParameter("fim", mes.atEndOfMonth())
+                .setParameter("inicio", inicio)
+                .setParameter("fim", fim)
                 .getSingleResult();
     }
 
@@ -80,19 +92,28 @@ public class PainelAdminService {
                 Role.PESSOAL, mes.atDay(1).atStartOfDay(), mes.plusMonths(1).atDay(1).atStartOfDay());
     }
 
-    private long lancamentos(YearMonth mes) {
-        return entityManager.createQuery("select count(t) from Transacao t where t.data between :inicio and :fim", Long.class)
-                .setParameter("inicio", mes.atDay(1))
-                .setParameter("fim", mes.atEndOfMonth())
-                .getSingleResult();
+    private long lancamentos(LocalDate inicio, LocalDate fim, TipoTransacao tipo) {
+        String jpql = "select count(t) from Transacao t where t.data between :inicio and :fim"
+                + (tipo == null ? "" : " and t.tipo = :tipo");
+        var query = entityManager.createQuery(jpql, Long.class)
+                .setParameter("inicio", inicio)
+                .setParameter("fim", fim);
+        if (tipo != null) {
+            query.setParameter("tipo", tipo);
+        }
+        return query.getSingleResult();
     }
 
-    private BigDecimal volume(YearMonth mes) {
-        BigDecimal soma = entityManager
-                .createQuery("select sum(t.valor) from Transacao t where t.data between :inicio and :fim", BigDecimal.class)
-                .setParameter("inicio", mes.atDay(1))
-                .setParameter("fim", mes.atEndOfMonth())
-                .getSingleResult();
+    private BigDecimal volume(LocalDate inicio, LocalDate fim, TipoTransacao tipo) {
+        String jpql = "select sum(t.valor) from Transacao t where t.data between :inicio and :fim"
+                + (tipo == null ? "" : " and t.tipo = :tipo");
+        var query = entityManager.createQuery(jpql, BigDecimal.class)
+                .setParameter("inicio", inicio)
+                .setParameter("fim", fim);
+        if (tipo != null) {
+            query.setParameter("tipo", tipo);
+        }
+        BigDecimal soma = query.getSingleResult();
         return soma == null ? BigDecimal.ZERO : soma;
     }
 

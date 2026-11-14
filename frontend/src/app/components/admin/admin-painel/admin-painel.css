@@ -1,5 +1,559 @@
-.cabeca-celular .sobre {
-  margin: 0 0 2px;
+/* =====================================================================
+   FinControl · Painel Administrativo (SUPER_ADMIN)
+   Cores exatas do protótipo:
+   - Roxo principal: #3B1478
+   - Roxo médio: #4A1C9A
+   - Amarelo destaque: #F6C21C
+   - Cinza de apoio/volume: #6E6882
+   - Fundo neutro do card volume: #ECEAF1
+   ===================================================================== */
+
+/* ---------- Ajustes de Estrutura e Preenchimento ---------- */
+.painel {
+  min-height: calc(100vh - 120px);
+  align-items: stretch;
+}
+
+.col-lateral {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+  height: 100%;
+}
+
+/* ---------- Cabeçalho da Página (Computador) ---------- */
+.cabecalho-pagina {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.titulos-cabecalho {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.titulo-pagina {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  color: #3B1478;
+}
+
+.subtitulo-pagina {
+  margin: 0;
+  font-size: 13px;
+  color: #6E6882;
+}
+
+/* ---------- Títulos de Seção e Cabeçalhos ---------- */
+.titulo-secao {
+  margin: 0 0 16px 0 !important;
+  font-size: 16px;
+  font-weight: 600;
+  color: #3B1478;
+}
+
+.header-com-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.header-com-badge .titulo-secao {
+  margin-bottom: 0 !important;
+}
+
+.selo-demo-secao {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #FFF4CC;
+  color: #5C4300;
+  text-transform: uppercase;
+}
+
+.header-transacoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.header-transacoes .titulo-secao {
+  margin-bottom: 0 !important;
+}
+
+.subtitulo-secao {
+  font-size: 12px;
+  color: #6E6882;
+}
+
+/* ---------- Espaçamento entre Seções Principais ---------- */
+.secao-visao-geral,
+.secao-saas,
+.secao-usuarios,
+.secao-transacoes {
+  margin-bottom: 28px;
+}
+
+/* =====================================================================
+   SEÇÃO 1: VISÃO GERAL (3 Hero Cards)
+   ===================================================================== */
+.grid-visao-geral {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.card-hero {
+  border-radius: 16px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-sizing: border-box;
+}
+
+.card-hero-topo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.card-hero-icone {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.card-hero-icone mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.card-hero-rotulo {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.card-hero-valor {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.6px;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.card-hero-sub {
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.card-hero-variacao {
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* Card 1: Usuários ativos (Amarelo / Destaque) */
+.card-hero.amarelo {
+  background: #F6C21C;
+  color: #2A0E5C;
+}
+
+.card-hero.amarelo .card-hero-icone {
+  background: #3B1478;
+  color: #F6C21C;
+}
+
+/* Cards 2 e 3: Brancos (Receita SaaS e Volume de transações) */
+.card-hero.branco {
+  background: #FFFFFF;
+  color: #26213A;
+  box-shadow: 0 1px 2px rgba(31, 22, 56, 0.05), 0 2px 10px rgba(31, 22, 56, 0.04);
+}
+
+.card-hero.branco .card-hero-icone.roxo {
+  background: #3B1478;
+  color: #FFFFFF;
+}
+
+.card-hero.branco .card-hero-icone.cinza {
+  background: #6E6882;
+  color: #FFFFFF;
+}
+
+.card-hero.branco .card-hero-rotulo {
+  color: #6E6882;
+}
+
+.card-hero.branco .card-hero-valor {
+  color: #26213A;
+}
+
+.card-hero.branco .card-hero-sub {
+  color: #6E6882;
+}
+
+.card-hero.branco .card-hero-variacao {
+  color: #0E6B42;
+}
+
+/* =====================================================================
+   SEÇÃO 2: MÉTRICAS DE RECEITA (SAAS)
+   ===================================================================== */
+.grid-saas {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.card-metrica-branca {
+  background: #FFFFFF;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(31, 22, 56, 0.05), 0 2px 10px rgba(31, 22, 56, 0.04);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-sizing: border-box;
+}
+
+.card-metrica-topo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.icone-avatar {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #FFFFFF !important;
+  flex: none;
+}
+
+.icone-avatar.mrr { background: #11804F; }
+.icone-avatar.conversao { background: #4A1C9A; }
+.icone-avatar.churn { background: #CF3445; }
+
+.icone-avatar mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.card-metrica-sub {
+  font-size: 12px;
+  color: #6E6882;
+}
+
+.card-metrica-valor {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  color: #26213A;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.card-mrr-footer {
+  display: flex;
+  gap: 18px;
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px solid #F3F2F7;
+  font-size: 12px;
+  color: #6E6882;
+}
+
+.card-mrr-footer span strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #26213A;
+  margin-top: 2px;
+}
+
+.texto-sucesso {
+  color: #0E6B42 !important;
+}
+
+.barra-conversao-trilha {
+  display: flex;
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 6px;
+  background: #E4E1EC;
+}
+
+.barra-conversao-fill {
+  background: #3B1478;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.card-metrica-detalhe {
+  font-size: 12px;
+  color: #6E6882;
+  margin-top: 4px;
+}
+
+.card-metrica-variacao {
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+/* Estados de loading e erro SaaS */
+.loading-saas {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 24px;
+  font-size: 14px;
+  color: #6E6882;
+}
+
+.erro-saas {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  background: #FDECEE;
+  border-radius: 14px;
+  font-size: 14px;
+  color: #CF3445;
+}
+
+.erro-saas .msg-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-tentar-novamente {
+  align-self: flex-start;
+  padding: 6px 16px;
+  border: 1px solid #CF3445;
+  border-radius: 8px;
+  background: none;
+  color: #CF3445;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn-tentar-novamente:hover {
+  background: #CF3445;
+  color: #FFFFFF;
+}
+
+/* =====================================================================
+   SEÇÃO 3: MÉTRICAS DE USUÁRIOS (Gráficos)
+   ===================================================================== */
+.grid-usuarios-metricas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+/* Gráfico 1: Novos cadastros */
+.mes-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.mes-col .col.larga {
+  width: 26px;
+  border-radius: 5px 5px 0 0;
+}
+
+.valor-col {
+  font-size: 10px;
+  color: #6E6882;
+  font-variant-numeric: tabular-nums;
+}
+
+.rotulos-x span.atual {
+  color: #3B1478;
+  font-weight: 600;
+}
+
+.legenda-parcial {
+  display: block;
+  font-size: 11px;
+  color: #6E6882;
+  margin-top: 8px;
+}
+
+/* Gráfico 2: Donut Chart */
+.grafico-donut-container {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  padding: 8px 0;
+}
+
+.donut-legenda {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 160px;
+}
+
+.donut-legenda-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.donut-legenda-cor {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex: none;
+}
+
+.donut-legenda-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.donut-legenda-titulo {
+  font-size: 13px;
+  font-weight: 600;
+  color: #26213A;
+}
+
+.donut-legenda-sub {
+  font-size: 12px;
+  color: #6E6882;
+}
+
+/* =====================================================================
+   SEÇÃO 4: MÉTRICAS DE TRANSAÇÕES (3 colunas)
+   ===================================================================== */
+.grid-transacoes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.card-transacao {
+  background: #FFFFFF;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(31, 22, 56, 0.05), 0 2px 10px rgba(31, 22, 56, 0.04);
+  padding: 20px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  box-sizing: border-box;
+}
+
+.card-transacao-icone {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+}
+
+.card-transacao-icone.custos { background: #CF3445; }
+.card-transacao-icone.receitas { background: #11804F; }
+.card-transacao-icone.total { background: #6E6882; }
+
+.card-transacao-icone mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.card-transacao-conteudo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card-transacao-rotulo {
+  font-size: 12px;
+  color: #6E6882;
+}
+
+.card-transacao-valor {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.card-transacao-valor.custos { color: #B8293A; }
+.card-transacao-valor.receitas { color: #0E6B42; }
+.card-transacao-valor.total { color: #26213A; }
+
+.card-transacao-detalhe {
+  font-size: 12px;
+  color: #6E6882;
+}
+
+/* =====================================================================
+   SEÇÃO 5: TABELA DE USUÁRIOS E MÓDULOS
+   ===================================================================== */
+.badge-plano-tab {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.badge-plano-tab.pro {
+  background: #3B1478;
+  color: #F6C21C;
+}
+
+.badge-plano-tab.free {
+  background: #F1ECFB;
+  color: #3B1478;
+}
+
+.badge-plano-tab.admin {
+  background: #FFF4CC;
+  color: #5C4300;
 }
 
 .cinza {
@@ -7,7 +561,7 @@
 }
 
 .sigla.cinza {
-  background: #f1f0f5;
+  background: #F1F0F5;
   color: var(--fc-text);
 }
 
@@ -22,7 +576,7 @@
 
 .perfil {
   white-space: nowrap;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .perfil .bolinha {
@@ -42,7 +596,7 @@
 }
 
 a.link-linha:hover {
-  color: var(--fc-roxo);
+  color: #3B1478;
 }
 
 .agenda .info .bolinha {
@@ -50,7 +604,7 @@ a.link-linha:hover {
   height: 8px;
 }
 
-/* ---------- Busca ---------- */
+/* Busca na coluna lateral */
 .busca-admin {
   display: flex;
   align-items: center;
@@ -60,7 +614,7 @@ a.link-linha:hover {
 }
 
 .busca-admin mat-icon {
-  color: var(--fc-roxo);
+  color: #3B1478;
 }
 
 .busca-admin input {
@@ -70,10 +624,10 @@ a.link-linha:hover {
   outline: none;
   background: none;
   font: inherit;
-  font-size: 16px;
+  font-size: 15px;
 }
 
-/* ---------- Auditoria ---------- */
+/* Auditoria */
 .auditoria {
   list-style: none;
   margin: 0;
@@ -99,158 +653,43 @@ a.link-linha:hover {
 
 .auditoria p {
   margin: 0;
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.45;
   word-break: break-word;
 }
 
 .auditoria strong {
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .auditoria span {
-  font-size: 13px;
-  color: var(--fc-muted);
-}
-
-/* ---------- Novos cadastros: valor em cima da coluna ---------- */
-.mes-col {
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 4px;
-}
-
-.mes-col .col.larga {
-  width: 28px;
-}
-
-.valor-col {
   font-size: 12px;
   color: var(--fc-muted);
-  font-variant-numeric: tabular-nums;
-}
-
-.rotulos-x span.atual {
-  color: var(--fc-roxo);
-  font-weight: 600;
 }
 
 .discreto {
   font-size: 13px;
-  color: var(--fc-muted);
+  color: #6E6882;
 }
 
 .sub-cartao {
   margin: -8px 0 16px;
+  font-size: 13px;
+  color: #6E6882;
 }
 
 .nota {
   margin: 16px 0 0;
   font-size: 12px;
   line-height: 1.5;
-  color: var(--fc-muted);
+  color: #6E6882;
 }
 
-/* ---------- Uso dos módulos ---------- */
 .legenda-modulos {
   margin: -6px 0 14px;
 }
 
-.modulos {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px 28px;
-}
-
-.modulos li {
-  display: grid;
-  grid-template-columns: 30px minmax(0, 1fr) 42px;
-  grid-template-rows: auto auto;
-  column-gap: 10px;
-  row-gap: 4px;
-  align-items: center;
-}
-
-.mod-icone {
-  grid-column: 1;
-  grid-row: 1 / 3;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: #efeafb;
-  color: var(--fc-roxo);
-}
-
-.mod-icone mat-icon {
-  font-size: 17px;
-  width: 17px;
-  height: 17px;
-}
-
-.mod-nome {
-  grid-column: 2;
-  grid-row: 1;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.mod-pct {
-  grid-column: 3;
-  grid-row: 1 / 3;
-  text-align: right;
-  font-size: 14px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-.mod-trilha {
-  grid-column: 2;
-  grid-row: 2;
-  position: relative;
-  height: 8px;
-  border-radius: 4px;
-  background: #f1eef8;
-  overflow: hidden;
-}
-
-.mod-barra {
-  position: absolute;
-  inset: 0 auto 0 0;
-  border-radius: 4px;
-}
-
-.mod-barra.ligado {
-  background: var(--fc-roxo);
-}
-
-.mod-barra.dados {
-  top: 2px;
-  bottom: 2px;
-  background: var(--fc-amarelo);
-}
-
-.modulos li.em-breve .mod-icone {
-  background: #f4f4f6;
-  color: var(--fc-muted);
-}
-
-.modulos li.em-breve .mod-barra.ligado {
-  background: #b9a8e6;
-}
-
-/* ---------- Segurança ---------- */
+/* ---------- Segurança e Base de Usuários (Cards de Métrica) ---------- */
 .seguranca {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -263,18 +702,19 @@ a.link-linha:hover {
   gap: 2px;
   padding: 14px;
   border-radius: 14px;
-  background: #f7f5fc;
+  background: #F7F5FC;
   color: var(--fc-text);
   text-decoration: none;
-  transition: background 0.15s;
+  transition: background 0.15s ease;
+  box-sizing: border-box;
 }
 
 .seg-item:hover {
-  background: #efeafb;
+  background: #EFEAFB;
 }
 
 .seg-item mat-icon {
-  color: var(--fc-roxo);
+  color: #3B1478;
   font-size: 20px;
   width: 20px;
   height: 20px;
@@ -282,15 +722,17 @@ a.link-linha:hover {
 }
 
 .seg-item strong {
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 22px;
+  font-weight: 700;
   line-height: 1.1;
+  color: #26213A;
+  font-variant-numeric: tabular-nums;
 }
 
 .seg-item span {
   font-size: 12px;
-  color: var(--fc-muted);
-  line-height: 1.3;
+  color: #6E6882;
+  line-height: 1.35;
 }
 
 .seg-item.largo {
@@ -298,15 +740,15 @@ a.link-linha:hover {
 }
 
 .seg-item.alerta {
-  background: #fdecee;
+  background: #FDECEE;
 }
 
 .seg-item.alerta mat-icon,
 .seg-item.alerta strong {
-  color: #d0343f;
+  color: #CF3445;
 }
 
-/* ---------- Categorias padrão ---------- */
+/* ---------- Categorias padrão mais usadas ---------- */
 .categorias-uso {
   list-style: none;
   margin: 0;
@@ -341,12 +783,25 @@ a.link-linha:hover {
   display: flex;
   align-items: center;
   gap: 6px;
+  font-weight: 500;
+  color: #26213A;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cat-linha strong {
+  font-weight: 600;
+  color: #26213A;
+  font-variant-numeric: tabular-nums;
+  flex: none;
 }
 
 .cat-trilha {
+  display: block;
   height: 6px;
   border-radius: 3px;
-  background: #f1eef8;
+  background: #F1EEF8;
   overflow: hidden;
 }
 
@@ -354,235 +809,54 @@ a.link-linha:hover {
   display: block;
   height: 100%;
   border-radius: 3px;
+  min-width: 4px;
+  transition: width 0.3s ease;
 }
 
 .cat-sub {
   font-size: 12px;
-  color: var(--fc-muted);
-}
-
-@media (max-width: 1100px) {
-  .modulos {
-    grid-template-columns: 1fr;
-  }
+  color: #6E6882;
 }
 
 /* =====================================================================
-   ESTILOS DE SEÇÕES E TÍTULOS DO PAINEL ADMIN
+   RESPONSIVIDADE (Celular / Tablets)
    ===================================================================== */
-
-/* Respiro global para todos os títulos de seção: evita sobreposição com cards */
-.titulo-secao {
-  margin: 0 0 16px 0 !important;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--fc-roxo);
-  display: block;
-}
-
-/* Seção 1 (Topo): margem superior para afastar da navbar e não cortar o título */
-.secao-visao-geral {
-  margin-top: 16px;
-  margin-bottom: 24px;
-}
-
-.secao-visao-geral .titulo-secao {
-  margin: 0 0 16px 0 !important;
-}
-
-.secao-visao-geral .c-indicadores {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-/* Seção 2: SaaS */
-.secao-saas {
-  margin-bottom: 24px;
-}
-
-/* Seção 3: Usuários */
-.secao-usuarios {
-  margin-bottom: 24px;
-}
-
-/* Seção 4: Transações com espaçamento acima para separar do gráfico anterior e do card abaixo */
-.secao-transacoes {
-  margin-top: 32px;
-  margin-bottom: 24px;
-}
-
-.secao-transacoes .titulo-secao {
-  margin: 0 0 16px 0 !important;
-}
-
-/* ---------- Cards SaaS (MRR, Conversão, Churn) ---------- */
-.cards-saas {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-}
-
-.card-saas {
-  border-radius: 18px !important;
-  box-shadow: var(--fc-shadow) !important;
-  overflow: hidden;
-  background: #ffffff !important;
-}
-
-.card-saas mat-card-header {
-  padding: 20px 20px 0;
-}
-
-.card-saas mat-card-content {
-  padding: 12px 20px 20px;
-}
-
-.icone-avatar {
-  width: 40px !important;
-  height: 40px !important;
-  border-radius: 50% !important;
-  display: grid !important;
-  place-items: center !important;
-  color: #fff !important;
-}
-
-.icone-avatar.mrr        { background: #15803d; }
-.icone-avatar.conversao  { background: #2563c9; }
-.icone-avatar.churn      { background: #d0343f; }
-
-.icone-avatar mat-icon {
-  font-size: 20px;
-  width: 20px;
-  height: 20px;
-}
-
-.valor-metrica {
-  font-size: 26px;
-  font-weight: 600;
-  line-height: 1.2;
-  color: var(--fc-text);
-  font-variant-numeric: tabular-nums;
-  margin-bottom: 4px;
-}
-
-.detalhe-metrica {
-  font-size: 13px;
-  color: var(--fc-muted);
-  margin: 0;
-}
-
-/* Estados loading e erro da seção SaaS */
-.loading-saas {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 24px;
-  font-size: 14px;
-  color: var(--fc-muted);
-}
-
-.erro-saas {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 20px;
-  background: #fdecee;
-  border-radius: 14px;
-  font-size: 14px;
-  color: #d0343f;
-}
-
-.erro-saas .msg-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.btn-tentar-novamente {
-  align-self: flex-start;
-  padding: 6px 16px;
-  border: 1px solid #d0343f;
-  border-radius: 8px;
-  background: none;
-  color: #d0343f;
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.btn-tentar-novamente:hover {
-  background: #d0343f;
-  color: #fff;
-}
-
 @media (max-width: 900px) {
-  .cards-saas {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-@media (max-width: 600px) {
-  .cards-saas {
+  .grid-visao-geral,
+  .grid-saas,
+  .grid-usuarios-metricas,
+  .grid-transacoes {
     grid-template-columns: 1fr;
   }
 }
 
-/* ---------- Gráfico Free vs Pro ---------- */
-.assinantes-barras {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-top: 4px;
-}
-
-.assinante-linha {
-  display: grid;
-  grid-template-columns: 36px 1fr 36px;
-  align-items: center;
-  gap: 12px;
-}
-
-.assinante-rotulo {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--fc-text);
-}
-
-.assinante-trilha {
-  position: relative;
-  height: 12px;
-  border-radius: 6px;
-  background: #f1eef8;
-  overflow: hidden;
-}
-
-.assinante-valor {
-  font-size: 13px;
-  font-weight: 600;
-  text-align: right;
-  color: var(--fc-muted);
-  font-variant-numeric: tabular-nums;
-}
-
-/* Celular: a ordem dos blocos segue o desenho (indicadores, busca, segurança, usuários...) */
 @media (max-width: 760px) {
   .cabeca-celular { order: 0; }
   .c-indicadores { order: 1; }
   .c-busca { order: 2; }
   .c-base { order: 3; }
   .c-seguranca { order: 4; }
-  .c-usuarios { order: 5; }
-  .c-cadastros { order: 6; }
-  .c-categorias { order: 7; }
-  .c-modulos { order: 8; }
-  .c-auditoria { order: 9; }
+  .c-saas { order: 5; }
+  .c-usuarios { order: 6; }
+  .c-cadastros { order: 7; }
+  .c-assinantes { order: 8; }
+  .c-indicadores-transacoes { order: 9; }
+  .c-categorias { order: 10; }
+  .c-modulos { order: 11; }
+  .c-auditoria { order: 12; }
   .vazio.erro { order: 1; }
 
   .busca-admin {
-    height: 60px;
-    padding: 0 20px;
+    height: 56px;
+    padding: 0 16px;
   }
 
   .mes-col .col.larga {
     width: 20px;
+  }
+
+  .grafico-donut-container {
+    flex-direction: column;
+    gap: 16px;
   }
 }

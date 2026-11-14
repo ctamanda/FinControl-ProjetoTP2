@@ -50,6 +50,9 @@ public class AdminUsuarioResource {
     UsuarioService usuarioService;
 
     @Inject
+    br.unitins.tp2.fincontrol.repository.AssinaturaRepository assinaturaRepository;
+
+    @Inject
     JsonWebToken jwt;
 
     @GET
@@ -62,13 +65,28 @@ public class AdminUsuarioResource {
         AdminConsultaService.validarPaginacao(page, pageSize);
         PanacheQuery<Usuario> query = service.pesquisar(busca, role, ativo, situacao);
         List<Usuario> usuarios = query.page(page, pageSize).list();
-        return PageResponse.of(usuarios, page, pageSize, query.count(), UsuarioResponseMapper::toResponse);
+        List<Long> ids = usuarios.stream().map(Usuario::getId).toList();
+        java.util.Map<Long, String> planos = assinaturaRepository.buscarPlanosPorUsuarioIds(ids);
+
+        return PageResponse.of(usuarios, page, pageSize, query.count(), u -> {
+            String plano = planos.get(u.getId());
+            if (plano == null && u.getRole() == Role.PESSOAL) {
+                plano = "Free";
+            }
+            return UsuarioResponseMapper.toResponse(u, plano);
+        });
     }
 
     @GET
     @Path("{id}")
     public UsuarioResponseDTO buscar(@PathParam("id") Long id) {
-        return UsuarioResponseMapper.toResponse(service.buscar(id));
+        Usuario usuario = service.buscar(id);
+        String plano = null;
+        if (usuario.getRole() == Role.PESSOAL) {
+            java.util.Map<Long, String> planos = assinaturaRepository.buscarPlanosPorUsuarioIds(List.of(id));
+            plano = planos.getOrDefault(id, "Free");
+        }
+        return UsuarioResponseMapper.toResponse(usuario, plano);
     }
 
     // Cadastro, acesso e quantidades, sem valores nem descrições.
