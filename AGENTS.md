@@ -109,4 +109,5 @@ Toda decisão de domínio, alteração de contratos ou adição de entidades apr
 | Data | Autor | Resumo da Decisão / Mudança Aprovada | Arquivos Impactados |
 |---|---|---|---|
 | 07/11/2026 | Documentador / Tech Lead | Consolidação da documentação inicial (`CONTEXTO_PROJETO.md`, `REGRAS_NEGOCIO.md`, `modelo-plantuml.puml`) e governança de agentes. | `docs/*`, `AGENTS.md` |
+| 13/11/2026 | Desenvolvedor / Tech Lead | Implementação da Fase 1 do Módulo de Assinaturas (tabelas `plano` e `assinatura`, seed dos planos Free e Pro, entidades JPA correspondentes com isolamento por `usuario_id`). | `backend/src/main/resources/db/migration/V21__...`, `backend/src/main/java/.../model/Plano.java`, `Assinatura.java`, `StatusAssinatura.java` |
 
